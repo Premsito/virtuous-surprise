@@ -11,6 +11,9 @@ console.log('  - NPM version:', process.env.npm_config_user_agent || 'N/A');
 console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
 console.log('  - npm_config_production:', process.env.npm_config_production || 'not set');
 console.log('  - npm_config_omit:', process.env.npm_config_omit || 'not set');
+console.log('  - npm_config_include:', process.env.npm_config_include || 'not set');
+console.log('  - npm_lifecycle_event:', process.env.npm_lifecycle_event || 'not set');
+console.log('  - npm_package_name:', process.env.npm_package_name || 'not set');
 console.log('');
 
 // Create Discord client

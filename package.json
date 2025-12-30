@@ -4,7 +4,7 @@
   "description": "Discord bot for LC management, invite tracking, games, and moderation",
   "main": "bot.js",
   "scripts": {
-    "prestart": "[ -d node_modules ] || npm install --omit=dev",
+    "prestart": "npm install --omit=dev",
     "start": "node bot.js",
     "dev": "node bot.js",
     "test": "node test-responses.js"
