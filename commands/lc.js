@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const { getResponse } = require('../utils/responseHelper');
 
 module.exports = {
     name: 'lc',
@@ -20,15 +21,15 @@ module.exports = {
         if (args.length === 0) {
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle(`${config.currency.symbol} Votre solde LC`)
-                .setDescription(`**${user.balance} LC**`)
-                .setFooter({ text: `Utilisez ${config.prefix}don pour transférer des LC` })
+                .setTitle(getResponse('lc.balance.title'))
+                .setDescription(getResponse('lc.balance.description', { balance: user.balance }))
+                .setFooter({ text: getResponse('lc.balance.footer') })
                 .setTimestamp();
             
             return message.reply({ embeds: [embed] });
         }
 
-        return message.reply('❌ Commande invalide. Utilisez `!lc` pour voir votre solde ou `!don` pour transférer des LC.');
+        return message.reply(getResponse('lc.invalidCommand'));
     }
 };
 
@@ -38,20 +39,20 @@ async function handleTransfer(message, args) {
 
     const recipient = message.mentions.users.first();
     if (!recipient) {
-        return message.reply('❌ Vous devez mentionner un utilisateur! Exemple: `!don @user 50`');
+        return message.reply(getResponse('transfer.noRecipient'));
     }
 
     if (recipient.id === senderId) {
-        return message.reply('❌ Vous ne pouvez pas vous transférer des LC à vous-même!');
+        return message.reply(getResponse('transfer.selfTransfer'));
     }
 
     if (recipient.bot) {
-        return message.reply('❌ Vous ne pouvez pas transférer des LC à un bot!');
+        return message.reply(getResponse('transfer.botTransfer'));
     }
 
     const amount = parseInt(args[1]);
     if (!amount || amount <= 0) {
-        return message.reply('❌ Montant invalide! Le montant doit être un nombre positif.');
+        return message.reply(getResponse('transfer.invalidAmount'));
     }
 
     const recipientId = recipient.id;
@@ -69,7 +70,7 @@ async function handleTransfer(message, args) {
 
     // Check sender balance
     if (senderUser.balance < amount) {
-        return message.reply(`❌ Vous n'avez pas assez de LC! Votre solde: ${senderUser.balance} LC`);
+        return message.reply(getResponse('transfer.insufficientBalance', { balance: senderUser.balance }));
     }
 
     // Transfer LC
@@ -78,17 +79,19 @@ async function handleTransfer(message, args) {
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.success)
-            .setTitle(`${config.currency.symbol} Transfert réussi`)
-            .setDescription(
-                `${sender} a transféré **${amount} LC** à ${recipient}!\n\n` +
-                `Nouveau solde: **${senderUser.balance - amount} LC**`
-            )
+            .setTitle(getResponse('transfer.success.title'))
+            .setDescription(getResponse('transfer.success.description', {
+                sender: sender,
+                amount: amount,
+                recipient: recipient,
+                newBalance: senderUser.balance - amount
+            }))
             .setTimestamp();
 
         return message.reply({ embeds: [embed] });
     } catch (error) {
         console.error('Transfer error:', error);
-        return message.reply('❌ Erreur lors du transfert. Veuillez réessayer.');
+        return message.reply(getResponse('transfer.error'));
     }
 }
 

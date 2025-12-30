@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const { getResponse } = require('../utils/responseHelper');
 
 // Active games storage
 const activeDuels = new Map();
@@ -16,11 +17,8 @@ module.exports = {
         if (!gameType) {
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle('🎮 Jeux disponibles')
-                .setDescription(
-                    `**Duel**: \`${config.prefix}jeu duel @utilisateur [montant]\`\n` +
-                    `**Roulette**: \`${config.prefix}jeu roulette [montant]\``
-                )
+                .setTitle(getResponse('games.list.title'))
+                .setDescription(getResponse('games.list.description'))
                 .setTimestamp();
             
             return message.reply({ embeds: [embed] });
@@ -31,7 +29,7 @@ module.exports = {
         } else if (gameType === 'roulette') {
             return handleRoulette(message, args.slice(1));
         } else {
-            return message.reply('❌ Jeu inconnu. Utilisez `duel` ou `roulette`.');
+            return message.reply(getResponse('games.unknownGame'));
         }
     }
 };
@@ -43,15 +41,15 @@ async function handleDuel(message, args) {
     // Get opponent
     const opponentMention = message.mentions.users.first();
     if (!opponentMention) {
-        return message.reply('❌ Vous devez mentionner un adversaire! Exemple: `!jeu duel @user 50`');
+        return message.reply(getResponse('games.duel.noOpponent'));
     }
     
     if (opponentMention.id === challengerId) {
-        return message.reply('❌ Vous ne pouvez pas vous défier vous-même!');
+        return message.reply(getResponse('games.duel.selfChallenge'));
     }
     
     if (opponentMention.bot) {
-        return message.reply('❌ Vous ne pouvez pas défier un bot!');
+        return message.reply(getResponse('games.duel.botChallenge'));
     }
     
     const opponentId = opponentMention.id;
@@ -59,7 +57,10 @@ async function handleDuel(message, args) {
     // Get bet amount
     const betAmount = parseInt(args[1]);
     if (!betAmount || betAmount < config.games.duel.minBet || betAmount > config.games.duel.maxBet) {
-        return message.reply(`❌ Le montant doit être entre ${config.games.duel.minBet} et ${config.games.duel.maxBet} LC.`);
+        return message.reply(getResponse('games.duel.invalidBet', {
+            minBet: config.games.duel.minBet,
+            maxBet: config.games.duel.maxBet
+        }));
     }
     
     // Ensure both users exist
@@ -75,16 +76,20 @@ async function handleDuel(message, args) {
     
     // Check balances
     if (challengerUser.balance < betAmount) {
-        return message.reply(`❌ Vous n'avez pas assez de LC! Votre solde: ${challengerUser.balance} LC`);
+        return message.reply(getResponse('games.duel.insufficientBalanceChallenger', {
+            balance: challengerUser.balance
+        }));
     }
     
     if (opponentUser.balance < betAmount) {
-        return message.reply(`❌ ${opponentMention.username} n'a pas assez de LC!`);
+        return message.reply(getResponse('games.duel.insufficientBalanceOpponent', {
+            opponent: opponentMention.username
+        }));
     }
     
     // Check if already in a duel
     if (activeDuels.has(challengerId) || activeDuels.has(opponentId)) {
-        return message.reply('❌ Un des joueurs est déjà dans un duel!');
+        return message.reply(getResponse('games.duel.alreadyInDuel'));
     }
     
     // Create duel request
@@ -94,11 +99,12 @@ async function handleDuel(message, args) {
     
     const embed = new EmbedBuilder()
         .setColor(config.colors.warning)
-        .setTitle('⚔️ Duel!')
-        .setDescription(
-            `${challenger} défie ${opponentMention} pour **${betAmount} LC**!\n\n` +
-            `${opponentMention}, tapez \`accepter\` pour accepter le duel dans les 30 secondes.`
-        )
+        .setTitle(getResponse('games.duel.challenge.title'))
+        .setDescription(getResponse('games.duel.challenge.description', {
+            challenger: challenger,
+            opponent: opponentMention,
+            bet: betAmount
+        }))
         .setTimestamp();
     
     const challengeMsg = await message.reply({ embeds: [embed] });
@@ -125,11 +131,13 @@ async function handleDuel(message, args) {
         
         const resultEmbed = new EmbedBuilder()
             .setColor(config.colors.success)
-            .setTitle('⚔️ Résultat du duel')
-            .setDescription(
-                `${winnerUser} a gagné le duel et remporte **${betAmount * 2} LC**!\n` +
-                `${loserUser} a perdu **${betAmount} LC**.`
-            )
+            .setTitle(getResponse('games.duel.result.title'))
+            .setDescription(getResponse('games.duel.result.description', {
+                winner: winnerUser,
+                totalWinnings: betAmount * 2,
+                loser: loserUser,
+                bet: betAmount
+            }))
             .setTimestamp();
         
         await message.channel.send({ embeds: [resultEmbed] });
@@ -137,8 +145,10 @@ async function handleDuel(message, args) {
     } catch (error) {
         const timeoutEmbed = new EmbedBuilder()
             .setColor(config.colors.error)
-            .setTitle('⚔️ Duel annulé')
-            .setDescription(`${opponentMention} n'a pas accepté le duel à temps.`)
+            .setTitle(getResponse('games.duel.timeout.title'))
+            .setDescription(getResponse('games.duel.timeout.description', {
+                opponent: opponentMention
+            }))
             .setTimestamp();
         
         await message.channel.send({ embeds: [timeoutEmbed] });
@@ -156,7 +166,10 @@ async function handleRoulette(message, args) {
     // Get bet amount
     const betAmount = parseInt(args[0]);
     if (!betAmount || betAmount < config.games.roulette.minBet || betAmount > config.games.roulette.maxBet) {
-        return message.reply(`❌ Le montant doit être entre ${config.games.roulette.minBet} et ${config.games.roulette.maxBet} LC.`);
+        return message.reply(getResponse('games.roulette.invalidBet', {
+            minBet: config.games.roulette.minBet,
+            maxBet: config.games.roulette.maxBet
+        }));
     }
     
     // Ensure user exists
@@ -167,7 +180,9 @@ async function handleRoulette(message, args) {
     
     // Check balance
     if (user.balance < betAmount) {
-        return message.reply(`❌ Vous n'avez pas assez de LC! Votre solde: ${user.balance} LC`);
+        return message.reply(getResponse('games.roulette.insufficientBalance', {
+            balance: user.balance
+        }));
     }
     
     // Check if roulette is active for this guild
@@ -184,7 +199,7 @@ async function handleRoulette(message, args) {
     
     // Add player
     if (roulette.players.has(playerId)) {
-        return message.reply('❌ Vous participez déjà à cette roulette!');
+        return message.reply(getResponse('games.roulette.alreadyJoined'));
     }
     
     roulette.players.set(playerId, { user: player, bet: betAmount });
@@ -192,15 +207,17 @@ async function handleRoulette(message, args) {
     // Deduct bet
     await db.updateBalance(playerId, -betAmount);
     
+    const totalPot = Array.from(roulette.players.values()).reduce((sum, p) => sum + p.bet, 0);
+    
     const embed = new EmbedBuilder()
         .setColor(config.colors.warning)
-        .setTitle('🎰 Roulette')
-        .setDescription(
-            `${player} a rejoint la roulette avec **${betAmount} LC**!\n\n` +
-            `Joueurs actuels: **${roulette.players.size}**\n` +
-            `Pot total: **${Array.from(roulette.players.values()).reduce((sum, p) => sum + p.bet, 0)} LC**\n\n` +
-            `La roulette démarre dans 30 secondes...`
-        )
+        .setTitle(getResponse('games.roulette.joined.title'))
+        .setDescription(getResponse('games.roulette.joined.description', {
+            player: player,
+            bet: betAmount,
+            playerCount: roulette.players.size,
+            totalPot: totalPot
+        }))
         .setTimestamp();
     
     await message.reply({ embeds: [embed] });
@@ -248,12 +265,13 @@ async function executeRoulette(guildId) {
     
     const resultEmbed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle('🎰 Résultat de la roulette')
-        .setDescription(
-            `${winner.user} a gagné la roulette et remporte **${winnings} LC**!\n\n` +
-            `Pot total: **${totalPot} LC**\n` +
-            `Participants: **${playersArray.length}**`
-        )
+        .setTitle(getResponse('games.roulette.result.title'))
+        .setDescription(getResponse('games.roulette.result.description', {
+            winner: winner.user,
+            winnings: winnings,
+            totalPot: totalPot,
+            playerCount: playersArray.length
+        }))
         .setTimestamp();
     
     await roulette.channel.send({ embeds: [resultEmbed] });

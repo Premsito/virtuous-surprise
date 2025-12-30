@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const { getResponse } = require('../utils/responseHelper');
 
 module.exports = {
     name: 'invites',
@@ -21,15 +22,15 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
-                .setTitle('📊 Vos invitations')
-                .setDescription(`Vous avez **${user.invites}** invitation(s) réussie(s)`)
-                .setFooter({ text: 'Invitez des amis pour gagner des LC!' })
+                .setTitle(getResponse('invites.count.title'))
+                .setDescription(getResponse('invites.count.description', { invites: user.invites }))
+                .setFooter({ text: getResponse('invites.count.footer') })
                 .setTimestamp();
 
             return message.reply({ embeds: [embed] });
         }
 
-        return message.reply('❌ Commande invalide. Utilisez `!invites` pour voir vos invitations.');
+        return message.reply(getResponse('invites.invalidCommand'));
     }
 };
 
@@ -37,19 +38,23 @@ async function handleTopInvites(message, args) {
     const topUsers = await db.getTopInvites(10);
 
     if (topUsers.length === 0) {
-        return message.reply('❌ Aucune donnée d\'invitation disponible.');
+        return message.reply(getResponse('invites.top.noData'));
     }
 
     let description = '';
     for (let i = 0; i < topUsers.length; i++) {
         const user = topUsers[i];
         const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
-        description += `${medal} **${user.username}** - ${user.invites} invitation(s)\n`;
+        description += getResponse('invites.top.entry', {
+            medal: medal,
+            username: user.username,
+            invites: user.invites
+        });
     }
 
     const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setTitle('🏆 Top invitations')
+        .setTitle(getResponse('invites.top.title'))
         .setDescription(description)
         .setTimestamp();
 
