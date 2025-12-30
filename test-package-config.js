@@ -32,8 +32,8 @@ test('prestart script exists in package.json', () => {
 // Test 2: Verify prestart uses --omit=dev flag
 test('prestart script uses --omit=dev flag', () => {
     const prestart = packageJson.scripts.prestart;
-    if (!prestart.includes('--omit=dev')) {
-        throw new Error('prestart script does not use --omit=dev flag');
+    if (!prestart.includes('npm install --omit=dev')) {
+        throw new Error('prestart script does not use npm install --omit=dev command');
     }
 });
 
