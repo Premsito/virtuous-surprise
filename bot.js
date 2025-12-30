@@ -267,6 +267,17 @@ async function shutdown() {
         client.destroy();
         
         console.log('🔌 Closing database connections...');
+        
+        // Flush any cached message counts before shutdown
+        for (const [userId, count] of messageCountCache.entries()) {
+            try {
+                await db.incrementMessageCount(userId, count);
+            } catch (error) {
+                console.error(`Error flushing message count for user ${userId}:`, error);
+            }
+        }
+        messageCountCache.clear();
+        
         await db.close();
         
         console.log('✅ Shutdown complete');
