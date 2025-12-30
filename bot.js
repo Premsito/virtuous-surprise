@@ -150,8 +150,8 @@ client.on('messageCreate', async (message) => {
             const command = client.commands.get('jeu');
             await command.execute(message, args);
         } else if (commandName === 'don') {
-            const command = client.commands.get('moderation');
-            await command.execute(message, args, 'don');
+            const lcCommand = require('./commands/lc');
+            await lcCommand.handleTransfer(message, args);
         } else if (commandName === 'setlc') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setlc');
@@ -159,8 +159,8 @@ client.on('messageCreate', async (message) => {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setinvites');
         } else if (commandName === 'topinvites') {
-            const command = client.commands.get('moderation');
-            await command.execute(message, args, 'topinvites');
+            const invitesCommand = require('./commands/invites');
+            await invitesCommand.handleTopInvites(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
