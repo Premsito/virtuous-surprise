@@ -108,8 +108,12 @@ Edit `config.json` to customize:
 - Command prefix
 - Currency name and symbol
 - Invite rewards
+- Channel IDs (e.g., invite tracker channel)
+- Custom emote names
 - Game bet limits
 - Colors for embeds
+
+**Note**: The `inviteTracker` channel ID in `config.json` should be set to the Discord channel where invite tracking messages should be posted. Update this value to match your server's channel ID.
 
 ### Bot Responses (responses.json)
 

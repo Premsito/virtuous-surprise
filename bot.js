@@ -111,6 +111,10 @@ client.on('guildMemberAdd', async (member) => {
             await db.recordTransaction(null, inviterId, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
             await db.recordTransaction(null, invitedId, config.currency.inviteReward, 'invite_reward', 'Reward for joining via invite');
             
+            // Get inviter's updated invite count after increment
+            const inviterData = await db.getUser(inviterId);
+            const totalInvites = inviterData ? inviterData.invites : 1;
+            
             console.log(`✅ ${usedInvite.inviter.username} invited ${member.user.username}`);
             
             // Send invite tracking message to specific channel
@@ -119,9 +123,6 @@ client.on('guildMemberAdd', async (member) => {
                 try {
                     const inviteChannel = await client.channels.fetch(inviteChannelId);
                     if (inviteChannel) {
-                        // Get updated inviter stats
-                        const inviterData = await db.getUser(inviterId);
-                        const totalInvites = inviterData ? inviterData.invites : 1;
                         
                         // Format message with emotes
                         const invitePeopleEmote = `:${config.emotes.invitePeople}:`;
