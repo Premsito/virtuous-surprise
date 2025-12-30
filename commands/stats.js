@@ -32,8 +32,7 @@ module.exports = {
         const gameStats = gameStatsResult.rows[0] || { games_played: 0, games_won: 0 };
 
         // Note: Message count is not tracked in current schema
-        // Using 'N/A' as placeholder
-        const messageCount = 'N/A';
+        const messageCount = getResponse('stats.notAvailable');
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)

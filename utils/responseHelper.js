@@ -36,7 +36,8 @@ function getResponse(path, values = {}) {
         response = response[key];
         if (response === undefined) {
             console.error(`Response path not found: ${path}`);
-            return '';
+            // Return a fallback message that makes the issue visible
+            return `[Missing response: ${path}]`;
         }
     }
     

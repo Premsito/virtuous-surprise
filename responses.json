@@ -43,7 +43,8 @@
     "messages": "💬 **Messages:** {messages}",
     "gamesPlayed": "🎮 **Parties jouées:** {gamesPlayed}",
     "gamesWon": "🏆 **Parties gagnées:** {gamesWon}",
-    "noStats": "❌ Aucune statistique disponible pour cet utilisateur."
+    "noStats": "❌ Aucune statistique disponible pour cet utilisateur.",
+    "notAvailable": "N/A"
   },
   "games": {
     "list": {
