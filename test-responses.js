@@ -39,9 +39,11 @@ test('All command modules load without errors', () => {
 // Test 2: LC responses
 test('LC balance responses work', () => {
     const title = getResponse('lc.balance.title');
+    const otherTitle = getResponse('lc.balance.otherTitle', { username: 'OtherUser' });
     const description = getResponse('lc.balance.description', { balance: 100 });
     
-    if (!title.includes('LC') || !description.includes('100')) {
+    if (!title.includes('LC') || !description.includes('100') || 
+        !otherTitle.includes('OtherUser')) {
         throw new Error('LC balance response placeholders not working');
     }
 });
@@ -74,8 +76,13 @@ test('Invite responses work', () => {
 test('Stats responses work', () => {
     const title = getResponse('stats.title', { username: 'TestUser' });
     const balance = getResponse('stats.balance', { balance: 250 });
+    const voiceTime = getResponse('stats.voiceTime', { voiceTime: '2h 30m' });
+    const joinDate = getResponse('stats.joinDate', { joinDate: '01/01/2024' });
+    const ranking = getResponse('stats.ranking', { ranking: 5 });
     
-    if (!title.includes('TestUser') || !balance.includes('250')) {
+    if (!title.includes('TestUser') || !balance.includes('250') || 
+        !voiceTime.includes('2h 30m') || !joinDate.includes('01/01/2024') || 
+        !ranking.includes('#5')) {
         throw new Error('Stats response placeholders not working');
     }
 });
@@ -154,10 +161,14 @@ test('Config values are integrated in responses', () => {
 test('All critical response paths exist', () => {
     const criticalPaths = [
         'lc.balance.title',
+        'lc.balance.otherTitle',
         'transfer.success.title',
         'invites.count.title',
         'invites.top.title',
         'stats.title',
+        'stats.voiceTime',
+        'stats.joinDate',
+        'stats.ranking',
         'games.list.title',
         'games.duel.challenge.title',
         'games.roulette.joined.title',
@@ -172,6 +183,23 @@ test('All critical response paths exist', () => {
             throw new Error(`Missing response path: ${path}`);
         }
     });
+});
+
+// Test 13: Stats formatVoiceTime helper works correctly
+test('Stats formatVoiceTime helper works correctly', () => {
+    const statsCommand = require('./commands/stats');
+    
+    // Test hours and minutes
+    const time1 = statsCommand.formatVoiceTime(7830); // 2h 10m
+    if (!time1.includes('2h') || !time1.includes('10m')) {
+        throw new Error('Voice time formatting failed for hours and minutes');
+    }
+    
+    // Test minutes only
+    const time2 = statsCommand.formatVoiceTime(300); // 5m
+    if (!time2.includes('5m') || time2.includes('h')) {
+        throw new Error('Voice time formatting failed for minutes only');
+    }
 });
 
 // Summary
