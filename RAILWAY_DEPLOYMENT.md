@@ -50,6 +50,7 @@ The `DATABASE_URL` is automatically provided by Railway when you add PostgreSQL.
 Once deployed on Railway:
 1. Check the logs to ensure the bot connected successfully
 2. You should see the following log sequence:
+   - "🔍 NPM Configuration Debug:" with npm configuration details
    - "✅ Database connection verified"
    - "✅ Database tables initialized"
    - "✅ Bot is online!"
@@ -63,6 +64,10 @@ Once deployed on Railway:
 This bot includes several production-ready features:
 
 - **Modern npm installation**: Uses `npm install --omit=dev` instead of deprecated `--production` flag
+  - `.npmrc` file prevents use of deprecated production flag
+  - `prestart` script ensures correct npm flags are used before bot starts
+  - `nixpacks.toml` specifies installation commands for Railway
+  - Startup logging shows npm configuration for debugging
 - **Automatic database initialization**: Tables are created automatically on first deployment
 - **Connection retry logic**: Attempts to reconnect to the database with exponential backoff (up to 3 retries)
 - **Connection pooling**: Optimized PostgreSQL connection pool with 20 max connections
@@ -94,9 +99,16 @@ This bot includes several production-ready features:
 - If initialization fails after retries, check that the PostgreSQL service is running in Railway
 
 ### npm warnings during deployment
-- The bot now uses `npm install --omit=dev` which is the modern replacement for `--production`
-- If you see warnings about `--production` being deprecated, ensure the `nixpacks.toml` file is present in the repository
-- Railway will automatically use this configuration file when deploying
+- The bot uses multiple layers of protection to prevent npm warnings:
+  - `.npmrc` file configures npm to use `--omit=dev` by default
+  - `nixpacks.toml` specifies `npm install --omit=dev` for Railway deployments
+  - `prestart` script in `package.json` ensures correct npm flags before bot starts
+- The bot logs npm configuration on startup for debugging purposes
+- If you see warnings about `--production` being deprecated:
+  - Ensure the `.npmrc` file is present in the repository
+  - Verify the `nixpacks.toml` file is present in the repository
+  - Check the startup logs for npm configuration debug information
+- Railway will automatically use these configuration files when deploying
 
 ### Bot crashes on startup
 - Check Railway logs for error messages
