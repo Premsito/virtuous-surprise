@@ -9,11 +9,15 @@
 
 ### Step 2: Add Environment Variables
 
-In your Railway project settings, add the following environment variable:
+In your Railway project settings, add the following environment variables:
 
 - `DISCORD_TOKEN`: Your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/applications)
+- `npm_config_production`: Set to `false` to prevent deprecated --production flag usage
+- `npm_config_omit`: Set to `dev` to explicitly use modern --omit=dev flag
 
 The `DATABASE_URL` is automatically provided by Railway when you add PostgreSQL.
+
+**Note**: The npm configuration environment variables ensure that Railway uses the modern `--omit=dev` flag instead of the deprecated `--production` flag, preventing npm warnings during deployment.
 
 ### Step 3: Deploy
 
@@ -79,6 +83,9 @@ This bot includes several production-ready features:
 |----------|----------|-------------|
 | `DISCORD_TOKEN` | Yes | Bot token from Discord Developer Portal |
 | `DATABASE_URL` | Yes | PostgreSQL connection string (auto-provided by Railway) |
+| `npm_config_production` | Recommended | Set to `false` to prevent deprecated --production flag warnings |
+| `npm_config_omit` | Recommended | Set to `dev` to explicitly use modern --omit=dev flag |
+| `NODE_ENV` | Optional | Set to `production` for production deployments |
 
 ## Troubleshooting
 
