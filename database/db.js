@@ -215,7 +215,7 @@ const db = {
             // Wait for any pending queries to complete (give it up to 5 seconds)
             const gracePeriodMs = 5000;
             const shutdownTimeout = setTimeout(() => {
-                console.warn('⚠️ Database shutdown taking longer than expected, forcing close...');
+                console.warn('⚠️ Database shutdown taking longer than expected...');
             }, gracePeriodMs);
             
             await pool.end();

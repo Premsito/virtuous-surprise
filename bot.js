@@ -268,14 +268,20 @@ async function shutdown() {
         
         console.log('🔌 Closing database connections...');
         
-        // Flush any cached message counts before shutdown
-        for (const [userId, count] of messageCountCache.entries()) {
+        // Flush any cached message counts before shutdown (with timeout)
+        const flushPromises = Array.from(messageCountCache.entries()).map(async ([userId, count]) => {
             try {
                 await db.incrementMessageCount(userId, count);
             } catch (error) {
                 console.error(`Error flushing message count for user ${userId}:`, error);
             }
-        }
+        });
+        
+        // Wait for all flushes with a timeout
+        await Promise.race([
+            Promise.allSettled(flushPromises),
+            new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout
+        ]);
         messageCountCache.clear();
         
         await db.close();
