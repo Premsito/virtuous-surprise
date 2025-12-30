@@ -113,20 +113,27 @@ client.on('guildMemberAdd', async (member) => {
             
             console.log(`✅ ${usedInvite.inviter.username} invited ${member.user.username}`);
             
-            // Send notification (optional - you can customize this)
-            const systemChannel = member.guild.systemChannel;
-            if (systemChannel) {
-                const embed = new EmbedBuilder()
-                    .setColor(config.colors.success)
-                    .setTitle(getResponse('invites.event.title'))
-                    .setDescription(getResponse('invites.event.description', {
-                        invited: member.user,
-                        inviter: usedInvite.inviter,
-                        reward: config.currency.inviteReward
-                    }))
-                    .setTimestamp();
-                
-                systemChannel.send({ embeds: [embed] }).catch(console.error);
+            // Send invite tracking message to specific channel
+            const inviteChannelId = config.channels.inviteTracker;
+            if (inviteChannelId) {
+                try {
+                    const inviteChannel = await client.channels.fetch(inviteChannelId);
+                    if (inviteChannel) {
+                        // Get updated inviter stats
+                        const inviterData = await db.getUser(inviterId);
+                        const totalInvites = inviterData ? inviterData.invites : 1;
+                        
+                        // Format message with emotes
+                        const invitePeopleEmote = `:${config.emotes.invitePeople}:`;
+                        const boostGemsEmote = `:${config.emotes.boostGemsMonth}:`;
+                        
+                        const messageContent = `${invitePeopleEmote} ${member.user} joins the team. Credit to ${usedInvite.inviter} who now has ${totalInvites} invitations! ${boostGemsEmote}`;
+                        
+                        await inviteChannel.send(messageContent);
+                    }
+                } catch (error) {
+                    console.error('Error sending invite tracking message:', error);
+                }
             }
         }
     } catch (error) {
