@@ -32,8 +32,12 @@ client.commands.set(statsCommand.name, statsCommand);
 // Store invites for tracking
 const invites = new Map();
 
+// Message count cache to reduce database load
+const messageCountCache = new Map();
+const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
+
 // Bot ready event
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
     console.log(`📝 Logged in as ${client.user.tag}`);
     
@@ -134,6 +138,31 @@ client.on('guildMemberAdd', async (member) => {
 client.on('messageCreate', async (message) => {
     // Ignore bot messages
     if (message.author.bot) return;
+    
+    // Track message count for the user
+    try {
+        const userId = message.author.id;
+        const username = message.author.username;
+        
+        // Ensure user exists
+        let user = await db.getUser(userId);
+        if (!user) {
+            user = await db.createUser(userId, username);
+        }
+        
+        // Use caching to reduce database load
+        const currentCount = messageCountCache.get(userId) || 0;
+        messageCountCache.set(userId, currentCount + 1);
+        
+        // Update database every MESSAGE_COUNT_BATCH_SIZE messages
+        if (messageCountCache.get(userId) >= MESSAGE_COUNT_BATCH_SIZE) {
+            const count = messageCountCache.get(userId);
+            await db.incrementMessageCount(userId, count);
+            messageCountCache.delete(userId);
+        }
+    } catch (error) {
+        console.error('Error tracking message:', error);
+    }
     
     // Check if message starts with prefix
     if (!message.content.startsWith(config.prefix)) return;

@@ -8,8 +8,10 @@ module.exports = {
     description: 'Manage your LC (virtual coins)',
     
     async execute(message, args) {
-        const userId = message.author.id;
-        const username = message.author.username;
+        // Check if a user is mentioned
+        const targetUser = message.mentions.users.first();
+        const userId = targetUser ? targetUser.id : message.author.id;
+        const username = targetUser ? targetUser.username : message.author.username;
 
         // Ensure user exists in database
         let user = await db.getUser(userId);
@@ -17,19 +19,15 @@ module.exports = {
             user = await db.createUser(userId, username);
         }
 
-        // No arguments - show balance
-        if (args.length === 0) {
-            const embed = new EmbedBuilder()
-                .setColor(config.colors.primary)
-                .setTitle(getResponse('lc.balance.title'))
-                .setDescription(getResponse('lc.balance.description', { balance: user.balance }))
-                .setFooter({ text: getResponse('lc.balance.footer') })
-                .setTimestamp();
-            
-            return message.reply({ embeds: [embed] });
-        }
-
-        return message.reply(getResponse('lc.invalidCommand'));
+        // Show balance
+        const embed = new EmbedBuilder()
+            .setColor(config.colors.primary)
+            .setTitle(getResponse(targetUser ? 'lc.balance.otherTitle' : 'lc.balance.title', { username: username }))
+            .setDescription(getResponse('lc.balance.description', { balance: user.balance }))
+            .setFooter({ text: getResponse('lc.balance.footer') })
+            .setTimestamp();
+        
+        return message.reply({ embeds: [embed] });
     }
 };
 
