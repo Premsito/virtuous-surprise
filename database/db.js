@@ -1,5 +1,10 @@
 const { Pool } = require('pg');
 
+// Database configuration constants
+const DB_INIT_MAX_RETRIES = 3;
+const DB_INIT_RETRY_BASE_DELAY_MS = 1000;
+const DB_INIT_RETRY_MAX_DELAY_MS = 5000;
+
 // Create PostgreSQL connection pool with improved configuration
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -165,10 +170,9 @@ const db = {
         const fs = require('fs');
         const path = require('path');
         
-        const maxRetries = 3;
         let retryCount = 0;
         
-        while (retryCount < maxRetries) {
+        while (retryCount < DB_INIT_MAX_RETRIES) {
             try {
                 // Test the connection first
                 await pool.query('SELECT 1');
@@ -184,15 +188,18 @@ const db = {
                 return; // Success, exit the function
             } catch (error) {
                 retryCount++;
-                console.error(`❌ Failed to initialize database (attempt ${retryCount}/${maxRetries}):`, error.message);
+                console.error(`❌ Failed to initialize database (attempt ${retryCount}/${DB_INIT_MAX_RETRIES}):`, error.message);
                 
-                if (retryCount >= maxRetries) {
+                if (retryCount >= DB_INIT_MAX_RETRIES) {
                     console.error('❌ Max retries reached. Database initialization failed.');
                     throw error;
                 }
                 
                 // Wait before retrying (exponential backoff)
-                const waitTime = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+                const waitTime = Math.min(
+                    DB_INIT_RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1), 
+                    DB_INIT_RETRY_MAX_DELAY_MS
+                );
                 console.log(`⏳ Retrying in ${waitTime}ms...`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
