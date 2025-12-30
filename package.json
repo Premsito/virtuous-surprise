@@ -1,0 +1,26 @@
+{
+  "name": "virtuous-surprise-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for LC management, invite tracking, games, and moderation",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node bot.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "discord.js",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=16.x"
+  }
+}
