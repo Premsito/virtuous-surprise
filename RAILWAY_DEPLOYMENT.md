@@ -18,8 +18,13 @@ The `DATABASE_URL` is automatically provided by Railway when you add PostgreSQL.
 ### Step 3: Deploy
 
 1. Connect your GitHub repository to Railway
-2. Railway will automatically detect the Node.js project
-3. The bot will start using the `npm start` command defined in `package.json`
+2. Railway will automatically detect the Node.js project and use the `nixpacks.toml` configuration
+3. The bot will:
+   - Install dependencies using `npm install --omit=dev` (production-only dependencies)
+   - Start using the `npm start` command defined in `package.json`
+   - Automatically initialize the PostgreSQL database tables on first run
+   - Retry database connections with exponential backoff if initial connection fails
+   - Handle restarts gracefully with automatic reconnection
 
 ### Step 4: Discord Bot Setup
 
@@ -44,8 +49,25 @@ The `DATABASE_URL` is automatically provided by Railway when you add PostgreSQL.
 
 Once deployed on Railway:
 1. Check the logs to ensure the bot connected successfully
-2. You should see: "✅ Bot is fully ready!"
-3. Test the bot with `!help` in your Discord server
+2. You should see the following log sequence:
+   - "✅ Database connection verified"
+   - "✅ Database tables initialized"
+   - "✅ Bot is online!"
+   - "✅ Cached invites for guild: [Your Server Name]"
+   - "✅ Bot is fully ready!"
+3. The logs should be clean without any npm warnings or database connection errors
+4. Test the bot with `!help` in your Discord server
+
+## Deployment Features
+
+This bot includes several production-ready features:
+
+- **Modern npm installation**: Uses `npm install --omit=dev` instead of deprecated `--production` flag
+- **Automatic database initialization**: Tables are created automatically on first deployment
+- **Connection retry logic**: Attempts to reconnect to the database with exponential backoff (up to 3 retries)
+- **Connection pooling**: Optimized PostgreSQL connection pool with 20 max connections
+- **Graceful shutdown**: Properly closes database connections and Discord client on shutdown
+- **Error resilience**: Handles database disconnections and automatically reconnects
 
 ## Environment Variables Reference
 
@@ -68,6 +90,13 @@ Once deployed on Railway:
 - Verify PostgreSQL is properly added to your Railway project
 - Check Railway logs for connection errors
 - Ensure DATABASE_URL environment variable is set
+- The bot will automatically retry database connections up to 3 times with exponential backoff
+- If initialization fails after retries, check that the PostgreSQL service is running in Railway
+
+### npm warnings during deployment
+- The bot now uses `npm install --omit=dev` which is the modern replacement for `--production`
+- If you see warnings about `--production` being deprecated, ensure the `nixpacks.toml` file is present in the repository
+- Railway will automatically use this configuration file when deploying
 
 ### Bot crashes on startup
 - Check Railway logs for error messages
