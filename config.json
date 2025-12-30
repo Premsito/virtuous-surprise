@@ -6,6 +6,13 @@
     "inviteReward": 25,
     "initialBalance": 25
   },
+  "channels": {
+    "inviteTracker": "1455345486071463936"
+  },
+  "emotes": {
+    "invitePeople": "Invite_People",
+    "boostGemsMonth": "Boost_Gems_Month_24"
+  },
   "games": {
     "duel": {
       "minBet": 10,
