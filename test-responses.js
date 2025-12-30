@@ -189,8 +189,8 @@ test('All critical response paths exist', () => {
 test('Stats formatVoiceTime helper works correctly', () => {
     const statsCommand = require('./commands/stats');
     
-    // Test hours and minutes
-    const time1 = statsCommand.formatVoiceTime(7830); // 2h 10m
+    // Test hours and minutes (7800 seconds = 2h 10m)
+    const time1 = statsCommand.formatVoiceTime(7800);
     if (!time1.includes('2h') || !time1.includes('10m')) {
         throw new Error('Voice time formatting failed for hours and minutes');
     }
@@ -199,6 +199,12 @@ test('Stats formatVoiceTime helper works correctly', () => {
     const time2 = statsCommand.formatVoiceTime(300); // 5m
     if (!time2.includes('5m') || time2.includes('h')) {
         throw new Error('Voice time formatting failed for minutes only');
+    }
+    
+    // Test zero seconds
+    const time3 = statsCommand.formatVoiceTime(0); // 0m
+    if (time3 !== '0m') {
+        throw new Error('Voice time formatting failed for zero seconds');
     }
 });
 

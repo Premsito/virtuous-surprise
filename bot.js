@@ -32,6 +32,10 @@ client.commands.set(statsCommand.name, statsCommand);
 // Store invites for tracking
 const invites = new Map();
 
+// Message count cache to reduce database load
+const messageCountCache = new Map();
+const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
+
 // Bot ready event
 client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
@@ -146,8 +150,16 @@ client.on('messageCreate', async (message) => {
             user = await db.createUser(userId, username);
         }
         
-        // Increment message count
-        await db.incrementMessageCount(userId);
+        // Use caching to reduce database load
+        const currentCount = messageCountCache.get(userId) || 0;
+        messageCountCache.set(userId, currentCount + 1);
+        
+        // Update database every MESSAGE_COUNT_BATCH_SIZE messages
+        if (messageCountCache.get(userId) >= MESSAGE_COUNT_BATCH_SIZE) {
+            const count = messageCountCache.get(userId);
+            await db.incrementMessageCount(userId, count);
+            messageCountCache.delete(userId);
+        }
     } catch (error) {
         console.error('Error tracking message:', error);
     }

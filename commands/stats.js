@@ -65,6 +65,10 @@ module.exports = {
     },
 
     formatVoiceTime(seconds) {
+        if (seconds === 0) {
+            return '0m';
+        }
+        
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         

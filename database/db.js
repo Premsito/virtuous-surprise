@@ -118,10 +118,10 @@ const db = {
     },
 
     // Message and voice tracking
-    async incrementMessageCount(userId) {
+    async incrementMessageCount(userId, count = 1) {
         const result = await pool.query(
-            'UPDATE users SET message_count = message_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1 RETURNING *',
-            [userId]
+            'UPDATE users SET message_count = message_count + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [count, userId]
         );
         return result.rows[0];
     },
