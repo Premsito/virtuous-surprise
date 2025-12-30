@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id VARCHAR(20) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
-    balance INTEGER DEFAULT 100,
+    balance INTEGER DEFAULT 25,
     invites INTEGER DEFAULT 0,
     invited_by VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

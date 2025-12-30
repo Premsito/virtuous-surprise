@@ -4,7 +4,7 @@
     "name": "LC",
     "symbol": "💰",
     "inviteReward": 25,
-    "initialBalance": 100
+    "initialBalance": 25
   },
   "games": {
     "duel": {
