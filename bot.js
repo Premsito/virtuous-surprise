@@ -33,7 +33,7 @@ client.commands.set(statsCommand.name, statsCommand);
 const invites = new Map();
 
 // Bot ready event
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
     console.log(`📝 Logged in as ${client.user.tag}`);
     
@@ -134,6 +134,23 @@ client.on('guildMemberAdd', async (member) => {
 client.on('messageCreate', async (message) => {
     // Ignore bot messages
     if (message.author.bot) return;
+    
+    // Track message count for the user
+    try {
+        const userId = message.author.id;
+        const username = message.author.username;
+        
+        // Ensure user exists
+        let user = await db.getUser(userId);
+        if (!user) {
+            user = await db.createUser(userId, username);
+        }
+        
+        // Increment message count
+        await db.incrementMessageCount(userId);
+    } catch (error) {
+        console.error('Error tracking message:', error);
+    }
     
     // Check if message starts with prefix
     if (!message.content.startsWith(config.prefix)) return;

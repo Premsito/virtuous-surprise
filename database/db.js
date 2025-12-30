@@ -117,6 +117,23 @@ const db = {
         return result.rows;
     },
 
+    // Message and voice tracking
+    async incrementMessageCount(userId) {
+        const result = await pool.query(
+            'UPDATE users SET message_count = message_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1 RETURNING *',
+            [userId]
+        );
+        return result.rows[0];
+    },
+
+    async updateVoiceTime(userId, seconds) {
+        const result = await pool.query(
+            'UPDATE users SET voice_time = voice_time + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [seconds, userId]
+        );
+        return result.rows[0];
+    },
+
     // Game operations
     async recordGame(gameType, playerId, opponentId, betAmount, result, winnings) {
         await pool.query(

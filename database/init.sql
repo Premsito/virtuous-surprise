@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
     balance INTEGER DEFAULT 25,
     invites INTEGER DEFAULT 0,
     invited_by VARCHAR(20),
+    message_count INTEGER DEFAULT 0,
+    voice_time INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

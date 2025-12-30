@@ -31,8 +31,20 @@ module.exports = {
         
         const gameStats = gameStatsResult.rows[0] || { games_played: 0, games_won: 0 };
 
-        // Note: Message count is not tracked in current schema
-        const messageCount = getResponse('stats.notAvailable');
+        // Calculate server ranking based on balance
+        const rankingResult = await pool.query(
+            `SELECT COUNT(*) + 1 as rank
+             FROM users
+             WHERE balance > $1`,
+            [user.balance]
+        );
+        const ranking = rankingResult.rows[0]?.rank || 1;
+
+        // Format join date
+        const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : getResponse('stats.notAvailable');
+
+        // Format voice time (convert seconds to hours and minutes)
+        const voiceTime = user.voice_time ? this.formatVoiceTime(user.voice_time) : getResponse('stats.notAvailable');
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
@@ -40,12 +52,25 @@ module.exports = {
             .setDescription(
                 getResponse('stats.balance', { balance: user.balance }) + '\n' +
                 getResponse('stats.invites', { invites: user.invites }) + '\n' +
-                getResponse('stats.messages', { messages: messageCount }) + '\n' +
+                getResponse('stats.messages', { messages: user.message_count || 0 }) + '\n' +
+                getResponse('stats.voiceTime', { voiceTime: voiceTime }) + '\n' +
+                getResponse('stats.joinDate', { joinDate: joinDate }) + '\n' +
+                getResponse('stats.ranking', { ranking: ranking }) + '\n' +
                 getResponse('stats.gamesPlayed', { gamesPlayed: gameStats.games_played }) + '\n' +
                 getResponse('stats.gamesWon', { gamesWon: gameStats.games_won })
             )
             .setTimestamp();
 
         return message.reply({ embeds: [embed] });
+    },
+
+    formatVoiceTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
     }
 };
