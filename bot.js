@@ -250,6 +250,33 @@ process.on('unhandledRejection', error => {
     console.error('Unhandled promise rejection:', error);
 });
 
+// Graceful shutdown handling
+process.on('SIGINT', async () => {
+    console.log('\n⏹️ Received SIGINT, shutting down gracefully...');
+    await shutdown();
+});
+
+process.on('SIGTERM', async () => {
+    console.log('\n⏹️ Received SIGTERM, shutting down gracefully...');
+    await shutdown();
+});
+
+async function shutdown() {
+    try {
+        console.log('👋 Logging out from Discord...');
+        client.destroy();
+        
+        console.log('🔌 Closing database connections...');
+        await db.close();
+        
+        console.log('✅ Shutdown complete');
+        process.exit(0);
+    } catch (error) {
+        console.error('❌ Error during shutdown:', error);
+        process.exit(1);
+    }
+}
+
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN).catch(error => {
     console.error('❌ Failed to login to Discord:', error);

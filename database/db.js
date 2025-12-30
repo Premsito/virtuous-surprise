@@ -1,11 +1,16 @@
 const { Pool } = require('pg');
 
-// Create PostgreSQL connection pool
+// Create PostgreSQL connection pool with improved configuration
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL?.includes('localhost') ? false : {
         rejectUnauthorized: false
-    }
+    },
+    // Connection pool configuration for better stability
+    max: 20, // Maximum number of clients in the pool
+    idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+    connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection cannot be established
+    allowExitOnIdle: false // Keep the pool alive even when all clients are idle
 });
 
 // Test database connection
@@ -15,6 +20,11 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
     console.error('❌ Unexpected database error:', err);
+    // Don't exit on database errors - let the pool handle reconnection
+});
+
+pool.on('remove', () => {
+    console.log('⚠️ Database client removed from pool');
 });
 
 // Database helper functions
@@ -155,16 +165,47 @@ const db = {
         const fs = require('fs');
         const path = require('path');
         
+        const maxRetries = 3;
+        let retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+            try {
+                // Test the connection first
+                await pool.query('SELECT 1');
+                console.log('✅ Database connection verified');
+                
+                // Read and execute initialization SQL
+                const initSQL = fs.readFileSync(
+                    path.join(__dirname, 'init.sql'),
+                    'utf-8'
+                );
+                await pool.query(initSQL);
+                console.log('✅ Database tables initialized');
+                return; // Success, exit the function
+            } catch (error) {
+                retryCount++;
+                console.error(`❌ Failed to initialize database (attempt ${retryCount}/${maxRetries}):`, error.message);
+                
+                if (retryCount >= maxRetries) {
+                    console.error('❌ Max retries reached. Database initialization failed.');
+                    throw error;
+                }
+                
+                // Wait before retrying (exponential backoff)
+                const waitTime = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+                console.log(`⏳ Retrying in ${waitTime}ms...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+        }
+    },
+    
+    // Graceful shutdown
+    async close() {
         try {
-            const initSQL = fs.readFileSync(
-                path.join(__dirname, 'init.sql'),
-                'utf-8'
-            );
-            await pool.query(initSQL);
-            console.log('✅ Database tables initialized');
+            await pool.end();
+            console.log('✅ Database connection pool closed');
         } catch (error) {
-            console.error('❌ Failed to initialize database:', error);
-            throw error;
+            console.error('❌ Error closing database pool:', error);
         }
     }
 };
