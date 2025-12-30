@@ -277,11 +277,22 @@ async function shutdown() {
             }
         });
         
-        // Wait for all flushes with a timeout
-        await Promise.race([
-            Promise.allSettled(flushPromises),
-            new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout
+        // Wait for all flushes with a timeout to prevent hanging
+        const flushTimeout = new Promise(resolve => {
+            setTimeout(() => {
+                console.warn('⚠️ Cache flush timeout reached, proceeding with shutdown...');
+                resolve('timeout');
+            }, 3000);
+        });
+        
+        const result = await Promise.race([
+            Promise.allSettled(flushPromises).then(() => 'completed'),
+            flushTimeout
         ]);
+        
+        if (result === 'completed') {
+            console.log('✅ Cache flushed successfully');
+        }
         messageCountCache.clear();
         
         await db.close();

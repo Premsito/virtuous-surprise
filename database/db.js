@@ -212,11 +212,11 @@ const db = {
     // Graceful shutdown
     async close() {
         try {
-            // Wait for any pending queries to complete (give it up to 5 seconds)
-            const gracePeriodMs = 5000;
+            // pool.end() waits for all active clients to be released and all queries to complete
+            // The timeout is just for logging if shutdown takes too long
             const shutdownTimeout = setTimeout(() => {
                 console.warn('⚠️ Database shutdown taking longer than expected...');
-            }, gracePeriodMs);
+            }, 5000);
             
             await pool.end();
             clearTimeout(shutdownTimeout);
