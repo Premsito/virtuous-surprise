@@ -107,7 +107,6 @@ This bot includes several production-ready features:
   - Verify the `nixpacks.toml` file is present in the repository
   - Set DEBUG=1 in Railway environment variables to see npm configuration on startup
 - Railway will automatically use these configuration files when deploying
-- Railway will automatically use these configuration files when deploying
 
 ### Bot crashes on startup
 - Check Railway logs for error messages
