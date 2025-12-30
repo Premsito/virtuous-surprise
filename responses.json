@@ -1,0 +1,140 @@
+{
+  "lc": {
+    "balance": {
+      "title": "{currency_symbol} Votre solde LC",
+      "description": "**{balance} LC**",
+      "footer": "Utilisez {prefix}don pour transférer des LC"
+    },
+    "invalidCommand": "❌ Commande invalide. Utilisez `!lc` pour voir votre solde ou `!don` pour transférer des LC."
+  },
+  "transfer": {
+    "noRecipient": "❌ Vous devez mentionner un utilisateur! Exemple: `!don @user 50`",
+    "selfTransfer": "❌ Vous ne pouvez pas vous transférer des LC à vous-même!",
+    "botTransfer": "❌ Vous ne pouvez pas transférer des LC à un bot!",
+    "invalidAmount": "❌ Montant invalide! Le montant doit être un nombre positif.",
+    "insufficientBalance": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
+    "success": {
+      "title": "{currency_symbol} Transfert réussi",
+      "description": "{sender} a transféré **{amount} LC** à {recipient}!\n\nNouveau solde: **{newBalance} LC**"
+    },
+    "error": "❌ Erreur lors du transfert. Veuillez réessayer."
+  },
+  "invites": {
+    "count": {
+      "title": "📊 Vos invitations",
+      "description": "Vous avez **{invites}** invitation(s) réussie(s)",
+      "footer": "Invitez des amis pour gagner des LC!"
+    },
+    "invalidCommand": "❌ Commande invalide. Utilisez `!invites` pour voir vos invitations.",
+    "top": {
+      "title": "🏆 Top invitations",
+      "noData": "❌ Aucune donnée d'invitation disponible.",
+      "entry": "{medal} **{username}** - {invites} invitation(s)\n"
+    },
+    "event": {
+      "title": "🎉 Nouvelle invitation!",
+      "description": "{invited} a rejoint grâce à l'invitation de {inviter}!\n\nLes deux ont reçu **{reward} LC** {currency_symbol}"
+    }
+  },
+  "stats": {
+    "title": "📊 Statistiques de {username}",
+    "balance": "💰 **Balance:** {balance} LC",
+    "invites": "👥 **Invitations:** {invites}",
+    "messages": "💬 **Messages:** {messages}",
+    "gamesPlayed": "🎮 **Parties jouées:** {gamesPlayed}",
+    "gamesWon": "🏆 **Parties gagnées:** {gamesWon}",
+    "noStats": "❌ Aucune statistique disponible pour cet utilisateur.",
+    "notAvailable": "N/A"
+  },
+  "games": {
+    "list": {
+      "title": "🎮 Jeux disponibles",
+      "description": "**Duel**: `{prefix}jeu duel @utilisateur [montant]`\n**Roulette**: `{prefix}jeu roulette [montant]`"
+    },
+    "unknownGame": "❌ Jeu inconnu. Utilisez `duel` ou `roulette`.",
+    "duel": {
+      "noOpponent": "❌ Vous devez mentionner un adversaire! Exemple: `!jeu duel @user 50`",
+      "selfChallenge": "❌ Vous ne pouvez pas vous défier vous-même!",
+      "botChallenge": "❌ Vous ne pouvez pas défier un bot!",
+      "invalidBet": "❌ Le montant doit être entre {minBet} et {maxBet} LC.",
+      "insufficientBalanceChallenger": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
+      "insufficientBalanceOpponent": "❌ {opponent} n'a pas assez de LC!",
+      "alreadyInDuel": "❌ Un des joueurs est déjà dans un duel!",
+      "challenge": {
+        "title": "⚔️ Duel!",
+        "description": "{challenger} défie {opponent} pour **{bet} LC**!\n\n{opponent}, tapez `accepter` pour accepter le duel dans les 30 secondes."
+      },
+      "result": {
+        "title": "⚔️ Résultat du duel",
+        "description": "{winner} a gagné le duel et remporte **{totalWinnings} LC**!\n{loser} a perdu **{bet} LC**."
+      },
+      "timeout": {
+        "title": "⚔️ Duel annulé",
+        "description": "{opponent} n'a pas accepté le duel à temps."
+      }
+    },
+    "roulette": {
+      "invalidBet": "❌ Le montant doit être entre {minBet} et {maxBet} LC.",
+      "insufficientBalance": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
+      "alreadyJoined": "❌ Vous participez déjà à cette roulette!",
+      "joined": {
+        "title": "🎰 Roulette",
+        "description": "{player} a rejoint la roulette avec **{bet} LC**!\n\nJoueurs actuels: **{playerCount}**\nPot total: **{totalPot} LC**\n\nLa roulette démarre dans 30 secondes..."
+      },
+      "result": {
+        "title": "🎰 Résultat de la roulette",
+        "description": "{winner} a gagné la roulette et remporte **{winnings} LC**!\n\nPot total: **{totalPot} LC**\nParticipants: **{playerCount}**"
+      }
+    }
+  },
+  "moderation": {
+    "noPermission": "❌ Vous devez être administrateur pour utiliser cette commande!",
+    "setlc": {
+      "noUser": "❌ Vous devez mentionner un utilisateur! Exemple: `!setlc @user 500`",
+      "invalidAmount": "❌ Montant invalide! Le montant doit être un nombre positif.",
+      "success": {
+        "title": "✅ Balance mise à jour",
+        "description": "Le solde de {user} a été défini à **{amount} LC**"
+      }
+    },
+    "setinvites": {
+      "noUser": "❌ Vous devez mentionner un utilisateur! Exemple: `!setinvites @user 10`",
+      "invalidCount": "❌ Nombre invalide! Le nombre doit être un entier positif.",
+      "success": {
+        "title": "✅ Invitations mises à jour",
+        "description": "Les invitations de {user} ont été définies à **{count}**"
+      }
+    }
+  },
+  "help": {
+    "title": "📚 Commandes disponibles",
+    "description": "Voici toutes les commandes disponibles:",
+    "sections": {
+      "lc": {
+        "title": "{currency_symbol} LC (Virtual Coins)",
+        "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}don @user [montant]` - Transférer des LC"
+      },
+      "invites": {
+        "title": "📊 Invitations",
+        "commands": "`{prefix}invites` - Voir vos invitations\n`{prefix}topinvites` - Classement des invitations"
+      },
+      "stats": {
+        "title": "📈 Statistiques",
+        "commands": "`{prefix}stats` - Voir vos statistiques\n`{prefix}stats @user` - Voir les statistiques d'un utilisateur"
+      },
+      "games": {
+        "title": "🎮 Jeux",
+        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette"
+      },
+      "moderation": {
+        "title": "🛡️ Modération (Admin uniquement)",
+        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations"
+      }
+    },
+    "footer": "Préfixe: {prefix}"
+  },
+  "errors": {
+    "commandExecutionError": "❌ Une erreur est survenue lors de l'exécution de la commande.",
+    "unknownCommand": "❌ Commande inconnue. Utilisez `{prefix}help` pour voir les commandes disponibles."
+  }
+}

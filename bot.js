@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const { db } = require('./database/db');
 const config = require('./config.json');
+const { getResponse } = require('./utils/responseHelper');
 
 // Create Discord client
 const client = new Client({
@@ -20,11 +21,13 @@ const lcCommand = require('./commands/lc');
 const invitesCommand = require('./commands/invites');
 const jeuCommand = require('./commands/jeu');
 const moderationCommand = require('./commands/moderation');
+const statsCommand = require('./commands/stats');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
 client.commands.set(jeuCommand.name, jeuCommand);
 client.commands.set(moderationCommand.name, moderationCommand);
+client.commands.set(statsCommand.name, statsCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -111,11 +114,12 @@ client.on('guildMemberAdd', async (member) => {
             if (systemChannel) {
                 const embed = new EmbedBuilder()
                     .setColor(config.colors.success)
-                    .setTitle('🎉 Nouvelle invitation!')
-                    .setDescription(
-                        `${member.user} a rejoint grâce à l'invitation de ${usedInvite.inviter}!\n\n` +
-                        `Les deux ont reçu **${config.currency.inviteReward} LC** ${config.currency.symbol}`
-                    )
+                    .setTitle(getResponse('invites.event.title'))
+                    .setDescription(getResponse('invites.event.description', {
+                        invited: member.user,
+                        inviter: usedInvite.inviter,
+                        reward: config.currency.inviteReward
+                    }))
                     .setTimestamp();
                 
                 systemChannel.send({ embeds: [embed] }).catch(console.error);
@@ -161,12 +165,15 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'topinvites') {
             const invitesCommand = require('./commands/invites');
             await invitesCommand.handleTopInvites(message, args);
+        } else if (commandName === 'stats') {
+            const command = client.commands.get('stats');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
     } catch (error) {
         console.error('Error executing command:', error);
-        message.reply('❌ Une erreur est survenue lors de l\'exécution de la commande.').catch(console.error);
+        message.reply(getResponse('errors.commandExecutionError')).catch(console.error);
     }
 });
 
@@ -174,39 +181,36 @@ client.on('messageCreate', async (message) => {
 async function showHelp(message) {
     const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setTitle('📚 Commandes disponibles')
-        .setDescription('Voici toutes les commandes disponibles:')
+        .setTitle(getResponse('help.title'))
+        .setDescription(getResponse('help.description'))
         .addFields(
             {
-                name: `${config.currency.symbol} LC (Virtual Coins)`,
-                value: 
-                    `\`${config.prefix}lc\` - Voir votre solde\n` +
-                    `\`${config.prefix}don @user [montant]\` - Transférer des LC`,
+                name: getResponse('help.sections.lc.title'),
+                value: getResponse('help.sections.lc.commands'),
                 inline: false
             },
             {
-                name: '📊 Invitations',
-                value: 
-                    `\`${config.prefix}invites\` - Voir vos invitations\n` +
-                    `\`${config.prefix}topinvites\` - Classement des invitations`,
+                name: getResponse('help.sections.invites.title'),
+                value: getResponse('help.sections.invites.commands'),
                 inline: false
             },
             {
-                name: '🎮 Jeux',
-                value: 
-                    `\`${config.prefix}jeu duel @user [montant]\` - Défier un joueur\n` +
-                    `\`${config.prefix}jeu roulette [montant]\` - Jouer à la roulette`,
+                name: getResponse('help.sections.stats.title'),
+                value: getResponse('help.sections.stats.commands'),
                 inline: false
             },
             {
-                name: '🛡️ Modération (Admin uniquement)',
-                value: 
-                    `\`${config.prefix}setlc @user [montant]\` - Définir le solde LC\n` +
-                    `\`${config.prefix}setinvites @user [nombre]\` - Définir les invitations`,
+                name: getResponse('help.sections.games.title'),
+                value: getResponse('help.sections.games.commands'),
+                inline: false
+            },
+            {
+                name: getResponse('help.sections.moderation.title'),
+                value: getResponse('help.sections.moderation.commands'),
                 inline: false
             }
         )
-        .setFooter({ text: `Préfixe: ${config.prefix}` })
+        .setFooter({ text: getResponse('help.footer') })
         .setTimestamp();
     
     await message.reply({ embeds: [embed] });

@@ -1,6 +1,7 @@
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const { getResponse } = require('../utils/responseHelper');
 
 module.exports = {
     name: 'moderation',
@@ -9,7 +10,7 @@ module.exports = {
     async execute(message, args, command) {
         // Check if user has administrator permission
         if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-            return message.reply('❌ Vous devez être administrateur pour utiliser cette commande!');
+            return message.reply(getResponse('moderation.noPermission'));
         }
 
         if (command === 'setlc') {
@@ -23,12 +24,12 @@ module.exports = {
 async function handleSetLC(message, args) {
     const targetUser = message.mentions.users.first();
     if (!targetUser) {
-        return message.reply('❌ Vous devez mentionner un utilisateur! Exemple: `!setlc @user 500`');
+        return message.reply(getResponse('moderation.setlc.noUser'));
     }
 
     const amount = parseInt(args[1]);
     if (isNaN(amount) || amount < 0) {
-        return message.reply('❌ Montant invalide! Le montant doit être un nombre positif.');
+        return message.reply(getResponse('moderation.setlc.invalidAmount'));
     }
 
     const targetId = targetUser.id;
@@ -47,8 +48,11 @@ async function handleSetLC(message, args) {
 
     const embed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle('✅ Balance mise à jour')
-        .setDescription(`Le solde de ${targetUser} a été défini à **${amount} LC**`)
+        .setTitle(getResponse('moderation.setlc.success.title'))
+        .setDescription(getResponse('moderation.setlc.success.description', {
+            user: targetUser,
+            amount: amount
+        }))
         .setTimestamp();
 
     return message.reply({ embeds: [embed] });
@@ -57,12 +61,12 @@ async function handleSetLC(message, args) {
 async function handleSetInvites(message, args) {
     const targetUser = message.mentions.users.first();
     if (!targetUser) {
-        return message.reply('❌ Vous devez mentionner un utilisateur! Exemple: `!setinvites @user 10`');
+        return message.reply(getResponse('moderation.setinvites.noUser'));
     }
 
     const count = parseInt(args[1]);
     if (isNaN(count) || count < 0) {
-        return message.reply('❌ Nombre invalide! Le nombre doit être un entier positif.');
+        return message.reply(getResponse('moderation.setinvites.invalidCount'));
     }
 
     const targetId = targetUser.id;
@@ -78,8 +82,11 @@ async function handleSetInvites(message, args) {
 
     const embed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle('✅ Invitations mises à jour')
-        .setDescription(`Les invitations de ${targetUser} ont été définies à **${count}**`)
+        .setTitle(getResponse('moderation.setinvites.success.title'))
+        .setDescription(getResponse('moderation.setinvites.success.description', {
+            user: targetUser,
+            count: count
+        }))
         .setTimestamp();
 
     return message.reply({ embeds: [embed] });
