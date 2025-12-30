@@ -56,13 +56,17 @@ Once deployed on Railway:
    - "✅ Cached invites for guild: [Your Server Name]"
    - "✅ Bot is fully ready!"
 3. The logs should be clean without any npm warnings or database connection errors
-4. Test the bot with `!help` in your Discord server
+4. If you need to debug npm configuration, set the DEBUG environment variable in Railway
+5. Test the bot with `!help` in your Discord server
 
 ## Deployment Features
 
 This bot includes several production-ready features:
 
 - **Modern npm installation**: Uses `npm install --omit=dev` instead of deprecated `--production` flag
+  - `.npmrc` file prevents use of deprecated production flag
+  - `nixpacks.toml` specifies installation commands for Railway
+  - Conditional startup logging shows npm configuration when DEBUG is set
 - **Automatic database initialization**: Tables are created automatically on first deployment
 - **Connection retry logic**: Attempts to reconnect to the database with exponential backoff (up to 3 retries)
 - **Connection pooling**: Optimized PostgreSQL connection pool with 20 max connections
@@ -94,9 +98,15 @@ This bot includes several production-ready features:
 - If initialization fails after retries, check that the PostgreSQL service is running in Railway
 
 ### npm warnings during deployment
-- The bot now uses `npm install --omit=dev` which is the modern replacement for `--production`
-- If you see warnings about `--production` being deprecated, ensure the `nixpacks.toml` file is present in the repository
-- Railway will automatically use this configuration file when deploying
+- The bot uses multiple layers of protection to prevent npm warnings:
+  - `.npmrc` file configures npm to use `--omit=dev` by default
+  - `nixpacks.toml` specifies `npm install --omit=dev` for Railway deployments
+- Debug logging can be enabled by setting the DEBUG environment variable
+- If you see warnings about `--production` being deprecated:
+  - Ensure the `.npmrc` file is present in the repository
+  - Verify the `nixpacks.toml` file is present in the repository
+  - Set DEBUG=1 in Railway environment variables to see npm configuration on startup
+- Railway will automatically use these configuration files when deploying
 
 ### Bot crashes on startup
 - Check Railway logs for error messages
