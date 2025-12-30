@@ -89,6 +89,8 @@ The bot uses PostgreSQL with the following tables:
 - `!don @user [amount]` - Transfer LC to another member
 - `!invites` - Check your invite count
 - `!topinvites` - Display invite leaderboard
+- `!stats` - View your statistics
+- `!stats @user` - View another user's statistics
 
 ### Game Commands
 - `!jeu duel @user [amount]` - Challenge a member to a duel
@@ -100,6 +102,8 @@ The bot uses PostgreSQL with the following tables:
 
 ## Configuration
 
+### Bot Settings (config.json)
+
 Edit `config.json` to customize:
 - Command prefix
 - Currency name and symbol
@@ -107,19 +111,35 @@ Edit `config.json` to customize:
 - Game bet limits
 - Colors for embeds
 
+### Bot Responses (responses.json)
+
+Edit `responses.json` to customize all bot text responses:
+- Command messages and descriptions
+- Error messages
+- Game notifications
+- Help text
+
+All responses support placeholders (e.g., `{user}`, `{balance}`, `{amount}`) for dynamic content.
+
+See [RESPONSES.md](RESPONSES.md) for detailed documentation on customizing responses.
+
 ## Project Structure
 
 ```
 virtuous-surprise/
 ├── bot.js                 # Main bot file
 ├── config.json            # Configuration file
+├── responses.json         # Text responses configuration
 ├── package.json           # Dependencies
 ├── .env.example           # Environment variables template
 ├── commands/              # Command modules
 │   ├── lc.js             # LC management
 │   ├── invites.js        # Invite tracking
 │   ├── jeu.js            # Games
+│   ├── stats.js          # User statistics
 │   └── moderation.js     # Admin commands
+├── utils/                # Utility modules
+│   └── responseHelper.js # Response management
 └── database/             # Database layer
     ├── init.sql          # Table schemas
     └── db.js             # Database queries
