@@ -4,14 +4,16 @@ const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
 
-// Log npm configuration for debugging deployment issues
-console.log('🔍 NPM Configuration Debug:');
-console.log('  - Node version:', process.version);
-console.log('  - NPM version:', process.env.npm_config_user_agent || 'N/A');
-console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
-console.log('  - npm_config_production:', process.env.npm_config_production || 'not set');
-console.log('  - npm_config_omit:', process.env.npm_config_omit || 'not set');
-console.log('');
+// Log npm configuration for debugging deployment issues (only in development or when DEBUG is set)
+if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+    console.log('🔍 NPM Configuration Debug:');
+    console.log('  - Node version:', process.version);
+    console.log('  - NPM version:', process.env.npm_config_user_agent || 'N/A');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'not set');
+    console.log('  - npm_config_production:', process.env.npm_config_production || 'not set');
+    console.log('  - npm_config_omit:', process.env.npm_config_omit || 'not set');
+    console.log('');
+}
 
 // Create Discord client
 const client = new Client({
