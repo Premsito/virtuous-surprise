@@ -37,6 +37,22 @@ test('prestart script uses --omit=dev flag', () => {
     }
 });
 
+// Test 2.5: Verify prestart unsets npm_config_production environment variable
+test('prestart script unsets npm_config_production environment variable', () => {
+    const prestart = packageJson.scripts.prestart;
+    if (!prestart.includes('-u npm_config_production')) {
+        throw new Error('prestart script does not unset npm_config_production environment variable');
+    }
+});
+
+// Test 2.6: Verify prestart sets npm_config_omit environment variable
+test('prestart script sets npm_config_omit environment variable', () => {
+    const prestart = packageJson.scripts.prestart;
+    if (!prestart.includes('npm_config_omit=dev')) {
+        throw new Error('prestart script does not set npm_config_omit environment variable');
+    }
+});
+
 // Test 3: Verify prestart does not use deprecated --production flag
 test('prestart script does not use deprecated --production flag', () => {
     const prestart = packageJson.scripts.prestart;
