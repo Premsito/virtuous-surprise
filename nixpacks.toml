@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["nodejs", "npm"]
+nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
-cmds = ["env -u npm_config_production npm_config_omit=dev npm install --omit=dev"]
+cmds = ["npm install --omit=dev"]
 
 [start]
 cmd = "npm start"
