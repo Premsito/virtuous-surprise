@@ -129,6 +129,21 @@ const db = {
         );
     },
 
+    async checkInviteExists(inviterId, invitedId) {
+        const result = await pool.query(
+            'SELECT 1 FROM invite_history WHERE inviter_id = $1 AND invited_id = $2 LIMIT 1',
+            [inviterId, invitedId]
+        );
+        return result.rows.length > 0;
+    },
+
+    async addInviteHistory(inviterId, invitedId) {
+        await pool.query(
+            'INSERT INTO invite_history (inviter_id, invited_id) VALUES ($1, $2) ON CONFLICT (inviter_id, invited_id) DO NOTHING',
+            [inviterId, invitedId]
+        );
+    },
+
     async getTopInvites(limit = 10) {
         const result = await pool.query(
             'SELECT user_id, username, invites FROM users ORDER BY invites DESC LIMIT $1',
