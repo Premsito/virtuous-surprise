@@ -110,8 +110,9 @@ async function sendDuplicateInviteNotification(client, member, inviterId) {
             const inviteChannel = await client.channels.fetch(inviteChannelId);
             if (inviteChannel) {
                 await inviteChannel.send(
-                    `🚫 Invitation non comptée : ${member.user} a déjà été invité par <@${inviterId}>.`
+                    `🚫 L'invitation n'a pas été comptée, cet utilisateur a déjà été invité !`
                 );
+                console.log(`Sent duplicate invite notification to channel ${inviteChannelId}`);
             }
         } catch (error) {
             console.error('Error sending duplicate invite message:', error);
@@ -143,10 +144,15 @@ client.on('guildMemberAdd', async (member) => {
             const inviterId = usedInvite.inviter.id;
             const invitedId = member.id;
             
+            // Debugging logs
+            console.log(`Inviter ID: ${inviterId}, Invited ID: ${invitedId}`);
+            console.log(`Verifying invitation from ${usedInvite.inviter.username} for ${member.user.username}`);
+            
             // Don't track bot invites
             if (member.user.bot) return;
             
             // Anti-cheat: Check if this invite already exists in history
+            console.log(`Checking invite history for duplicates...`);
             const alreadyInvited = await db.checkInviteHistory(inviterId, invitedId);
             
             if (alreadyInvited) {
@@ -155,19 +161,30 @@ client.on('guildMemberAdd', async (member) => {
                 return;
             }
             
+            console.log(`✅ Invite validation passed - invite is unique`);
+            
             // Create or get inviter
+            console.log(`Creating/fetching inviter user record...`);
             let inviter = await db.getUser(inviterId);
             if (!inviter) {
                 inviter = await db.createUser(inviterId, usedInvite.inviter.username);
+                console.log(`Created new inviter record for ${usedInvite.inviter.username}`);
+            } else {
+                console.log(`Found existing inviter record for ${usedInvite.inviter.username}`);
             }
             
             // Create or get invited user
+            console.log(`Creating/fetching invited user record...`);
             let invited = await db.getUser(invitedId);
             if (!invited) {
                 invited = await db.createUser(invitedId, member.user.username, inviterId);
+                console.log(`Created new invited user record for ${member.user.username}`);
+            } else {
+                console.log(`Found existing invited user record for ${member.user.username}`);
             }
             
             // Anti-cheat: Add to invite history (double-check with unique constraint)
+            console.log(`Adding invite to history table...`);
             const historyAdded = await db.addInviteHistory(inviterId, invitedId);
             
             if (!historyAdded) {
@@ -177,13 +194,17 @@ client.on('guildMemberAdd', async (member) => {
                 return;
             }
             
+            console.log(`✅ Invite successfully added to history`);
+            
             // Increment inviter's invite count
+            console.log(`Incrementing invite count for ${usedInvite.inviter.username}...`);
             await db.incrementInvites(inviterId);
             
             // Record the invite (legacy table)
             await db.recordInvite(inviterId, invitedId);
             
             // Reward both users with LC
+            console.log(`Rewarding ${config.currency.inviteReward} LC to both users...`);
             await db.updateBalance(inviterId, config.currency.inviteReward);
             await db.updateBalance(invitedId, config.currency.inviteReward);
             
@@ -196,6 +217,7 @@ client.on('guildMemberAdd', async (member) => {
             const totalInvites = inviterData ? inviterData.invites : 1;
             
             console.log(`✅ ${usedInvite.inviter.username} invited ${member.user.username} (unique invite)`);
+            console.log(`   Total invites for ${usedInvite.inviter.username}: ${totalInvites}`);
             
             // Send invite tracking message to specific channel
             const inviteChannelId = config.channels.inviteTracker;
