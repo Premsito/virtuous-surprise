@@ -1,6 +1,11 @@
 -- Migration: Add message_count column to users table
 -- This migration adds the message_count column if it doesn't exist
 -- Safe to run multiple times (idempotent)
+-- 
+-- Purpose: This migration is for existing production databases that were created 
+-- before the message_count column was added to init.sql. New deployments will 
+-- already have this column from init.sql, so this migration will detect it 
+-- already exists and skip the ALTER TABLE operation.
 
 DO $$ 
 BEGIN

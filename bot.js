@@ -49,6 +49,7 @@ const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
 const errorThrottleMap = new Map();
 const ERROR_THROTTLE_INTERVAL_MS = 60000; // Only log same error type once per minute
 const ERROR_THROTTLE_CLEANUP_INTERVAL_MS = 600000; // Clean up old entries every 10 minutes
+const ERROR_THROTTLE_CLEANUP_MULTIPLIER = 2; // Keep entries for 2x the throttle interval
 
 function shouldLogError(errorType) {
     const now = Date.now();
@@ -64,7 +65,7 @@ function shouldLogError(errorType) {
 // Periodic cleanup of old error throttle entries to prevent memory leaks
 setInterval(() => {
     const now = Date.now();
-    const cutoffTime = now - ERROR_THROTTLE_INTERVAL_MS * 2; // Keep entries for 2x the throttle interval
+    const cutoffTime = now - ERROR_THROTTLE_INTERVAL_MS * ERROR_THROTTLE_CLEANUP_MULTIPLIER;
     
     for (const [errorType, timestamp] of errorThrottleMap.entries()) {
         if (timestamp < cutoffTime) {
