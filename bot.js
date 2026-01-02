@@ -174,7 +174,7 @@ client.on('guildMemberAdd', async (member) => {
                         
                         // Fix grammar for pluralization
                         const invitationText = totalInvites === 1 ? '1 invitation' : `${totalInvites} invitations`;
-                        const messageContent = `${invitePeopleEmote} ${member.user} joins the team. Credit to ${usedInvite.inviter} who now has ${invitationText}! ${boostGemsEmote}`;
+                        const messageContent = `${invitePeopleEmote} ${member.user} à rejoins l'équipe. Passe D de ${usedInvite.inviter} qui a maintenant ${invitationText}! ${boostGemsEmote}`;
                         
                         await inviteChannel.send(messageContent);
                     }
