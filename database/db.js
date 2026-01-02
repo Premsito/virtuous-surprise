@@ -129,6 +129,32 @@ const db = {
         );
     },
 
+    // Anti-cheat: Check if an invite already exists in history
+    async checkInviteHistory(inviterId, invitedId) {
+        const result = await pool.query(
+            'SELECT EXISTS(SELECT 1 FROM invite_history WHERE inviter_id = $1 AND invited_id = $2)',
+            [inviterId, invitedId]
+        );
+        return result.rows[0].exists;
+    },
+
+    // Anti-cheat: Add invite to history (returns false if already exists)
+    async addInviteHistory(inviterId, invitedId) {
+        try {
+            await pool.query(
+                'INSERT INTO invite_history (inviter_id, invited_id) VALUES ($1, $2)',
+                [inviterId, invitedId]
+            );
+            return true;
+        } catch (error) {
+            // If primary key violation, invite already exists
+            if (error.code === '23505') {
+                return false;
+            }
+            throw error;
+        }
+    },
+
     async getTopInvites(limit = 10) {
         const result = await pool.query(
             'SELECT user_id, username, invites FROM users ORDER BY invites DESC LIMIT $1',
