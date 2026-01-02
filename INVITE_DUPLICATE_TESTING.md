@@ -132,7 +132,7 @@ WHERE table_name = 'invite_history' AND constraint_type = 'PRIMARY KEY';
 
 ### Channel Monitoring
 Monitor the invite tracking channel (configured in `config.json`) for:
-- Success messages: "🎉 Félicitations à @<inviter> pour une nouvelle invitation réussie !"
+- Success messages: `<emoji> <member> à rejoins l'équipe. Passe D de <inviter> qui a maintenant X invitation(s)! <emoji>`
 - Duplicate warnings: "🚫 L'invitation n'a pas été comptée, cet utilisateur a déjà été invité !"
 
 ## Troubleshooting
