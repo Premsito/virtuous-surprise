@@ -52,13 +52,12 @@ module.exports = {
             minute: '2-digit'
         });
         
-        // Determine if today or date
-        const today = new Date().toLocaleDateString('fr-FR');
-        const updateDate = now.toLocaleDateString('fr-FR') === today ? 'Aujourd\'hui' : now.toLocaleDateString('fr-FR');
+        // Always use "Aujourd'hui" for the update date since stats are always current
+        const updateDate = 'Aujourd\'hui';
 
         // Create compact frame message (design option 3)
         const statsMessage = 
-`📊 **Statistiques de @${username}**
+`📊 **Statistiques de ${username}**
 ════════════════════════════
 💰 Balance : ${user.balance} LC
 🤝 Invitations : ${user.invites}
