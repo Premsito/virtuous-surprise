@@ -20,7 +20,8 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildInvites
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
@@ -46,6 +47,9 @@ const invites = new Map();
 // Message count cache to reduce database load
 const messageCountCache = new Map();
 const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
+
+// Voice session tracking to calculate time spent in voice channels
+const voiceSessions = new Map(); // Maps userId to join timestamp
 
 // Error throttling to prevent log flooding
 const errorThrottleMap = new Map();
@@ -181,6 +185,56 @@ client.on('guildMemberAdd', async (member) => {
         }
     } catch (error) {
         console.error('Error tracking invite:', error);
+    }
+});
+
+// Voice state update event (voice channel tracking)
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    try {
+        const userId = newState.id;
+        const member = newState.member;
+        
+        // Ignore bot users
+        if (member.user.bot) return;
+        
+        // User joined a voice channel
+        if (!oldState.channelId && newState.channelId) {
+            // Store join timestamp
+            voiceSessions.set(userId, Date.now());
+        }
+        // User left a voice channel or switched channels
+        else if (oldState.channelId && !newState.channelId) {
+            // User left voice channel completely
+            const joinTime = voiceSessions.get(userId);
+            if (joinTime) {
+                const timeSpent = Math.floor((Date.now() - joinTime) / 1000); // Convert to seconds
+                
+                // Only update if user spent at least 1 second
+                if (timeSpent > 0) {
+                    // Ensure user exists in database
+                    let user = await db.getUser(userId);
+                    if (!user) {
+                        user = await db.createUser(userId, member.user.username);
+                    }
+                    
+                    // Update voice time in database
+                    await db.updateVoiceTime(userId, timeSpent);
+                }
+                
+                // Remove from tracking
+                voiceSessions.delete(userId);
+            }
+        }
+        // User switched channels (moved from one voice channel to another)
+        else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
+            // Keep tracking - don't reset the timer when switching channels
+            // This ensures continuous time tracking across channel switches
+        }
+    } catch (error) {
+        // Throttle error logging to prevent log flooding
+        if (shouldLogError('voice_tracking')) {
+            console.error('Error tracking voice time (throttled - shown once per minute):', error.message);
+        }
     }
 });
 
@@ -323,6 +377,25 @@ async function shutdown() {
         client.destroy();
         
         console.log('🔌 Closing database connections...');
+        
+        // Flush any active voice sessions before shutdown
+        if (voiceSessions.size > 0) {
+            console.log(`⏰ Flushing ${voiceSessions.size} active voice sessions...`);
+            const voiceFlushPromises = Array.from(voiceSessions.entries()).map(async ([userId, joinTime]) => {
+                try {
+                    const timeSpent = Math.floor((Date.now() - joinTime) / 1000);
+                    if (timeSpent > 0) {
+                        await db.updateVoiceTime(userId, timeSpent);
+                    }
+                } catch (error) {
+                    console.error(`Error flushing voice time for user ${userId}:`, error.message);
+                }
+            });
+            
+            await Promise.allSettled(voiceFlushPromises);
+            voiceSessions.clear();
+            console.log('✅ Voice sessions flushed');
+        }
         
         // Flush any cached message counts before shutdown (with timeout)
         const flushPromises = Array.from(messageCountCache.entries()).map(async ([userId, count]) => {
