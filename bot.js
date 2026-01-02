@@ -152,7 +152,7 @@ client.on('guildMemberAdd', async (member) => {
             if (member.user.bot) return;
             
             // Anti-cheat: Check if this invite already exists in history
-            console.log(`Checking if invited before...`);
+            console.log(`Checking invite history for duplicates...`);
             const alreadyInvited = await db.checkInviteHistory(inviterId, invitedId);
             
             if (alreadyInvited) {
