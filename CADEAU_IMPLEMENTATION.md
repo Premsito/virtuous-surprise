@@ -86,12 +86,12 @@ When cooldown active:
 
 ### Success Message
 ```
-🎁 Félicitations ! Vous avez récupéré 25 LC en cadeau ! Revenez demain pour un autre cadeau !
+🎁 Yeeee tiens,Félicitations ! Tu as récupéré 25 LC en cadeau ! Gratte pas trop demande dans 24h pour un autre cadeau !
 ```
 
 ### Cooldown Message (Example)
 ```
-⏳ Désolé, vous avez déjà récupéré votre cadeau. Il vous reste 5h et 30min avant de pouvoir réutiliser !cadeau.
+⏳ Abuse pas, tu as déjà récupéré ton cadeau. Il te reste 5h et 30min avant de pouvoir refaire le gratteur.
 ```
 
 ### Error Message
@@ -135,8 +135,8 @@ The `!cadeau` command is now visible in the help menu under the LC section:
 ```
 💰 LC (Virtual Coins)
 `!lc` - Voir votre solde
-`!lc @user` - Voir le solde d'un utilisateur
-`!don @user [montant]` - Transférer des LC
+`!lc @user` - Voir le solde d'un utilisateur ( 3ayen pas ) 
+`!don @user [montant]` - Transférer des LC ( partage un peu aussi)
 `!cadeau` - Recevoir 25 LC quotidiennement
 ```
 
