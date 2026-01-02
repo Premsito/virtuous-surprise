@@ -31,12 +31,14 @@ const invitesCommand = require('./commands/invites');
 const jeuCommand = require('./commands/jeu');
 const moderationCommand = require('./commands/moderation');
 const statsCommand = require('./commands/stats');
+const cadeauCommand = require('./commands/cadeau');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
 client.commands.set(jeuCommand.name, jeuCommand);
 client.commands.set(moderationCommand.name, moderationCommand);
 client.commands.set(statsCommand.name, statsCommand);
+client.commands.set(cadeauCommand.name, cadeauCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -236,6 +238,9 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'don') {
             const lcCommand = require('./commands/lc');
             await lcCommand.handleTransfer(message, args);
+        } else if (commandName === 'cadeau') {
+            const command = client.commands.get('cadeau');
+            await command.execute(message, args);
         } else if (commandName === 'setlc') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setlc');
