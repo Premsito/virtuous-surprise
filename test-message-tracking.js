@@ -4,6 +4,11 @@
  */
 
 const { db } = require('./database/db');
+const fs = require('fs');
+
+// Cache file contents to avoid redundant reads
+const botCode = fs.readFileSync('./bot.js', 'utf-8');
+const statsCode = fs.readFileSync('./commands/stats.js', 'utf-8');
 
 async function testMessageTracking() {
     console.log('=== Message Tracking Test ===\n');
@@ -47,9 +52,6 @@ async function testMessageTracking() {
     // Test 3: Check bot.js has messageCreate listener
     console.log('Test 3: Verify messageCreate event listener exists in bot.js');
     try {
-        const fs = require('fs');
-        const botCode = fs.readFileSync('./bot.js', 'utf-8');
-        
         if (botCode.includes("client.on('messageCreate'") &&
             botCode.includes('db.incrementMessageCount')) {
             console.log('✅ messageCreate event listener is configured');
@@ -67,9 +69,6 @@ async function testMessageTracking() {
     // Test 4: Check caching mechanism
     console.log('Test 4: Verify message count caching is implemented');
     try {
-        const fs = require('fs');
-        const botCode = fs.readFileSync('./bot.js', 'utf-8');
-        
         if (botCode.includes('messageCountCache') &&
             botCode.includes('MESSAGE_COUNT_BATCH_SIZE')) {
             console.log('✅ Message count caching is implemented');
@@ -87,9 +86,6 @@ async function testMessageTracking() {
     // Test 5: Check shutdown handler flushes cache
     console.log('Test 5: Verify shutdown handler flushes message count cache');
     try {
-        const fs = require('fs');
-        const botCode = fs.readFileSync('./bot.js', 'utf-8');
-        
         if (botCode.includes('messageCountCache.entries()') &&
             botCode.includes('shutdown') &&
             botCode.includes('incrementMessageCount')) {
@@ -108,9 +104,6 @@ async function testMessageTracking() {
     // Test 6: Verify stats.js displays message count
     console.log('Test 6: Verify stats command displays message count');
     try {
-        const fs = require('fs');
-        const statsCode = fs.readFileSync('./commands/stats.js', 'utf-8');
-        
         if (statsCode.includes('message_count') &&
             statsCode.includes('Messages')) {
             console.log('✅ Stats command displays message count');
