@@ -45,6 +45,21 @@ const invites = new Map();
 const messageCountCache = new Map();
 const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
 
+// Error throttling to prevent log flooding
+const errorThrottleMap = new Map();
+const ERROR_THROTTLE_INTERVAL_MS = 60000; // Only log same error type once per minute
+
+function shouldLogError(errorType) {
+    const now = Date.now();
+    const lastLogged = errorThrottleMap.get(errorType);
+    
+    if (!lastLogged || (now - lastLogged) > ERROR_THROTTLE_INTERVAL_MS) {
+        errorThrottleMap.set(errorType, now);
+        return true;
+    }
+    return false;
+}
+
 // Bot ready event
 client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
@@ -178,7 +193,10 @@ client.on('messageCreate', async (message) => {
             messageCountCache.delete(userId);
         }
     } catch (error) {
-        console.error('Error tracking message:', error);
+        // Throttle error logging to prevent log flooding
+        if (shouldLogError('message_tracking')) {
+            console.error('Error tracking message (throttled - shown once per minute):', error.message);
+        }
     }
     
     // Check if message starts with prefix
@@ -290,7 +308,7 @@ async function shutdown() {
             try {
                 await db.incrementMessageCount(userId, count);
             } catch (error) {
-                console.error(`Error flushing message count for user ${userId}:`, error);
+                console.error(`Error flushing message count for user ${userId}:`, error.message);
             }
         });
         

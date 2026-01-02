@@ -188,6 +188,24 @@ const db = {
                 );
                 await pool.query(initSQL);
                 console.log('✅ Database tables initialized');
+                
+                // Run migrations
+                const migrationsDir = path.join(__dirname, 'migrations');
+                if (fs.existsSync(migrationsDir)) {
+                    const migrationFiles = fs.readdirSync(migrationsDir)
+                        .filter(file => file.endsWith('.sql'))
+                        .sort(); // Ensure migrations run in order
+                    
+                    for (const file of migrationFiles) {
+                        const migrationSQL = fs.readFileSync(
+                            path.join(migrationsDir, file),
+                            'utf-8'
+                        );
+                        await pool.query(migrationSQL);
+                        console.log(`✅ Migration applied: ${file}`);
+                    }
+                }
+                
                 return; // Success, exit the function
             } catch (error) {
                 retryCount++;
