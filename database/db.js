@@ -135,7 +135,9 @@ const db = {
             'SELECT EXISTS(SELECT 1 FROM invite_history WHERE inviter_id = $1 AND invited_id = $2)',
             [inviterId, invitedId]
         );
-        return result.rows[0].exists;
+        const exists = result.rows[0].exists;
+        console.log(`[DB] checkInviteHistory(${inviterId}, ${invitedId}) = ${exists}`);
+        return exists;
     },
 
     // Anti-cheat: Add invite to history (returns false if already exists)
@@ -145,12 +147,15 @@ const db = {
                 'INSERT INTO invite_history (inviter_id, invited_id) VALUES ($1, $2)',
                 [inviterId, invitedId]
             );
+            console.log(`[DB] Successfully added invite history: ${inviterId} -> ${invitedId}`);
             return true;
         } catch (error) {
             // If primary key violation, invite already exists
             if (error.code === '23505') {
+                console.log(`[DB] Duplicate key violation: invite already exists ${inviterId} -> ${invitedId}`);
                 return false;
             }
+            console.error(`[DB] Error adding invite history:`, error);
             throw error;
         }
     },
