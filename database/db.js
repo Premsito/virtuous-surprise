@@ -170,6 +170,15 @@ const db = {
         );
     },
 
+    // Gift operations
+    async updateGiftTime(userId, timestamp) {
+        const result = await pool.query(
+            'UPDATE users SET last_gift_time = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [timestamp, userId]
+        );
+        return result.rows[0];
+    },
+
     // Initialize database
     async initialize() {
         let retryCount = 0;
