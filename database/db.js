@@ -1,4 +1,6 @@
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
 // Database configuration constants
 const DB_INIT_MAX_RETRIES = 3;
@@ -170,9 +172,6 @@ const db = {
 
     // Initialize database
     async initialize() {
-        const fs = require('fs');
-        const path = require('path');
-        
         let retryCount = 0;
         
         while (retryCount < DB_INIT_MAX_RETRIES) {
