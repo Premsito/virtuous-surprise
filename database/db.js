@@ -131,7 +131,7 @@ const db = {
 
     async checkInviteExists(inviterId, invitedId) {
         const result = await pool.query(
-            'SELECT * FROM invite_history WHERE inviter_id = $1 AND invited_id = $2',
+            'SELECT 1 FROM invite_history WHERE inviter_id = $1 AND invited_id = $2 LIMIT 1',
             [inviterId, invitedId]
         );
         return result.rows.length > 0;
