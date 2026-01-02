@@ -1,4 +1,3 @@
-const { EmbedBuilder } = require('discord.js');
 const { db, pool } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
@@ -44,24 +43,34 @@ module.exports = {
         const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : getResponse('stats.notAvailable');
 
         // Format voice time (convert seconds to hours and minutes)
-        const voiceTime = user.voice_time ? this.formatVoiceTime(user.voice_time) : getResponse('stats.notAvailable');
+        const voiceTime = this.formatVoiceTime(user.voice_time || 0);
 
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setTitle(getResponse('stats.title', { username: username }))
-            .setDescription(
-                getResponse('stats.balance', { balance: user.balance }) + '\n' +
-                getResponse('stats.invites', { invites: user.invites }) + '\n' +
-                getResponse('stats.messages', { messages: user.message_count || 0 }) + '\n' +
-                getResponse('stats.voiceTime', { voiceTime: voiceTime }) + '\n' +
-                getResponse('stats.joinDate', { joinDate: joinDate }) + '\n' +
-                getResponse('stats.ranking', { ranking: ranking }) + '\n' +
-                getResponse('stats.gamesPlayed', { gamesPlayed: gameStats.games_played }) + '\n' +
-                getResponse('stats.gamesWon', { gamesWon: gameStats.games_won })
-            )
-            .setTimestamp();
+        // Format current time
+        const now = new Date();
+        const updateTime = now.toLocaleString('fr-FR', { 
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
+        
+        // Always use "Aujourd'hui" for the update date since stats are always current
+        const updateDate = 'Aujourd\'hui';
 
-        return message.reply({ embeds: [embed] });
+        // Create compact frame message (design option 3)
+        const statsMessage = 
+`📊 **Statistiques de ${username}**
+════════════════════════════
+💰 Balance : ${user.balance} LC
+🤝 Invitations : ${user.invites}
+📩 Messages : ${user.message_count || 0}
+🎙️ Temps vocal : ${voiceTime}
+📅 Date d'arrivée : ${joinDate}
+════════════════════════════
+🏆 Classement : #${ranking}
+🎮 Jouées : ${gameStats.games_played} 🎉 Gagnées : ${gameStats.games_won}
+════════════════════════════
+📋 Mise à jour : ${updateDate} à ${updateTime}`;
+
+        return message.reply(statsMessage);
     },
 
     formatVoiceTime(seconds) {
