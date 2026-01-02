@@ -162,11 +162,13 @@ client.on('guildMemberAdd', async (member) => {
                     const inviteChannel = await client.channels.fetch(inviteChannelId);
                     if (inviteChannel) {
                         
-                        // Format message with emotes
-                        const invitePeopleEmote = `:${config.emotes.invitePeople}:`;
-                        const boostGemsEmote = `:${config.emotes.boostGemsMonth}:`;
+                        // Format message with emotes (try custom emojis, fallback to Unicode)
+                        const invitePeopleEmote = client.emojis.cache.find(e => e.name === config.emotes.invitePeople) || '📨';
+                        const boostGemsEmote = client.emojis.cache.find(e => e.name === config.emotes.boostGemsMonth) || '🔰';
                         
-                        const messageContent = `${invitePeopleEmote} ${member.user} joins the team. Credit to ${usedInvite.inviter} who now has ${totalInvites} invitations! ${boostGemsEmote}`;
+                        // Fix grammar for pluralization
+                        const invitationText = totalInvites === 1 ? '1 invitation' : `${totalInvites} invitations`;
+                        const messageContent = `${invitePeopleEmote} ${member.user} joins the team. Credit to ${usedInvite.inviter} who now has ${invitationText}! ${boostGemsEmote}`;
                         
                         await inviteChannel.send(messageContent);
                     }
