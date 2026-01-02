@@ -45,6 +45,35 @@ const invites = new Map();
 const messageCountCache = new Map();
 const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
 
+// Error throttling to prevent log flooding
+const errorThrottleMap = new Map();
+const ERROR_THROTTLE_INTERVAL_MS = 60000; // Only log same error type once per minute
+const ERROR_THROTTLE_CLEANUP_INTERVAL_MS = 600000; // Clean up old entries every 10 minutes
+const ERROR_THROTTLE_CLEANUP_MULTIPLIER = 2; // Keep entries for 2x the throttle interval
+
+function shouldLogError(errorType) {
+    const now = Date.now();
+    const lastLogged = errorThrottleMap.get(errorType);
+    
+    if (!lastLogged || (now - lastLogged) > ERROR_THROTTLE_INTERVAL_MS) {
+        errorThrottleMap.set(errorType, now);
+        return true;
+    }
+    return false;
+}
+
+// Periodic cleanup of old error throttle entries to prevent memory leaks
+setInterval(() => {
+    const now = Date.now();
+    const cutoffTime = now - ERROR_THROTTLE_INTERVAL_MS * ERROR_THROTTLE_CLEANUP_MULTIPLIER;
+    
+    for (const [errorType, timestamp] of errorThrottleMap.entries()) {
+        if (timestamp < cutoffTime) {
+            errorThrottleMap.delete(errorType);
+        }
+    }
+}, ERROR_THROTTLE_CLEANUP_INTERVAL_MS);
+
 // Bot ready event
 client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
@@ -178,7 +207,10 @@ client.on('messageCreate', async (message) => {
             messageCountCache.delete(userId);
         }
     } catch (error) {
-        console.error('Error tracking message:', error);
+        // Throttle error logging to prevent log flooding
+        if (shouldLogError('message_tracking')) {
+            console.error('Error tracking message (throttled - shown once per minute):', error.message);
+        }
     }
     
     // Check if message starts with prefix
@@ -290,7 +322,7 @@ async function shutdown() {
             try {
                 await db.incrementMessageCount(userId, count);
             } catch (error) {
-                console.error(`Error flushing message count for user ${userId}:`, error);
+                console.error(`Error flushing message count for user ${userId}:`, error.message);
             }
         });
         
