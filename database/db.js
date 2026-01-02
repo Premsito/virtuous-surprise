@@ -189,6 +189,8 @@ const db = {
                 console.log('✅ Database tables initialized');
                 
                 // Run migrations
+                // Note: All migrations are designed to be idempotent (safe to run multiple times)
+                // using conditional checks (e.g., IF NOT EXISTS) to prevent duplicate operations
                 const migrationsDir = path.join(__dirname, 'migrations');
                 if (fs.existsSync(migrationsDir)) {
                     const migrationFiles = fs.readdirSync(migrationsDir)
@@ -196,12 +198,18 @@ const db = {
                         .sort(); // Ensure migrations run in order
                     
                     for (const file of migrationFiles) {
-                        const migrationSQL = fs.readFileSync(
-                            path.join(migrationsDir, file),
-                            'utf-8'
-                        );
-                        await pool.query(migrationSQL);
-                        console.log(`✅ Migration applied: ${file}`);
+                        try {
+                            const migrationSQL = fs.readFileSync(
+                                path.join(migrationsDir, file),
+                                'utf-8'
+                            );
+                            await pool.query(migrationSQL);
+                            console.log(`✅ Migration applied: ${file}`);
+                        } catch (migrationError) {
+                            console.error(`❌ Failed to apply migration ${file}:`, migrationError.message);
+                            // Re-throw to trigger retry mechanism
+                            throw migrationError;
+                        }
                     }
                 }
                 

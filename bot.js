@@ -48,6 +48,7 @@ const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
 // Error throttling to prevent log flooding
 const errorThrottleMap = new Map();
 const ERROR_THROTTLE_INTERVAL_MS = 60000; // Only log same error type once per minute
+const ERROR_THROTTLE_CLEANUP_INTERVAL_MS = 600000; // Clean up old entries every 10 minutes
 
 function shouldLogError(errorType) {
     const now = Date.now();
@@ -59,6 +60,18 @@ function shouldLogError(errorType) {
     }
     return false;
 }
+
+// Periodic cleanup of old error throttle entries to prevent memory leaks
+setInterval(() => {
+    const now = Date.now();
+    const cutoffTime = now - ERROR_THROTTLE_INTERVAL_MS * 2; // Keep entries for 2x the throttle interval
+    
+    for (const [errorType, timestamp] of errorThrottleMap.entries()) {
+        if (timestamp < cutoffTime) {
+            errorThrottleMap.delete(errorType);
+        }
+    }
+}, ERROR_THROTTLE_CLEANUP_INTERVAL_MS);
 
 // Bot ready event
 client.once('clientReady', async () => {
