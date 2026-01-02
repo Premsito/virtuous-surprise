@@ -43,7 +43,7 @@ module.exports = {
         const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : getResponse('stats.notAvailable');
 
         // Format voice time (convert seconds to hours and minutes)
-        const voiceTime = user.voice_time ? this.formatVoiceTime(user.voice_time) : '0m';
+        const voiceTime = this.formatVoiceTime(user.voice_time || 0);
 
         // Format current time
         const now = new Date();
