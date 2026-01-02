@@ -55,19 +55,19 @@ module.exports = {
         // Always use "Aujourd'hui" for the update date since stats are always current
         const updateDate = 'Aujourd\'hui';
 
-        // Create compact frame message (design option 3)
+        // Create compact frame message with box-drawing characters
         const statsMessage = 
-`📊 **Statistiques de ${username}**
-════════════════════════════
-💰 Balance : ${user.balance} LC
-🤝 Invitations : ${user.invites}
-📩 Messages : ${user.message_count || 0}
-🎙️ Temps vocal : ${voiceTime}
-📅 Date d'arrivée : ${joinDate}
-════════════════════════════
-🏆 Classement : #${ranking}
-🎮 Jouées : ${gameStats.games_played} 🎉 Gagnées : ${gameStats.games_won}
-════════════════════════════
+`🏆 **Profil : @${username}**
+╔════════════════════════════════╗
+║ 💰 **Balance**      : ${user.balance} LC
+║ 🤝 **Invitations**  : ${user.invites}
+║ 📩 **Messages**     : ${user.message_count || 0}
+║ 🎙️ **Temps vocal**  : ${voiceTime}
+║ 📅 **Arrivé**       : ${joinDate}
+╠════════════════════════════════╣
+║ 🎮 **Jouées**       : ${gameStats.games_played}
+║ 🎉 **Gagnées**      : ${gameStats.games_won}
+╚════════════════════════════════╝
 📋 Mise à jour : ${updateDate} à ${updateTime}`;
 
         return message.reply(statsMessage);
