@@ -129,6 +129,29 @@ client.on('guildMemberAdd', async (member) => {
             // Don't track bot invites
             if (member.user.bot) return;
             
+            // Check if this invite already exists (anti-cheat mechanism)
+            const inviteExists = await db.checkInviteExists(inviterId, invitedId);
+            
+            if (inviteExists) {
+                // Duplicate invite detected - log and notify
+                console.log(`🚫 Duplicate invite detected: ${usedInvite.inviter.username} already invited ${member.user.username}`);
+                
+                const inviteChannelId = config.channels.inviteTracker;
+                if (inviteChannelId) {
+                    try {
+                        const inviteChannel = await client.channels.fetch(inviteChannelId);
+                        if (inviteChannel) {
+                            await inviteChannel.send(
+                                `🚫 Cette invitation ne peut pas être comptée car ${member.user} a déjà été invité par ${usedInvite.inviter}.`
+                            );
+                        }
+                    } catch (error) {
+                        console.error('Error sending duplicate invite notification:', error);
+                    }
+                }
+                return; // Don't process duplicate invites
+            }
+            
             // Create or get inviter
             let inviter = await db.getUser(inviterId);
             if (!inviter) {
@@ -140,6 +163,9 @@ client.on('guildMemberAdd', async (member) => {
             if (!invited) {
                 invited = await db.createUser(invitedId, member.user.username, inviterId);
             }
+            
+            // Add to invite history (anti-cheat)
+            await db.addInviteHistory(inviterId, invitedId);
             
             // Increment inviter's invite count
             await db.incrementInvites(inviterId);
