@@ -79,7 +79,7 @@ async function testInviteHistory() {
         console.log('🎉 All tests passed!\n');
         
     } catch (error) {
-        console.error('❌ Test failed:', error.message);
+        console.error('❌ Test failed:', error);
         process.exit(1);
     } finally {
         await db.close();

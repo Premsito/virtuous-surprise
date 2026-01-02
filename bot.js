@@ -102,6 +102,23 @@ client.once('clientReady', async () => {
     }
 });
 
+// Helper function to send duplicate invite notification
+async function sendDuplicateInviteNotification(client, member, inviterId) {
+    const inviteChannelId = config.channels.inviteTracker;
+    if (inviteChannelId) {
+        try {
+            const inviteChannel = await client.channels.fetch(inviteChannelId);
+            if (inviteChannel) {
+                await inviteChannel.send(
+                    `🚫 Invitation non comptée : ${member.user} a déjà été invité par <@${inviterId}>.`
+                );
+            }
+        } catch (error) {
+            console.error('Error sending duplicate invite message:', error);
+        }
+    }
+}
+
 // Guild member add event (invite tracking)
 client.on('guildMemberAdd', async (member) => {
     try {
@@ -134,21 +151,7 @@ client.on('guildMemberAdd', async (member) => {
             
             if (alreadyInvited) {
                 console.log(`🚫 Duplicate invite blocked: ${usedInvite.inviter.username} -> ${member.user.username}`);
-                
-                // Send notification that invite was not counted
-                const inviteChannelId = config.channels.inviteTracker;
-                if (inviteChannelId) {
-                    try {
-                        const inviteChannel = await client.channels.fetch(inviteChannelId);
-                        if (inviteChannel) {
-                            await inviteChannel.send(
-                                `🚫 Invitation non comptée : ${member.user} a déjà été invité par <@${inviterId}>.`
-                            );
-                        }
-                    } catch (error) {
-                        console.error('Error sending duplicate invite message:', error);
-                    }
-                }
+                await sendDuplicateInviteNotification(client, member, inviterId);
                 return;
             }
             
@@ -170,20 +173,7 @@ client.on('guildMemberAdd', async (member) => {
             if (!historyAdded) {
                 // Race condition: invite was added between check and insert
                 console.log(`🚫 Duplicate invite blocked (race condition): ${usedInvite.inviter.username} -> ${member.user.username}`);
-                
-                const inviteChannelId = config.channels.inviteTracker;
-                if (inviteChannelId) {
-                    try {
-                        const inviteChannel = await client.channels.fetch(inviteChannelId);
-                        if (inviteChannel) {
-                            await inviteChannel.send(
-                                `🚫 Invitation non comptée : ${member.user} a déjà été invité par <@${inviterId}>.`
-                            );
-                        }
-                    } catch (error) {
-                        console.error('Error sending duplicate invite message:', error);
-                    }
-                }
+                await sendDuplicateInviteNotification(client, member, inviterId);
                 return;
             }
             

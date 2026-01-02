@@ -132,10 +132,10 @@ const db = {
     // Anti-cheat: Check if an invite already exists in history
     async checkInviteHistory(inviterId, invitedId) {
         const result = await pool.query(
-            'SELECT * FROM invite_history WHERE inviter_id = $1 AND invited_id = $2',
+            'SELECT EXISTS(SELECT 1 FROM invite_history WHERE inviter_id = $1 AND invited_id = $2)',
             [inviterId, invitedId]
         );
-        return result.rows.length > 0;
+        return result.rows[0].exists;
     },
 
     // Anti-cheat: Add invite to history (returns false if already exists)
