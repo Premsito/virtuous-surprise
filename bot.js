@@ -103,14 +103,14 @@ client.once('clientReady', async () => {
 });
 
 // Helper function to send duplicate invite notification
-async function sendDuplicateInviteNotification(client, member, inviterId) {
+async function sendDuplicateInviteNotification(client, member, inviter) {
     const inviteChannelId = config.channels.inviteTracker;
     if (inviteChannelId) {
         try {
             const inviteChannel = await client.channels.fetch(inviteChannelId);
             if (inviteChannel) {
                 await inviteChannel.send(
-                    `🚫 L'invitation n'a pas été comptée, cet utilisateur a déjà été invité !`
+                    `🔴 L'invitation de ${inviter} pour ${member.user} n'a pas été comptée, car ${member.user} est déjà membre du serveur !`
                 );
                 console.log(`Sent duplicate invite notification to channel ${inviteChannelId}`);
             }
@@ -151,13 +151,16 @@ client.on('guildMemberAdd', async (member) => {
             // Don't track bot invites
             if (member.user.bot) return;
             
+            // Get inviter member object for mentions
+            const inviterMember = await member.guild.members.fetch(inviterId).catch(() => null);
+            
             // Anti-cheat: Check if this invite already exists in history
             console.log(`Checking invite history for duplicates...`);
             const alreadyInvited = await db.checkInviteHistory(inviterId, invitedId);
             
             if (alreadyInvited) {
                 console.log(`🚫 Duplicate invite blocked: ${usedInvite.inviter.username} -> ${member.user.username}`);
-                await sendDuplicateInviteNotification(client, member, inviterId);
+                await sendDuplicateInviteNotification(client, member, inviterMember || usedInvite.inviter);
                 return;
             }
             
@@ -190,7 +193,7 @@ client.on('guildMemberAdd', async (member) => {
             if (!historyAdded) {
                 // Race condition: invite was added between check and insert
                 console.log(`🚫 Duplicate invite blocked (race condition): ${usedInvite.inviter.username} -> ${member.user.username}`);
-                await sendDuplicateInviteNotification(client, member, inviterId);
+                await sendDuplicateInviteNotification(client, member, inviterMember || usedInvite.inviter);
                 return;
             }
             
