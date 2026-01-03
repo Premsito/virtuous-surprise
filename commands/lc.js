@@ -20,10 +20,14 @@ module.exports = {
         }
 
         // Show balance
+        const description = targetUser 
+            ? getResponse('lc.balance.otherDescription', { username: username, balance: user.balance })
+            : getResponse('lc.balance.description', { balance: user.balance });
+
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
-            .setTitle(getResponse(targetUser ? 'lc.balance.otherTitle' : 'lc.balance.title', { username: username }))
-            .setDescription(getResponse('lc.balance.description', { balance: user.balance }))
+            .setTitle(getResponse('lc.balance.title'))
+            .setDescription(description)
             .setFooter({ text: getResponse('lc.balance.footer') })
             .setTimestamp();
         
