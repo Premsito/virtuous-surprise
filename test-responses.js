@@ -39,11 +39,11 @@ test('All command modules load without errors', () => {
 // Test 2: LC responses
 test('LC balance responses work', () => {
     const title = getResponse('lc.balance.title');
-    const otherTitle = getResponse('lc.balance.otherTitle', { username: 'OtherUser' });
+    const otherDescription = getResponse('lc.balance.otherDescription', { username: 'OtherUser', balance: 100 });
     const description = getResponse('lc.balance.description', { balance: 100 });
     
     if (!title.includes('LC') || !description.includes('100') || 
-        !otherTitle.includes('OtherUser')) {
+        !otherDescription.includes('OtherUser')) {
         throw new Error('LC balance response placeholders not working');
     }
 });
@@ -67,7 +67,7 @@ test('Invite responses work', () => {
     const title = getResponse('invites.count.title');
     const description = getResponse('invites.count.description', { invites: 5 });
     
-    if (!title.includes('invitations') || !description.includes('5')) {
+    if (!title.includes('Invitation') || !description.includes('5')) {
         throw new Error('Invite response placeholders not working');
     }
 });
@@ -161,7 +161,7 @@ test('Config values are integrated in responses', () => {
 test('All critical response paths exist', () => {
     const criticalPaths = [
         'lc.balance.title',
-        'lc.balance.otherTitle',
+        'lc.balance.otherDescription',
         'transfer.success.title',
         'invites.count.title',
         'invites.top.title',

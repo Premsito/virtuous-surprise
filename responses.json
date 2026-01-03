@@ -1,40 +1,40 @@
 {
   "lc": {
     "balance": {
-      "title": "{currency_symbol} Votre solde LC",
-      "otherTitle": "{currency_symbol} Solde LC de {username}",
-      "description": "**{balance} LC**",
+      "title": "💰 Solde LC",
+      "description": "╔══════════════════════════════════════╗\n║ 💵 **Balance** : {balance} LC\n╚══════════════════════════════════════╝",
+      "otherDescription": "╔══════════════════════════════════════╗\n║ 👤 **Utilisateur** : {username}\n║ 💵 **Balance** : {balance} LC\n╚══════════════════════════════════════╝",
       "footer": "Utilisez {prefix}don pour transférer des LC"
     },
     "invalidCommand": "❌ Commande invalide. Utilisez `!lc` pour voir votre solde ou `!don` pour transférer des LC."
   },
   "transfer": {
-    "noRecipient": "❌ Vous devez mentionner un utilisateur! Exemple: `!don @user 50`",
-    "selfTransfer": "❌ Vous ne pouvez pas vous transférer des LC à vous-même!",
-    "botTransfer": "❌ Vous ne pouvez pas transférer des LC à un bot!",
-    "invalidAmount": "❌ Montant invalide! Le montant doit être un nombre positif.",
-    "insufficientBalance": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
+    "noRecipient": "╔══════════════════════════════════════╗\n║ ❌ **Erreur de transfert**\n║ \n║ Vous devez mentionner un utilisateur!\n║ Exemple: `!don @user 50`\n╚══════════════════════════════════════╝",
+    "selfTransfer": "╔══════════════════════════════════════╗\n║ ❌ **Transfert impossible**\n║ \n║ Vous ne pouvez pas vous transférer\n║ des LC à vous-même!\n╚══════════════════════════════════════╝",
+    "botTransfer": "╔══════════════════════════════════════╗\n║ ❌ **Transfert impossible**\n║ \n║ Vous ne pouvez pas transférer des LC\n║ à un bot!\n╚══════════════════════════════════════╝",
+    "invalidAmount": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être un nombre\n║ positif.\n╚══════════════════════════════════════╝",
+    "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
     "success": {
-      "title": "{currency_symbol} Transfert réussi",
-      "description": "{sender} a transféré **{amount} LC** à {recipient}!\n\nNouveau solde: **{newBalance} LC**"
+      "title": "💸 Transfert réussi",
+      "description": "╔══════════════════════════════════════╗\n║ 💰 **Montant** : {amount} LC\n║ 👤 **De** : {sender}\n║ 👤 **À** : {recipient}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💵 **Nouveau solde** : {newBalance} LC\n╚══════════════════════════════════════╝"
     },
-    "error": "❌ Erreur lors du transfert. Veuillez réessayer."
+    "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Erreur lors du transfert.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
   },
   "invites": {
     "count": {
-      "title": "📊 Vos invitations",
-      "description": "Vous avez **{invites}** invitation(s) réussie(s)",
+      "title": "🎉 Vos Invitations",
+      "description": "╔══════════════════════════════════════╗\n║ 👥 **Invitations réussies** : {invites}\n╚══════════════════════════════════════╝",
       "footer": "Invitez des amis pour gagner des LC!"
     },
     "invalidCommand": "❌ Commande invalide. Utilisez `!invites` pour voir vos invitations.",
     "top": {
-      "title": "🏆 Top invitations",
+      "title": "🏆 Top Invitations",
       "noData": "❌ Aucune donnée d'invitation disponible.",
       "entry": "{medal} **{username}** - {invites} invitation(s)\n"
     },
     "event": {
       "title": "🎉 Nouvelle invitation!",
-      "description": "{invited} a rejoint grâce à l'invitation de {inviter}!\n\nLes deux ont reçu **{reward} LC** {currency_symbol}"
+      "description": "╔══════════════════════════════════════╗\n║ 🎊 **Bienvenue** : {invited}\n║ 👋 **Invité par** : {inviter}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎁 **Récompense** : {reward} LC {currency_symbol}\n╚══════════════════════════════════════╝"
     }
   },
   "stats": {
@@ -52,68 +52,69 @@
   },
   "games": {
     "list": {
-      "title": "🎮 Jeux disponibles",
-      "description": "**Duel**: `{prefix}jeu duel @utilisateur [montant]`\n**Roulette**: `{prefix}jeu roulette [montant]`"
+      "title": "🎮 Jeux Disponibles",
+      "description": "╔══════════════════════════════════════╗\n║ ⚔️  **Duel** : `{prefix}jeu duel @user [LC]`\n║ 🎰 **Roulette** : `{prefix}jeu roulette [LC]`\n╚══════════════════════════════════════╝"
     },
     "unknownGame": "❌ Jeu inconnu. Utilisez `duel` ou `roulette`.",
     "duel": {
-      "noOpponent": "❌ Vous devez mentionner un adversaire! Exemple: `!jeu duel @user 50`",
-      "selfChallenge": "❌ Vous ne pouvez pas vous défier vous-même!",
-      "botChallenge": "❌ Vous ne pouvez pas défier un bot!",
-      "invalidBet": "❌ Le montant doit être entre {minBet} et {maxBet} LC.",
-      "insufficientBalanceChallenger": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
-      "insufficientBalanceOpponent": "❌ {opponent} n'a pas assez de LC!",
-      "alreadyInDuel": "❌ Un des joueurs est déjà dans un duel!",
+      "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Exemple: `!jeu duel @user 50`\n╚══════════════════════════════════════╝",
+      "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+      "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+      "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+      "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ {opponent} n'a pas assez de LC!\n╚══════════════════════════════════════╝",
+      "alreadyInDuel": "╔══════════════════════════════════════╗\n║ ❌ **Duel en cours**\n║ \n║ Un des joueurs est déjà dans un\n║ duel!\n╚══════════════════════════════════════╝",
       "challenge": {
-        "title": "⚔️ Duel!",
-        "description": "{challenger} défie {opponent} pour **{bet} LC**!\n\n{opponent}, tapez `accepter` pour accepter le duel dans les 30 secondes."
+        "title": "⚔️ Défi de Duel!",
+        "description": "╔══════════════════════════════════════╗\n║ ⚔️  **Challenger** : {challenger}\n║ 🎯 **Adversaire** : {opponent}\n║ 💰 **Mise** : {bet} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ ⏱️  Tapez `accepter` dans 30s\n╚══════════════════════════════════════╝",
+        "footer": "Acceptez le défi pour gagner!"
       },
       "result": {
-        "title": "⚔️ Résultat du duel",
-        "description": "{winner} a gagné le duel et remporte **{totalWinnings} LC**!\n{loser} a perdu **{bet} LC**."
+        "title": "⚔️ Résultat du Duel",
+        "description": "╔══════════════════════════════════════╗\n║ 🏆 **Vainqueur** : {winner}\n║ 💰 **Gains** : {totalWinnings} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 😢 **Perdant** : {loser}\n║ 💸 **Perte** : {bet} LC\n╚══════════════════════════════════════╝"
       },
       "timeout": {
-        "title": "⚔️ Duel annulé",
-        "description": "{opponent} n'a pas accepté le duel à temps."
+        "title": "⚔️ Duel Annulé",
+        "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {opponent} n'a pas accepté le duel\n║ à temps.\n╚══════════════════════════════════════╝"
       }
     },
     "roulette": {
-      "invalidBet": "❌ Le montant doit être entre {minBet} et {maxBet} LC.",
-      "insufficientBalance": "❌ Vous n'avez pas assez de LC! Votre solde: {balance} LC",
-      "alreadyJoined": "❌ Vous participez déjà à cette roulette!",
+      "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+      "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "alreadyJoined": "╔══════════════════════════════════════╗\n║ ❌ **Déjà inscrit**\n║ \n║ Vous participez déjà à cette\n║ roulette!\n╚══════════════════════════════════════╝",
       "joined": {
-        "title": "🎰 Roulette",
-        "description": "{player} a rejoint la roulette avec **{bet} LC**!\n\nJoueurs actuels: **{playerCount}**\nPot total: **{totalPot} LC**\n\nLa roulette démarre dans 30 secondes..."
+        "title": "🎰 Roulette en cours",
+        "description": "╔══════════════════════════════════════╗\n║ 🎲 **Joueur** : {player}\n║ 💰 **Mise** : {bet} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 👥 **Joueurs** : {playerCount}\n║ 💵 **Pot total** : {totalPot} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ ⏱️  Démarrage dans 30s...\n╚══════════════════════════════════════╝"
       },
       "result": {
-        "title": "🎰 Résultat de la roulette",
-        "description": "{winner} a gagné la roulette et remporte **{winnings} LC**!\n\nPot total: **{totalPot} LC**\nParticipants: **{playerCount}**"
+        "title": "🎰 Résultat de la Roulette",
+        "description": "╔══════════════════════════════════════╗\n║ 🎉 **Gagnant** : {winner}\n║ 💰 **Gains** : {winnings} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💵 **Pot total** : {totalPot} LC\n║ 👥 **Participants** : {playerCount}\n╚══════════════════════════════════════╝"
       }
     }
   },
   "moderation": {
-    "noPermission": "❌ Vous devez être administrateur pour utiliser cette commande!",
+    "noPermission": "╔══════════════════════════════════════╗\n║ ❌ **Permission refusée**\n║ \n║ Vous devez être administrateur pour\n║ utiliser cette commande!\n╚══════════════════════════════════════╝",
     "setlc": {
-      "noUser": "❌ Vous devez mentionner un utilisateur! Exemple: `!setlc @user 500`",
-      "invalidAmount": "❌ Montant invalide! Le montant doit être un nombre positif.",
+      "noUser": "╔══════════════════════════════════════╗\n║ ❌ **Utilisateur manquant**\n║ \n║ Exemple: `!setlc @user 500`\n╚══════════════════════════════════════╝",
+      "invalidAmount": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être un nombre\n║ positif.\n╚══════════════════════════════════════╝",
       "success": {
-        "title": "✅ Balance mise à jour",
-        "description": "Le solde de {user} a été défini à **{amount} LC**"
+        "title": "✅ Balance Mise à Jour",
+        "description": "╔══════════════════════════════════════╗\n║ 👤 **Utilisateur** : {user}\n║ 💰 **Nouveau solde** : {amount} LC\n╚══════════════════════════════════════╝"
       }
     },
     "setinvites": {
-      "noUser": "❌ Vous devez mentionner un utilisateur! Exemple: `!setinvites @user 10`",
-      "invalidCount": "❌ Nombre invalide! Le nombre doit être un entier positif.",
+      "noUser": "╔══════════════════════════════════════╗\n║ ❌ **Utilisateur manquant**\n║ \n║ Exemple: `!setinvites @user 10`\n╚══════════════════════════════════════╝",
+      "invalidCount": "╔══════════════════════════════════════╗\n║ ❌ **Nombre invalide**\n║ \n║ Le nombre doit être un entier\n║ positif.\n╚══════════════════════════════════════╝",
       "success": {
-        "title": "✅ Invitations mises à jour",
-        "description": "Les invitations de {user} ont été définies à **{count}**"
+        "title": "✅ Invitations Mises à Jour",
+        "description": "╔══════════════════════════════════════╗\n║ 👤 **Utilisateur** : {user}\n║ 👥 **Invitations** : {count}\n╚══════════════════════════════════════╝"
       }
     }
   },
   "cadeau": {
-    "success": "🎁 Félicitations ! Vous avez récupéré 25 LC en cadeau ! Revenez demain pour un autre cadeau !",
-    "cooldown": "⏳ Désolé, vous avez déjà récupéré votre cadeau. Il vous reste {hours}h et {minutes}min avant de pouvoir réutiliser !cadeau.",
-    "error": "❌ Une erreur est survenue lors de la récupération de votre cadeau. Veuillez réessayer."
+    "success": "╔══════════════════════════════════════╗\n║ 🎁 **Cadeau quotidien récupéré!**\n║ \n║ 💰 Vous avez reçu **25 LC**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 📅 Revenez demain pour un autre\n║    cadeau!\n╚══════════════════════════════════════╝",
+    "cooldown": "╔══════════════════════════════════════╗\n║ ⏳ **Cadeau déjà récupéré**\n║ \n║ Temps restant: **{hours}h {minutes}min**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 📅 Revenez plus tard!\n╚══════════════════════════════════════╝",
+    "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Une erreur est survenue.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
   },
   "help": {
     "title": "📚 Commandes disponibles",
