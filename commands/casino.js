@@ -8,22 +8,15 @@ const activeRoues = new Map();
 const activeBlackjacks = new Map();
 
 // Helper functions for roulette colors
+const colorEmojis = { rouge: '🟥', noir: '⬛', vert: '🟩' };
+const colorNames = { rouge: 'Rouge', noir: 'Noir', vert: 'Vert' };
+
 function getColorEmoji(colorName) {
-    switch(colorName) {
-        case 'rouge': return '🟥';
-        case 'noir': return '⬛';
-        case 'vert': return '🟩';
-        default: return '⚪';
-    }
+    return colorEmojis[colorName] || '⚪';
 }
 
 function formatColor(colorName) {
-    switch(colorName) {
-        case 'rouge': return 'Rouge';
-        case 'noir': return 'Noir';
-        case 'vert': return 'Vert';
-        default: return colorName;
-    }
+    return colorNames[colorName] || colorName;
 }
 
 module.exports = {
