@@ -70,6 +70,26 @@ async function handleRoue(message, args) {
     // Deduct bet
     await db.updateBalance(playerId, -betAmount);
     
+    // Step 1: Send initial suspenseful message
+    const initialEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setDescription('🎰 **Les jeux sont faits, rien ne va plus !** 🎲')
+        .setTimestamp();
+    
+    const initialMsg = await message.reply({ embeds: [initialEmbed] });
+    
+    // Step 2: Display the GIF and add suspense for 5 seconds
+    const gifEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setDescription('🎰 **Les jeux sont faits, rien ne va plus !** 🎲')
+        .setImage('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWo2bXgxYXB0b3Rkb29lbHFpNW8yanp0a2Z2cTlpZGF4MG5rYmp4ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26uf2YTgF5upXUTm0/giphy.gif')
+        .setTimestamp();
+    
+    await initialMsg.edit({ embeds: [gifEmbed] });
+    
+    // Wait for 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
     // Spin the wheel - probabilities: Rouge (18/37), Noir (18/37), Vert (1/37)
     const random = Math.random();
     let result;
@@ -96,33 +116,43 @@ async function handleRoue(message, args) {
     // Record game
     await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', winnings);
     
-    // Build result message
+    // Helper function to get color emoji
+    const getColorEmoji = (colorName) => {
+        switch(colorName) {
+            case 'rouge': return '🟥';
+            case 'noir': return '⬛';
+            case 'vert': return '🟩';
+            default: return '⚪';
+        }
+    };
+    
+    // Helper function to format color name
+    const formatColor = (colorName) => {
+        switch(colorName) {
+            case 'rouge': return 'Rouge';
+            case 'noir': return 'Noir';
+            case 'vert': return 'Vert';
+            default: return colorName;
+        }
+    };
+    
+    // Step 3: Display the result
     let resultMessage;
     if (result === color) {
-        resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player.toString()}
-║ 💰 **Mise** : ${betAmount} LC sur ${color}
-║ 🎯 **Résultat** : ${result}
-║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-║ 🎉 **Gains** : ${winnings} LC
-╚══════════════════════════════════════╝`;
+        // Win message
+        resultMessage = `🎲 **Résultat de la roulette** 🎯 : ${getColorEmoji(result)} ${formatColor(result)}
+🎉 Félicitations, ${player.toString()}! Tu remportes **${winnings} LC !**`;
     } else {
-        resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player.toString()}
-║ 💰 **Mise** : ${betAmount} LC sur ${color}
-║ 🎯 **Résultat** : ${result}
-║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-║ 😢 **Perdu** : ${betAmount} LC
-╚══════════════════════════════════════╝`;
+        // Loss message
+        resultMessage = `😢 Désolé, ${player.toString()}... La chance n'était pas de ton côté. La couleur gagnante était 🎯 **${getColorEmoji(result)} ${formatColor(result)}**.`;
     }
     
     const resultEmbed = new EmbedBuilder()
         .setColor(result === color ? config.colors.success : config.colors.error)
-        .setTitle(getResponse('casino.roue.result.title'))
         .setDescription(resultMessage)
         .setTimestamp();
     
-    return message.reply({ embeds: [resultEmbed] });
+    return initialMsg.edit({ embeds: [resultEmbed] });
 }
 
 async function handleBlackjack(message, args) {
