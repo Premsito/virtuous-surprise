@@ -569,6 +569,10 @@ function formatDealerCards(dealerHand, hideSecondCard = true) {
 }
 
 function getRandomVariant(variants) {
+    if (!variants || !Array.isArray(variants) || variants.length === 0) {
+        console.error('getRandomVariant called with invalid variants array');
+        return '';
+    }
     return variants[Math.floor(Math.random() * variants.length)];
 }
 
