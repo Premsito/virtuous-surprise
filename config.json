@@ -29,6 +29,7 @@
       "maxBet": 500,
       "colorMultiplier": 2,
       "greenMultiplier": 14,
+      "suspenseDelay": 5000,
       "gifUrl": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWo2bXgxYXB0b3Rkb29lbHFpNW8yanp0a2Z2cTlpZGF4MG5rYmp4ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26uf2YTgF5upXUTm0/giphy.gif"
     },
     "blackjack": {

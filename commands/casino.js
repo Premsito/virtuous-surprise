@@ -7,6 +7,25 @@ const { getResponse } = require('../utils/responseHelper');
 const activeRoues = new Map();
 const activeBlackjacks = new Map();
 
+// Helper functions for roulette colors
+function getColorEmoji(colorName) {
+    switch(colorName) {
+        case 'rouge': return '🟥';
+        case 'noir': return '⬛';
+        case 'vert': return '🟩';
+        default: return '⚪';
+    }
+}
+
+function formatColor(colorName) {
+    switch(colorName) {
+        case 'rouge': return 'Rouge';
+        case 'noir': return 'Noir';
+        case 'vert': return 'Vert';
+        default: return colorName;
+    }
+}
+
 module.exports = {
     name: 'casino',
     description: 'Casino games menu and individual game commands',
@@ -70,25 +89,17 @@ async function handleRoue(message, args) {
     // Deduct bet
     await db.updateBalance(playerId, -betAmount);
     
-    // Step 1: Send initial suspenseful message
-    const initialEmbed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setDescription(getResponse('casino.roue.suspense'))
-        .setTimestamp();
-    
-    const initialMsg = await message.reply({ embeds: [initialEmbed] });
-    
-    // Step 2: Display the GIF and add suspense for 5 seconds
-    const gifEmbed = new EmbedBuilder()
+    // Step 1 & 2: Send suspenseful message with GIF
+    const suspenseEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setDescription(getResponse('casino.roue.suspense'))
         .setImage(config.games.roue.gifUrl)
         .setTimestamp();
     
-    await initialMsg.edit({ embeds: [gifEmbed] });
+    const initialMsg = await message.reply({ embeds: [suspenseEmbed] });
     
-    // Wait for 5 seconds
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Wait for suspense
+    await new Promise(resolve => setTimeout(resolve, config.games.roue.suspenseDelay));
     
     // Spin the wheel - probabilities: Rouge (18/37), Noir (18/37), Vert (1/37)
     const random = Math.random();
@@ -115,26 +126,6 @@ async function handleRoue(message, args) {
     
     // Record game
     await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', winnings);
-    
-    // Helper function to get color emoji
-    const getColorEmoji = (colorName) => {
-        switch(colorName) {
-            case 'rouge': return '🟥';
-            case 'noir': return '⬛';
-            case 'vert': return '🟩';
-            default: return '⚪';
-        }
-    };
-    
-    // Helper function to format color name
-    const formatColor = (colorName) => {
-        switch(colorName) {
-            case 'rouge': return 'Rouge';
-            case 'noir': return 'Noir';
-            case 'vert': return 'Vert';
-            default: return colorName;
-        }
-    };
     
     // Step 3: Display the result
     let resultMessage;
