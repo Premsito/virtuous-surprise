@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
-const { getResponse } = require('../utils/responseHelper');
+const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
 
 // Active games storage
 const activeRoues = new Map();
@@ -201,8 +201,8 @@ async function handleBlackjack(message, args) {
                 .setColor(config.colors.warning)
                 .setTitle(getResponse('casino.blackjack.push.title'))
                 .setDescription(getResponse('casino.blackjack.push.description', {
-                    playerHand: formatHand(playerHand),
-                    dealerHand: formatHand(dealerHand)
+                    playerHand: formatHand(playerHand, true),
+                    dealerHand: formatHand(dealerHand, true)
                 }))
                 .setTimestamp();
             
@@ -218,7 +218,7 @@ async function handleBlackjack(message, args) {
                 .setTitle(getResponse('casino.blackjack.blackjack.title'))
                 .setDescription(getResponse('casino.blackjack.blackjack.description', {
                     winnings: winnings,
-                    playerHand: formatHand(playerHand)
+                    playerHand: formatHand(playerHand, true)
                 }))
                 .setTimestamp();
             
@@ -239,9 +239,8 @@ async function handleBlackjack(message, args) {
         .setColor(config.colors.primary)
         .setTitle(getResponse('casino.blackjack.started.title'))
         .setDescription(getResponse('casino.blackjack.started.description', {
-            playerHand: formatHand(playerHand),
-            playerScore: playerScore,
-            dealerCard: formatCard(dealerFirstCard)
+            playerHand: formatHand(playerHand, true),
+            dealerCards: formatDealerCards(dealerHand, true)
         }))
         .setFooter({ text: getResponse('casino.blackjack.started.footer') })
         .setTimestamp();
@@ -294,7 +293,7 @@ async function handleBlackjackHit(message, playerId) {
             .setColor(config.colors.error)
             .setTitle(getResponse('casino.blackjack.bust.title'))
             .setDescription(getResponse('casino.blackjack.bust.description', {
-                playerHand: formatHand(game.playerHand),
+                playerHand: formatHand(game.playerHand, true),
                 playerScore: playerScore,
                 bet: game.betAmount
             }))
@@ -311,9 +310,8 @@ async function handleBlackjackHit(message, playerId) {
             .setTitle(getResponse('casino.blackjack.hit.title'))
             .setDescription(getResponse('casino.blackjack.hit.description', {
                 newCard: formatCard(newCard),
-                playerHand: formatHand(game.playerHand),
-                playerScore: playerScore,
-                dealerCard: formatCard(game.dealerHand[0])
+                playerHand: formatHand(game.playerHand, true),
+                dealerCards: formatDealerCards(game.dealerHand, true)
             }))
             .setFooter({ text: getResponse('casino.blackjack.started.footer') })
             .setTimestamp();
@@ -388,17 +386,34 @@ async function handleBlackjackStand(message, playerId) {
     await db.recordGame('blackjack', playerId, null, game.betAmount, result, winnings);
     activeBlackjacks.delete(playerId);
     
+    // Get random variant for win/loss messages
+    const responses = require('../responses.json');
+    let description;
+    
+    if (result === 'win' || result === 'loss') {
+        const variants = responses.casino.blackjack.result[result].variants;
+        const variantTemplate = getRandomVariant(variants);
+        const variant = replacePlaceholders(variantTemplate, {
+            winnings: winnings,
+            dealerScore: dealerScore
+        });
+        description = getResponse(`casino.blackjack.result.${result}.description`, {
+            playerHand: formatHand(game.playerHand, true),
+            dealerHand: formatHand(game.dealerHand, true),
+            variant: variant
+        });
+    } else {
+        description = getResponse(`casino.blackjack.result.${result}.description`, {
+            playerHand: formatHand(game.playerHand, true),
+            dealerHand: formatHand(game.dealerHand, true),
+            bet: game.betAmount
+        });
+    }
+    
     const embed = new EmbedBuilder()
         .setColor(result === 'win' ? config.colors.success : (result === 'push' ? config.colors.warning : config.colors.error))
         .setTitle(getResponse(`casino.blackjack.result.${result}.title`))
-        .setDescription(getResponse(`casino.blackjack.result.${result}.description`, {
-            playerHand: formatHand(game.playerHand),
-            playerScore: playerScore,
-            dealerHand: formatHand(game.dealerHand),
-            dealerScore: dealerScore,
-            winnings: winnings,
-            bet: game.betAmount
-        }))
+        .setDescription(description)
         .setTimestamp();
     
     return message.channel.send({ embeds: [embed] });
@@ -534,11 +549,27 @@ function calculateScore(hand) {
 }
 
 function formatCard(card) {
-    return `${card.value}${card.suit}`;
+    return `${card.suit}${card.value}`;
 }
 
-function formatHand(hand) {
-    return hand.map(formatCard).join(' ');
+function formatHand(hand, showScore = true) {
+    const cards = hand.map(formatCard).join(' ');
+    if (showScore) {
+        const score = calculateScore(hand);
+        return `${cards} (**${score} points**)`;
+    }
+    return cards;
+}
+
+function formatDealerCards(dealerHand, hideSecondCard = true) {
+    if (hideSecondCard && dealerHand.length >= 2) {
+        return `${formatCard(dealerHand[0])} 🂠`;
+    }
+    return formatHand(dealerHand, true);
+}
+
+function getRandomVariant(variants) {
+    return variants[Math.floor(Math.random() * variants.length)];
 }
 
 // Helper function for slot machine

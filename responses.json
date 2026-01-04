@@ -71,13 +71,13 @@
       "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
       "alreadyPlaying": "╔══════════════════════════════════════╗\n║ ❌ **Partie en cours**\n║ \n║ Terminez votre partie actuelle\n║ avant d'en commencer une nouvelle!\n╚══════════════════════════════════════╝",
       "started": {
-        "title": "🃏 Blackjack - Partie commencée",
-        "description": "╔══════════════════════════════════════╗\n║ 🎴 **Vos cartes** : {playerHand}\n║ 📊 **Votre score** : {playerScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎭 **Carte du croupier** : {dealerCard}\n╚══════════════════════════════════════╝",
+        "title": "🃏 Blackjack — Votre Main",
+        "description": "➤ **Cartes** : {playerHand}\n➤ **Croupier** : {dealerCards}\n\n💡 *Tapez 'tirer' pour une carte ou 'rester' pour vous arrêter*",
         "footer": "Tapez 'tirer' pour une carte ou 'rester' pour vous arrêter"
       },
       "hit": {
-        "title": "🃏 Blackjack - Nouvelle carte",
-        "description": "╔══════════════════════════════════════╗\n║ 🎴 **Nouvelle carte** : {newCard}\n║ 🎴 **Vos cartes** : {playerHand}\n║ 📊 **Votre score** : {playerScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎭 **Carte du croupier** : {dealerCard}\n╚══════════════════════════════════════╝"
+        "title": "🃏 Blackjack — Votre Main",
+        "description": "➤ **Nouvelle carte** : {newCard}\n➤ **Cartes** : {playerHand}\n➤ **Croupier** : {dealerCards}\n\n💡 *Tapez 'tirer' pour une carte ou 'rester' pour vous arrêter*"
       },
       "bust": {
         "title": "🃏 Blackjack - Perdu !",
@@ -97,16 +97,30 @@
       },
       "result": {
         "win": {
-          "title": "🃏 Blackjack - Victoire !",
-          "description": "╔══════════════════════════════════════╗\n║ 🎉 **VICTOIRE!**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💰 **Gains** : {winnings} LC\n╚══════════════════════════════════════╝"
+          "title": "🃏 Blackjack — Votre Main",
+          "variants": [
+            "🎉 *Incroyable ! Vous gagnez {winnings} LC !*",
+            "🎊 *Chance légendaire, **victoire écrasante** contre le croupier !*",
+            "🏆 *Félicitations ! Remerciez la chance pour ces **cartes parfaites**.*",
+            "✨ *Victoire brillante ! Vous remportez {winnings} LC !*",
+            "🌟 *Magnifique ! Le croupier s'incline devant votre main !*"
+          ],
+          "description": "➤ **Cartes** : {playerHand}\n➤ **Croupier** : {dealerHand}\n➤ {variant}"
         },
         "loss": {
-          "title": "🃏 Blackjack - Défaite",
-          "description": "╔══════════════════════════════════════╗\n║ 😢 **DÉFAITE**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💸 **Perdu** : {bet} LC\n╚══════════════════════════════════════╝"
+          "title": "🃏 Blackjack — Votre Main",
+          "variants": [
+            "😢 *Dommage... La chance n'était pas de votre côté.*",
+            "💔 *Le croupier vous a battu de justesse avec **{dealerScore} points** !*",
+            "🃏 *Pas de panique, la prochaine partie sera différente !*",
+            "😔 *Cette fois-ci, le croupier l'emporte...*",
+            "💨 *Si proche ! Mais le croupier a une meilleure main.*"
+          ],
+          "description": "➤ **Cartes** : {playerHand}\n➤ **Croupier** : {dealerHand}\n➤ {variant}"
         },
         "push": {
-          "title": "🃏 Blackjack - Égalité",
-          "description": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🔄 **Mise rendue** : {bet} LC\n╚══════════════════════════════════════╝"
+          "title": "🃏 Blackjack — Égalité",
+          "description": "➤ **Cartes** : {playerHand}\n➤ **Croupier** : {dealerHand}\n➤ 🤝 *Égalité parfaite ! Votre mise de {bet} LC vous est rendue.*"
         }
       }
     },
