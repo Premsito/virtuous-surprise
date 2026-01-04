@@ -7,6 +7,18 @@ const { getResponse } = require('../utils/responseHelper');
 const activeRoues = new Map();
 const activeBlackjacks = new Map();
 
+// Helper functions for roulette colors
+const colorEmojis = { rouge: '🟥', noir: '⬛', vert: '🟩' };
+const colorNames = { rouge: 'Rouge', noir: 'Noir', vert: 'Vert' };
+
+function getColorEmoji(colorName) {
+    return colorEmojis[colorName] || '⚪';
+}
+
+function formatColor(colorName) {
+    return colorNames[colorName] || colorName;
+}
+
 module.exports = {
     name: 'casino',
     description: 'Casino games menu and individual game commands',
@@ -70,6 +82,18 @@ async function handleRoue(message, args) {
     // Deduct bet
     await db.updateBalance(playerId, -betAmount);
     
+    // Step 1 & 2: Send suspenseful message with GIF
+    const suspenseEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setDescription(getResponse('casino.roue.suspense'))
+        .setImage(config.games.roue.gifUrl)
+        .setTimestamp();
+    
+    const initialMsg = await message.reply({ embeds: [suspenseEmbed] });
+    
+    // Wait for suspense
+    await new Promise(resolve => setTimeout(resolve, config.games.roue.suspenseDelay));
+    
     // Spin the wheel - probabilities: Rouge (18/37), Noir (18/37), Vert (1/37)
     const random = Math.random();
     let result;
@@ -96,33 +120,31 @@ async function handleRoue(message, args) {
     // Record game
     await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', winnings);
     
-    // Build result message
+    // Step 3: Display the result
     let resultMessage;
     if (result === color) {
-        resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player.toString()}
-║ 💰 **Mise** : ${betAmount} LC sur ${color}
-║ 🎯 **Résultat** : ${result}
-║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-║ 🎉 **Gains** : ${winnings} LC
-╚══════════════════════════════════════╝`;
+        // Win message
+        resultMessage = getResponse('casino.roue.result.win', {
+            colorEmoji: getColorEmoji(result),
+            color: formatColor(result),
+            player: player.toString(),
+            winnings: winnings
+        });
     } else {
-        resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player.toString()}
-║ 💰 **Mise** : ${betAmount} LC sur ${color}
-║ 🎯 **Résultat** : ${result}
-║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-║ 😢 **Perdu** : ${betAmount} LC
-╚══════════════════════════════════════╝`;
+        // Loss message
+        resultMessage = getResponse('casino.roue.result.loss', {
+            colorEmoji: getColorEmoji(result),
+            color: formatColor(result),
+            player: player.toString()
+        });
     }
     
     const resultEmbed = new EmbedBuilder()
         .setColor(result === color ? config.colors.success : config.colors.error)
-        .setTitle(getResponse('casino.roue.result.title'))
         .setDescription(resultMessage)
         .setTimestamp();
     
-    return message.reply({ embeds: [resultEmbed] });
+    return initialMsg.edit({ embeds: [resultEmbed] });
 }
 
 async function handleBlackjack(message, args) {

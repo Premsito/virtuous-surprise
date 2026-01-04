@@ -59,8 +59,11 @@
       "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
       "invalidColor": "╔══════════════════════════════════════╗\n║ ❌ **Couleur invalide**\n║ \n║ Choisissez: rouge, noir ou vert\n║ Exemple: `!roue 50 rouge`\n╚══════════════════════════════════════╝",
       "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "suspense": "🎰 **Les jeux sont faits, rien ne va plus !** 🎲",
       "result": {
-        "title": "🎯 Résultat de la Roue"
+        "title": "🎯 Résultat de la Roue",
+        "win": "🎲 **Résultat de la roulette** 🎯 : {colorEmoji} {color}\n🎉 Félicitations, {player}! Tu remportes **{winnings} LC !**",
+        "loss": "😢 Désolé, {player}... La chance n'était pas de ton côté. La couleur gagnante était 🎯 **{colorEmoji} {color}**."
       }
     },
     "blackjack": {
