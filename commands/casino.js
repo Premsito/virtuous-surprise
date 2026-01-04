@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const responses = require('../responses.json');
 const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
 
 // Active games storage
@@ -201,8 +202,8 @@ async function handleBlackjack(message, args) {
                 .setColor(config.colors.warning)
                 .setTitle(getResponse('casino.blackjack.push.title'))
                 .setDescription(getResponse('casino.blackjack.push.description', {
-                    playerHand: formatHand(playerHand, true),
-                    dealerHand: formatHand(dealerHand, true)
+                    playerHand: formatHand(playerHand),
+                    dealerHand: formatHand(dealerHand)
                 }))
                 .setTimestamp();
             
@@ -218,7 +219,7 @@ async function handleBlackjack(message, args) {
                 .setTitle(getResponse('casino.blackjack.blackjack.title'))
                 .setDescription(getResponse('casino.blackjack.blackjack.description', {
                     winnings: winnings,
-                    playerHand: formatHand(playerHand, true)
+                    playerHand: formatHand(playerHand)
                 }))
                 .setTimestamp();
             
@@ -239,8 +240,8 @@ async function handleBlackjack(message, args) {
         .setColor(config.colors.primary)
         .setTitle(getResponse('casino.blackjack.started.title'))
         .setDescription(getResponse('casino.blackjack.started.description', {
-            playerHand: formatHand(playerHand, true),
-            dealerCards: formatDealerCards(dealerHand, true)
+            playerHand: formatHand(playerHand),
+            dealerCards: formatDealerCards(dealerHand)
         }))
         .setFooter({ text: getResponse('casino.blackjack.started.footer') })
         .setTimestamp();
@@ -293,7 +294,7 @@ async function handleBlackjackHit(message, playerId) {
             .setColor(config.colors.error)
             .setTitle(getResponse('casino.blackjack.bust.title'))
             .setDescription(getResponse('casino.blackjack.bust.description', {
-                playerHand: formatHand(game.playerHand, true),
+                playerHand: formatHand(game.playerHand),
                 playerScore: playerScore,
                 bet: game.betAmount
             }))
@@ -310,8 +311,8 @@ async function handleBlackjackHit(message, playerId) {
             .setTitle(getResponse('casino.blackjack.hit.title'))
             .setDescription(getResponse('casino.blackjack.hit.description', {
                 newCard: formatCard(newCard),
-                playerHand: formatHand(game.playerHand, true),
-                dealerCards: formatDealerCards(game.dealerHand, true)
+                playerHand: formatHand(game.playerHand),
+                dealerCards: formatDealerCards(game.dealerHand)
             }))
             .setFooter({ text: getResponse('casino.blackjack.started.footer') })
             .setTimestamp();
@@ -387,7 +388,6 @@ async function handleBlackjackStand(message, playerId) {
     activeBlackjacks.delete(playerId);
     
     // Get random variant for win/loss messages
-    const responses = require('../responses.json');
     let description;
     
     if (result === 'win' || result === 'loss') {
@@ -398,14 +398,14 @@ async function handleBlackjackStand(message, playerId) {
             dealerScore: dealerScore
         });
         description = getResponse(`casino.blackjack.result.${result}.description`, {
-            playerHand: formatHand(game.playerHand, true),
-            dealerHand: formatHand(game.dealerHand, true),
+            playerHand: formatHand(game.playerHand),
+            dealerHand: formatHand(game.dealerHand),
             variant: variant
         });
     } else {
         description = getResponse(`casino.blackjack.result.${result}.description`, {
-            playerHand: formatHand(game.playerHand, true),
-            dealerHand: formatHand(game.dealerHand, true),
+            playerHand: formatHand(game.playerHand),
+            dealerHand: formatHand(game.dealerHand),
             bet: game.betAmount
         });
     }
