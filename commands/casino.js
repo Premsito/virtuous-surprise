@@ -96,17 +96,30 @@ async function handleRoue(message, args) {
     // Record game
     await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', winnings);
     
+    // Build result message
+    let resultMessage;
+    if (result === color) {
+        resultMessage = `╔══════════════════════════════════════╗
+║ 🎲 **Joueur** : ${player}
+║ 💰 **Mise** : ${betAmount} LC sur ${color}
+║ 🎯 **Résultat** : ${result}
+║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+║ 🎉 **Gains** : ${winnings} LC
+╚══════════════════════════════════════╝`;
+    } else {
+        resultMessage = `╔══════════════════════════════════════╗
+║ 🎲 **Joueur** : ${player}
+║ 💰 **Mise** : ${betAmount} LC sur ${color}
+║ 🎯 **Résultat** : ${result}
+║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+║ 😢 **Perdu** : ${betAmount} LC
+╚══════════════════════════════════════╝`;
+    }
+    
     const resultEmbed = new EmbedBuilder()
         .setColor(result === color ? config.colors.success : config.colors.error)
         .setTitle(getResponse('casino.roue.result.title'))
-        .setDescription(getResponse('casino.roue.result.description', {
-            player: player,
-            bet: betAmount,
-            color: color,
-            result: result,
-            winnings: winnings,
-            isWin: result === color
-        }))
+        .setDescription(resultMessage)
         .setTimestamp();
     
     return message.reply({ embeds: [resultEmbed] });
