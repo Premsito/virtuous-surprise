@@ -73,7 +73,7 @@ async function handleRoue(message, args) {
     // Step 1: Send initial suspenseful message
     const initialEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setDescription('🎰 **Les jeux sont faits, rien ne va plus !** 🎲')
+        .setDescription(getResponse('casino.roue.suspense'))
         .setTimestamp();
     
     const initialMsg = await message.reply({ embeds: [initialEmbed] });
@@ -81,8 +81,8 @@ async function handleRoue(message, args) {
     // Step 2: Display the GIF and add suspense for 5 seconds
     const gifEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setDescription('🎰 **Les jeux sont faits, rien ne va plus !** 🎲')
-        .setImage('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWo2bXgxYXB0b3Rkb29lbHFpNW8yanp0a2Z2cTlpZGF4MG5rYmp4ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26uf2YTgF5upXUTm0/giphy.gif')
+        .setDescription(getResponse('casino.roue.suspense'))
+        .setImage(config.games.roue.gifUrl)
         .setTimestamp();
     
     await initialMsg.edit({ embeds: [gifEmbed] });
@@ -140,11 +140,19 @@ async function handleRoue(message, args) {
     let resultMessage;
     if (result === color) {
         // Win message
-        resultMessage = `🎲 **Résultat de la roulette** 🎯 : ${getColorEmoji(result)} ${formatColor(result)}
-🎉 Félicitations, ${player.toString()}! Tu remportes **${winnings} LC !**`;
+        resultMessage = getResponse('casino.roue.result.win', {
+            colorEmoji: getColorEmoji(result),
+            color: formatColor(result),
+            player: player.toString(),
+            winnings: winnings
+        });
     } else {
         // Loss message
-        resultMessage = `😢 Désolé, ${player.toString()}... La chance n'était pas de ton côté. La couleur gagnante était 🎯 **${getColorEmoji(result)} ${formatColor(result)}**.`;
+        resultMessage = getResponse('casino.roue.result.loss', {
+            colorEmoji: getColorEmoji(result),
+            color: formatColor(result),
+            player: player.toString()
+        });
     }
     
     const resultEmbed = new EmbedBuilder()
