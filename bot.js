@@ -33,6 +33,7 @@ const jeuCommand = require('./commands/jeu');
 const moderationCommand = require('./commands/moderation');
 const statsCommand = require('./commands/stats');
 const cadeauCommand = require('./commands/cadeau');
+const casinoCommand = require('./commands/casino');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -40,6 +41,7 @@ client.commands.set(jeuCommand.name, jeuCommand);
 client.commands.set(moderationCommand.name, moderationCommand);
 client.commands.set(statsCommand.name, statsCommand);
 client.commands.set(cadeauCommand.name, cadeauCommand);
+client.commands.set(casinoCommand.name, casinoCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -356,6 +358,18 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'cadeau') {
             const command = client.commands.get('cadeau');
             await command.execute(message, args);
+        } else if (commandName === 'casino') {
+            const command = client.commands.get('casino');
+            await command.execute(message, args);
+        } else if (commandName === 'roue') {
+            const command = client.commands.get('casino');
+            await command.handleRoue(message, args);
+        } else if (commandName === 'bj') {
+            const command = client.commands.get('casino');
+            await command.handleBlackjack(message, args);
+        } else if (commandName === 'machine') {
+            const command = client.commands.get('casino');
+            await command.handleMachine(message, args);
         } else if (commandName === 'setlc') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setlc');
@@ -402,6 +416,11 @@ async function showHelp(message) {
             {
                 name: getResponse('help.sections.games.title'),
                 value: getResponse('help.sections.games.commands'),
+                inline: false
+            },
+            {
+                name: getResponse('help.sections.casino.title'),
+                value: getResponse('help.sections.casino.commands'),
                 inline: false
             },
             {
