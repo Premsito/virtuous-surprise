@@ -23,6 +23,22 @@
       "maxBet": 500,
       "waitTime": 30000,
       "winMultiplier": 2
+    },
+    "roue": {
+      "minBet": 10,
+      "maxBet": 500,
+      "colorMultiplier": 2,
+      "greenMultiplier": 35
+    },
+    "blackjack": {
+      "minBet": 10,
+      "maxBet": 1000,
+      "winMultiplier": 2,
+      "blackjackMultiplier": 2.5
+    },
+    "machine": {
+      "minBet": 5,
+      "maxBet": 250
     }
   },
   "colors": {

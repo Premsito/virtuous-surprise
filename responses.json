@@ -50,6 +50,75 @@
     "noStats": "❌ Aucune statistique disponible pour cet utilisateur.",
     "notAvailable": "N/A"
   },
+  "casino": {
+    "menu": {
+      "title": "🎰 Bienvenue au Casino Virtuel !",
+      "description": "Explorez les jeux disponibles et tentez votre chance :\n\n1️⃣ **!roue** : Jouez à la roulette 🎯\n   *Pariez sur une couleur (Rouge, Noir ou Vert) pour gagner gros !*\n\n2️⃣ **!bj** : Jouez au Blackjack 🃏\n   *Affrontez le croupier : obtenez 21 points pour gagner !*\n\n3️⃣ **!machine** : Essayez la machine à sous 🎰\n   *Misez pour des gains aléatoires. Jackpot possible !*\n\nUtilisez une des commandes ci-dessus pour commencer votre expérience au casino 🌟."
+    },
+    "roue": {
+      "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+      "invalidColor": "╔══════════════════════════════════════╗\n║ ❌ **Couleur invalide**\n║ \n║ Choisissez: rouge, noir ou vert\n║ Exemple: `!roue 50 rouge`\n╚══════════════════════════════════════╝",
+      "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "result": {
+        "title": "🎯 Résultat de la Roue",
+        "description": "╔══════════════════════════════════════╗\n║ 🎲 **Joueur** : {player}\n║ 💰 **Mise** : {bet} LC sur {color}\n║ 🎯 **Résultat** : {result}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ {isWin, select, true {🎉 **Gains** : {winnings} LC} other {😢 **Perdu** : {bet} LC}}\n╚══════════════════════════════════════╝"
+      }
+    },
+    "blackjack": {
+      "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+      "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "alreadyPlaying": "╔══════════════════════════════════════╗\n║ ❌ **Partie en cours**\n║ \n║ Terminez votre partie actuelle\n║ avant d'en commencer une nouvelle!\n╚══════════════════════════════════════╝",
+      "started": {
+        "title": "🃏 Blackjack - Partie commencée",
+        "description": "╔══════════════════════════════════════╗\n║ 🎴 **Vos cartes** : {playerHand}\n║ 📊 **Votre score** : {playerScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎭 **Carte du croupier** : {dealerCard}\n╚══════════════════════════════════════╝",
+        "footer": "Tapez 'tirer' pour une carte ou 'rester' pour vous arrêter"
+      },
+      "hit": {
+        "title": "🃏 Blackjack - Nouvelle carte",
+        "description": "╔══════════════════════════════════════╗\n║ 🎴 **Nouvelle carte** : {newCard}\n║ 🎴 **Vos cartes** : {playerHand}\n║ 📊 **Votre score** : {playerScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎭 **Carte du croupier** : {dealerCard}\n╚══════════════════════════════════════╝"
+      },
+      "bust": {
+        "title": "🃏 Blackjack - Perdu !",
+        "description": "╔══════════════════════════════════════╗\n║ 💥 **BUST!** Score trop élevé!\n║ 🎴 **Vos cartes** : {playerHand}\n║ 📊 **Votre score** : {playerScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 😢 **Perdu** : {bet} LC\n╚══════════════════════════════════════╝"
+      },
+      "blackjack": {
+        "title": "🃏 Blackjack - BLACKJACK !",
+        "description": "╔══════════════════════════════════════╗\n║ 🎉 **BLACKJACK!** 21 points!\n║ 🎴 **Vos cartes** : {playerHand}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎊 **Gains** : {winnings} LC\n╚══════════════════════════════════════╝"
+      },
+      "push": {
+        "title": "🃏 Blackjack - Égalité",
+        "description": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ!**\n║ 🎴 **Vos cartes** : {playerHand}\n║ 🎭 **Cartes croupier** : {dealerHand}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🔄 **Mise rendue**\n╚══════════════════════════════════════╝"
+      },
+      "timeout": {
+        "title": "🃏 Blackjack - Temps écoulé",
+        "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Vous n'avez pas répondu à temps.\n║ La mise est perdue.\n╚══════════════════════════════════════╝"
+      },
+      "result": {
+        "win": {
+          "title": "🃏 Blackjack - Victoire !",
+          "description": "╔══════════════════════════════════════╗\n║ 🎉 **VICTOIRE!**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💰 **Gains** : {winnings} LC\n╚══════════════════════════════════════╝"
+        },
+        "loss": {
+          "title": "🃏 Blackjack - Défaite",
+          "description": "╔══════════════════════════════════════╗\n║ 😢 **DÉFAITE**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💸 **Perdu** : {bet} LC\n╚══════════════════════════════════════╝"
+        },
+        "push": {
+          "title": "🃏 Blackjack - Égalité",
+          "description": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ**\n║ 🎴 **Vos cartes** : {playerHand} ({playerScore})\n║ 🎭 **Croupier** : {dealerHand} ({dealerScore})\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🔄 **Mise rendue** : {bet} LC\n╚══════════════════════════════════════╝"
+        }
+      }
+    },
+    "machine": {
+      "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+      "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "result": {
+        "title": "🎰 Machine à sous",
+        "jackpot": "╔══════════════════════════════════════╗\n║ 🎰 **Résultat** : {reel1} {reel2} {reel3}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎊 **JACKPOT!** Trois symboles!\n║ 💰 **Mise** : {bet} LC\n║ 💎 **Gains** : {winnings} LC (x{multiplier})\n╚══════════════════════════════════════╝",
+        "match": "╔══════════════════════════════════════╗\n║ 🎰 **Résultat** : {reel1} {reel2} {reel3}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🎉 **Deux symboles!**\n║ 💰 **Mise** : {bet} LC\n║ 💵 **Gains** : {winnings} LC (x{multiplier})\n╚══════════════════════════════════════╝",
+        "loss": "╔══════════════════════════════════════╗\n║ 🎰 **Résultat** : {reel1} {reel2} {reel3}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 😢 **Aucun gain**\n║ 💸 **Perdu** : {bet} LC\n╚══════════════════════════════════════╝"
+      }
+    }
+  },
   "games": {
     "list": {
       "title": "🎮 Jeux Disponibles",
@@ -135,6 +204,10 @@
       "games": {
         "title": "🎮 Jeux",
         "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette"
+      },
+      "casino": {
+        "title": "🎰 Casino",
+        "commands": "`{prefix}casino` - Menu du casino\n`{prefix}roue [montant] [couleur]` - Roulette (rouge/noir/vert)\n`{prefix}bj [montant]` - Blackjack\n`{prefix}machine [montant]` - Machine à sous"
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",
