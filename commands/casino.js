@@ -100,7 +100,7 @@ async function handleRoue(message, args) {
     let resultMessage;
     if (result === color) {
         resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player}
+║ 🎲 **Joueur** : ${player.toString()}
 ║ 💰 **Mise** : ${betAmount} LC sur ${color}
 ║ 🎯 **Résultat** : ${result}
 ║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -108,7 +108,7 @@ async function handleRoue(message, args) {
 ╚══════════════════════════════════════╝`;
     } else {
         resultMessage = `╔══════════════════════════════════════╗
-║ 🎲 **Joueur** : ${player}
+║ 🎲 **Joueur** : ${player.toString()}
 ║ 💰 **Mise** : ${betAmount} LC sur ${color}
 ║ 🎯 **Résultat** : ${result}
 ║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -195,7 +195,6 @@ async function handleBlackjack(message, args) {
                 .setColor(config.colors.success)
                 .setTitle(getResponse('casino.blackjack.blackjack.title'))
                 .setDescription(getResponse('casino.blackjack.blackjack.description', {
-                    player: player,
                     winnings: winnings,
                     playerHand: formatHand(playerHand)
                 }))
@@ -371,7 +370,6 @@ async function handleBlackjackStand(message, playerId) {
         .setColor(result === 'win' ? config.colors.success : (result === 'push' ? config.colors.warning : config.colors.error))
         .setTitle(getResponse(`casino.blackjack.result.${result}.title`))
         .setDescription(getResponse(`casino.blackjack.result.${result}.description`, {
-            player: player,
             playerHand: formatHand(game.playerHand),
             playerScore: playerScore,
             dealerHand: formatHand(game.dealerHand),
@@ -416,6 +414,8 @@ async function handleMachine(message, args) {
     // Slot symbols
     const symbols = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎', '7️⃣'];
     const weights = [30, 25, 20, 15, 5, 3, 2]; // Higher weight = more common
+    // Symbol multipliers for three-of-a-kind (corresponds to symbols array)
+    const symbolMultipliers = [2, 3, 5, 10, 20, 50, 100];
     
     // Spin the reels
     const reel1 = weightedRandom(symbols, weights);
@@ -430,8 +430,7 @@ async function handleMachine(message, args) {
         // Three of a kind
         winType = 'jackpot';
         const symbolIndex = symbols.indexOf(reel1);
-        // Better symbols = higher payout
-        multiplier = [2, 3, 5, 10, 20, 50, 100][symbolIndex];
+        multiplier = symbolMultipliers[symbolIndex];
     } else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) {
         // Two of a kind
         winType = 'match';
@@ -451,7 +450,6 @@ async function handleMachine(message, args) {
         .setColor(winnings > 0 ? config.colors.success : config.colors.error)
         .setTitle(getResponse('casino.machine.result.title'))
         .setDescription(getResponse(`casino.machine.result.${winType}`, {
-            player: player,
             reel1: reel1,
             reel2: reel2,
             reel3: reel3,
