@@ -25,6 +25,8 @@ module.exports = {
             case 'jackpot':
             case 'info':
                 return handleJackpot(message);
+            case 'setjackpot':
+                return handleSetJackpot(message, args.slice(1));
             default:
                 return message.reply(getResponse('loto.invalidCommand'));
         }
@@ -158,6 +160,31 @@ async function handleJackpot(message) {
         return message.reply({ embeds: [embed] });
     } catch (error) {
         console.error('Error getting lottery jackpot:', error);
+        return message.reply(getResponse('loto.error'));
+    }
+}
+
+async function handleSetJackpot(message, args) {
+    // Check if user has administrator permission
+    if (!message.member.permissions.has('Administrator')) {
+        return message.reply(getResponse('loto.setjackpot.noPermission'));
+    }
+    
+    const amount = parseInt(args[0]);
+    
+    // Validate amount
+    if (!amount || amount < 0 || isNaN(amount)) {
+        return message.reply(getResponse('loto.setjackpot.invalidAmount'));
+    }
+    
+    try {
+        // Update the jackpot amount
+        await db.setLotteryJackpot(amount);
+        
+        // Send confirmation message
+        return message.reply(getResponse('loto.setjackpot.success', { amount }));
+    } catch (error) {
+        console.error('Error setting lottery jackpot:', error);
         return message.reply(getResponse('loto.error'));
     }
 }

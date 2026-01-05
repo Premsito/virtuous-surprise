@@ -231,6 +231,11 @@
         "resetInfo": "\n\n🎟 **Nouvelle loterie** : Le jack-pot redémarre à {baseJackpot} LC.\n➤ **Prochain tirage : {nextDrawTime}** ⏰"
       }
     },
+    "setjackpot": {
+      "success": "🔧 **Jackpot mis à jour !**\n➤ 💰 Nouveau montant de départ : **{amount} LC**",
+      "noPermission": "❌ Vous n'avez pas les permissions nécessaires pour modifier le jackpot !",
+      "invalidAmount": "❌ Veuillez spécifier un montant valide pour le jackpot."
+    },
     "invalidCommand": "❌ Commande invalide. Utilisez:\n• `!loto acheter [nombre]` - Acheter des tickets\n• `!loto voir` - Voir vos tickets\n• `!loto jackpot` - Voir le jackpot actuel",
     "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Une erreur est survenue.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
   },
@@ -260,7 +265,7 @@
       },
       "loto": {
         "title": "🎟 Loterie",
-        "commands": "`{prefix}loto acheter [nombre]` - Acheter des tickets\n`{prefix}loto voir` - Voir vos tickets\n`{prefix}loto jackpot` - Voir le jackpot actuel"
+        "commands": "`{prefix}loto acheter [nombre]` - Acheter des tickets\n`{prefix}loto voir` - Voir vos tickets\n`{prefix}loto jackpot` - Voir le jackpot actuel\n`{prefix}loto setjackpot [montant]` - (Admin) Définir le jackpot"
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",

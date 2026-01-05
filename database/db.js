@@ -224,6 +224,14 @@ const db = {
         return result.rows[0];
     },
 
+    async setLotteryJackpot(amount) {
+        const result = await pool.query(
+            'UPDATE lottery_state SET jackpot = $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1 RETURNING *',
+            [amount]
+        );
+        return result.rows[0];
+    },
+
     async incrementTicketsSold(count = 1) {
         const result = await pool.query(
             'UPDATE lottery_state SET total_tickets_sold = total_tickets_sold + $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1 RETURNING *',
