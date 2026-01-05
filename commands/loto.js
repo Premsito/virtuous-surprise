@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
@@ -166,14 +166,14 @@ async function handleJackpot(message) {
 
 async function handleSetJackpot(message, args) {
     // Check if user has administrator permission
-    if (!message.member.permissions.has('Administrator')) {
+    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return message.reply(getResponse('loto.setjackpot.noPermission'));
     }
     
     const amount = parseInt(args[0]);
     
     // Validate amount
-    if (!amount || amount < 0 || isNaN(amount)) {
+    if (isNaN(amount) || amount < 0) {
         return message.reply(getResponse('loto.setjackpot.invalidAmount'));
     }
     
