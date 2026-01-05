@@ -237,11 +237,14 @@ const db = {
         try {
             await client.query('BEGIN');
 
-            // Get current total tickets to assign numbers
-            const stateResult = await client.query('SELECT total_tickets_sold FROM lottery_state WHERE id = 1');
+            // Lock the lottery_state row and get current total tickets to assign numbers
+            // SELECT FOR UPDATE ensures only one transaction can read/update at a time
+            const stateResult = await client.query(
+                'SELECT total_tickets_sold FROM lottery_state WHERE id = 1 FOR UPDATE'
+            );
             const currentTotal = stateResult.rows[0].total_tickets_sold;
 
-            // Insert tickets
+            // Insert tickets with sequential numbers
             const tickets = [];
             for (let i = 0; i < count; i++) {
                 const ticketNumber = currentTotal + i + 1;
@@ -251,6 +254,18 @@ const db = {
                 );
                 tickets.push(ticketNumber);
             }
+            
+            // Update total tickets sold within the same transaction
+            await client.query(
+                'UPDATE lottery_state SET total_tickets_sold = total_tickets_sold + $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+                [count]
+            );
+            
+            // Update jackpot within the same transaction
+            await client.query(
+                'UPDATE lottery_state SET jackpot = jackpot + $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+                [count * 20] // ticketIncrement
+            );
 
             await client.query('COMMIT');
             return tickets;

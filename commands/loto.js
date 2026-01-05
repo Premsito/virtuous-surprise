@@ -70,14 +70,8 @@ async function handlePurchase(message, args) {
         // Deduct balance
         await db.updateBalance(playerId, -totalCost);
         
-        // Purchase tickets
+        // Purchase tickets (this now also updates jackpot and ticket count in a single transaction)
         const tickets = await db.purchaseLotteryTickets(playerId, count, drawTime);
-        
-        // Update jackpot (add ticket price to jackpot)
-        await db.updateLotteryJackpot(count * config.games.loto.ticketIncrement);
-        
-        // Increment tickets sold
-        await db.incrementTicketsSold(count);
         
         // Record transaction
         await db.recordTransaction(playerId, null, totalCost, 'lottery_purchase', `Achat de ${count} ticket(s) de loterie`);
@@ -231,43 +225,51 @@ async function performDraw(client) {
         const suspenseMessages = getResponse('loto.draw.suspense');
         const randomSuspense = suspenseMessages[Math.floor(Math.random() * suspenseMessages.length)];
         
-        // Find a general channel to announce (you can configure this)
-        const guild = client.guilds.cache.first();
-        if (guild) {
-            const channel = guild.channels.cache.find(ch => ch.name === 'général' || ch.name === 'general') 
-                || guild.channels.cache.find(ch => ch.type === 0); // First text channel
-            
-            if (channel) {
-                const suspenseEmbed = new EmbedBuilder()
-                    .setColor(config.colors.primary)
-                    .setDescription(randomSuspense)
-                    .setImage(config.games.loto.gifUrl)
-                    .setTimestamp();
-                
-                await channel.send({ embeds: [suspenseEmbed] });
-                
-                // Wait for suspense
-                await new Promise(resolve => setTimeout(resolve, config.games.loto.suspenseDelay));
-                
-                // Announce winner
-                const nextDrawTime = getNextDrawTime();
-                const nextDrawTimeStr = `<t:${Math.floor(nextDrawTime.getTime() / 1000)}:F>`;
-                
-                const resultEmbed = new EmbedBuilder()
-                    .setColor(config.colors.success)
-                    .setTitle(getResponse('loto.draw.result.title'))
-                    .setDescription(getResponse('loto.draw.result.winner', {
-                        jackpot,
-                        winningNumber: winningTicket,
-                        winner: winnerMention
-                    }) + getResponse('loto.draw.result.resetInfo', {
-                        baseJackpot: config.games.loto.baseJackpot,
-                        nextDrawTime: nextDrawTimeStr
-                    }))
-                    .setTimestamp();
-                
-                await channel.send({ embeds: [resultEmbed] });
+        // Get configured announcement channel
+        const announcementChannelId = config.channels.lotteryAnnouncement;
+        if (!announcementChannelId) {
+            console.error('No lottery announcement channel configured');
+            return;
+        }
+        
+        try {
+            const channel = await client.channels.fetch(announcementChannelId);
+            if (!channel) {
+                console.error('Failed to find lottery announcement channel');
+                return;
             }
+            
+            const suspenseEmbed = new EmbedBuilder()
+                .setColor(config.colors.primary)
+                .setDescription(randomSuspense)
+                .setImage(config.games.loto.gifUrl)
+                .setTimestamp();
+            
+            await channel.send({ embeds: [suspenseEmbed] });
+            
+            // Wait for suspense
+            await new Promise(resolve => setTimeout(resolve, config.games.loto.suspenseDelay));
+            
+            // Announce winner
+            const nextDrawTime = getNextDrawTime();
+            const nextDrawTimeStr = `<t:${Math.floor(nextDrawTime.getTime() / 1000)}:F>`;
+            
+            const resultEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('loto.draw.result.title'))
+                .setDescription(getResponse('loto.draw.result.winner', {
+                    jackpot,
+                    winningNumber: winningTicket,
+                    winner: winnerMention
+                }) + getResponse('loto.draw.result.resetInfo', {
+                    baseJackpot: config.games.loto.baseJackpot,
+                    nextDrawTime: nextDrawTimeStr
+                }))
+                .setTimestamp();
+            
+            await channel.send({ embeds: [resultEmbed] });
+        } catch (error) {
+            console.error('Error sending lottery announcement:', error);
         }
         
         // Reset lottery for next week
@@ -285,11 +287,12 @@ function getNextDrawTime() {
     const now = new Date();
     const nextDraw = new Date();
     
-    // Set to configured time
+    // Set to configured time (20:00 on Sundays)
     nextDraw.setHours(config.games.loto.drawHour, config.games.loto.drawMinute, 0, 0);
     
     // Calculate days until next Sunday (0 = Sunday)
-    const daysUntilSunday = (7 - now.getDay() + config.games.loto.drawDay) % 7;
+    // Note: drawDay is hardcoded to 0 (Sunday) in requirements
+    const daysUntilSunday = (7 - now.getDay()) % 7;
     
     // If today is Sunday and the time hasn't passed, use today; otherwise next Sunday
     if (daysUntilSunday === 0 && now < nextDraw) {

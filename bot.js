@@ -100,10 +100,41 @@ client.once('clientReady', async () => {
             console.log(`✅ Cached invites for guild: ${guild.name}`);
         }
         
-        // Start lottery draw checker (check every minute)
-        setInterval(() => {
-            lotoCommand.checkDrawTime(client);
-        }, 60000); // Check every minute
+        // Start lottery draw checker with smart scheduling
+        async function scheduleLotteryCheck() {
+            try {
+                const lotteryState = await db.getLotteryState();
+                if (lotteryState) {
+                    const now = new Date();
+                    const drawTime = new Date(lotteryState.next_draw_time);
+                    const msUntilDraw = drawTime.getTime() - now.getTime();
+                    
+                    // If draw time has passed, check immediately
+                    if (msUntilDraw <= 0) {
+                        await lotoCommand.checkDrawTime(client);
+                        // Reschedule for next draw
+                        setTimeout(scheduleLotteryCheck, 60000);
+                    } else if (msUntilDraw < 60000) {
+                        // If less than 1 minute away, wait and then check
+                        setTimeout(async () => {
+                            await lotoCommand.checkDrawTime(client);
+                            scheduleLotteryCheck();
+                        }, msUntilDraw + 1000);
+                    } else {
+                        // Otherwise, check in 1 hour or when close to draw time
+                        const checkInterval = Math.min(msUntilDraw - 60000, 3600000); // Check 1 minute before or every hour
+                        setTimeout(scheduleLotteryCheck, checkInterval);
+                    }
+                }
+            } catch (error) {
+                console.error('Error scheduling lottery check:', error);
+                // Retry in 1 minute on error
+                setTimeout(scheduleLotteryCheck, 60000);
+            }
+        }
+        
+        // Start the lottery scheduler
+        scheduleLotteryCheck();
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {
