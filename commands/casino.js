@@ -1,7 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
-const { getResponse } = require('../utils/responseHelper');
+const responses = require('../responses.json');
+const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
 
 // Active games storage
 const activeRoues = new Map();
@@ -240,8 +241,7 @@ async function handleBlackjack(message, args) {
         .setTitle(getResponse('casino.blackjack.started.title'))
         .setDescription(getResponse('casino.blackjack.started.description', {
             playerHand: formatHand(playerHand),
-            playerScore: playerScore,
-            dealerCard: formatCard(dealerFirstCard)
+            dealerCards: formatDealerCards(dealerHand)
         }))
         .setFooter({ text: getResponse('casino.blackjack.started.footer') })
         .setTimestamp();
@@ -312,8 +312,7 @@ async function handleBlackjackHit(message, playerId) {
             .setDescription(getResponse('casino.blackjack.hit.description', {
                 newCard: formatCard(newCard),
                 playerHand: formatHand(game.playerHand),
-                playerScore: playerScore,
-                dealerCard: formatCard(game.dealerHand[0])
+                dealerCards: formatDealerCards(game.dealerHand)
             }))
             .setFooter({ text: getResponse('casino.blackjack.started.footer') })
             .setTimestamp();
@@ -388,17 +387,33 @@ async function handleBlackjackStand(message, playerId) {
     await db.recordGame('blackjack', playerId, null, game.betAmount, result, winnings);
     activeBlackjacks.delete(playerId);
     
+    // Get random variant for win/loss messages
+    let description;
+    
+    if (result === 'win' || result === 'loss') {
+        const variants = responses.casino.blackjack.result[result].variants;
+        const variantTemplate = getRandomVariant(variants);
+        const variant = replacePlaceholders(variantTemplate, {
+            winnings: winnings,
+            dealerScore: dealerScore
+        });
+        description = getResponse(`casino.blackjack.result.${result}.description`, {
+            playerHand: formatHand(game.playerHand),
+            dealerHand: formatHand(game.dealerHand),
+            variant: variant
+        });
+    } else {
+        description = getResponse(`casino.blackjack.result.${result}.description`, {
+            playerHand: formatHand(game.playerHand),
+            dealerHand: formatHand(game.dealerHand),
+            bet: game.betAmount
+        });
+    }
+    
     const embed = new EmbedBuilder()
         .setColor(result === 'win' ? config.colors.success : (result === 'push' ? config.colors.warning : config.colors.error))
         .setTitle(getResponse(`casino.blackjack.result.${result}.title`))
-        .setDescription(getResponse(`casino.blackjack.result.${result}.description`, {
-            playerHand: formatHand(game.playerHand),
-            playerScore: playerScore,
-            dealerHand: formatHand(game.dealerHand),
-            dealerScore: dealerScore,
-            winnings: winnings,
-            bet: game.betAmount
-        }))
+        .setDescription(description)
         .setTimestamp();
     
     return message.channel.send({ embeds: [embed] });
@@ -534,11 +549,31 @@ function calculateScore(hand) {
 }
 
 function formatCard(card) {
-    return `${card.value}${card.suit}`;
+    return `${card.suit}${card.value}`;
 }
 
-function formatHand(hand) {
-    return hand.map(formatCard).join(' ');
+function formatHand(hand, showScore = true) {
+    const cards = hand.map(formatCard).join(' ');
+    if (showScore) {
+        const score = calculateScore(hand);
+        return `${cards} (**${score} points**)`;
+    }
+    return cards;
+}
+
+function formatDealerCards(dealerHand, hideSecondCard = true) {
+    if (hideSecondCard && dealerHand.length >= 2) {
+        return `${formatCard(dealerHand[0])} 🂠`;
+    }
+    return formatHand(dealerHand, true);
+}
+
+function getRandomVariant(variants) {
+    if (!variants || !Array.isArray(variants) || variants.length === 0) {
+        console.error('getRandomVariant called with invalid variants array');
+        return '';
+    }
+    return variants[Math.floor(Math.random() * variants.length)];
 }
 
 // Helper function for slot machine
