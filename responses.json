@@ -201,6 +201,39 @@
     "cooldown": "╔══════════════════════════════════════╗\n║ ⏳ **Cadeau déjà récupéré**\n║ \n║ Temps restant: **{hours}h {minutes}min**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 📅 Revenez plus tard!\n╚══════════════════════════════════════╝",
     "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Une erreur est survenue.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
   },
+  "loto": {
+    "purchase": {
+      "invalidAmount": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Veuillez spécifier un nombre valide\n║ de tickets à acheter.\n║ Exemple: `!loto acheter 5`\n╚══════════════════════════════════════╝",
+      "insufficientBalance": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Prix total: **{totalCost} LC**\n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+      "success": "🎟 **Tickets achetés** :\n➤ {player}, vous avez acheté **{count} ticket(s)** ({cost} LC). Bonne chance pour le tirage ! 🍀"
+    },
+    "view": {
+      "title": "🎟 Vos Tickets de Loterie",
+      "noTickets": "╔══════════════════════════════════════╗\n║ ❌ **Aucun ticket**\n║ \n║ Vous n'avez pas de tickets pour le\n║ prochain tirage.\n║ \n║ Achetez-en avec:\n║ `!loto acheter [nombre]`\n╚══════════════════════════════════════╝",
+      "description": "➤ Vous avez **{count} ticket(s)** pour le prochain tirage.\n➤ **Numéros** : {numbers}\n➤ **Prochain tirage** : {drawTime}"
+    },
+    "jackpot": {
+      "title": "🎟 **Loterie Hebdomadaire — Participer pour 20 LC** 🎲",
+      "description": "🌟 Jack-Pot actuel : **{jackpot} LC 💰**\n➤ **Prochain tirage : {drawTime}** ⏰\n➤ **Pour participer :** Utilisez `!loto acheter [nombre]` ! 🎯\n🎉 *Plus vous achetez de tickets, plus vous avez de chances de gagner !*"
+    },
+    "draw": {
+      "suspense": [
+        "🌟 Le tirage de votre vie commence... 🌟",
+        "🎯 Les numéros s'alignent... Patience !",
+        "🎰 La roue de la fortune tourne...",
+        "✨ Le moment de vérité approche...",
+        "🔮 Le destin se décide..."
+      ],
+      "result": {
+        "title": "🎰 **Tirage de la Loterie !** 🎟",
+        "noTickets": "➤ Aucun ticket n'a été vendu pour ce tirage.",
+        "winner": "➤ Le jack-pot était **{jackpot} LC 💰**\n➤ Le **numéro tiré est... 🎯 {winningNumber}**.\n🏆 **Félicitations : {winner} ! Tu remportes tout 🎉**",
+        "resetInfo": "\n\n🎟 **Nouvelle loterie** : Le jack-pot redémarre à {baseJackpot} LC.\n➤ **Prochain tirage : {nextDrawTime}** ⏰"
+      }
+    },
+    "invalidCommand": "❌ Commande invalide. Utilisez:\n• `!loto acheter [nombre]` - Acheter des tickets\n• `!loto voir` - Voir vos tickets\n• `!loto jackpot` - Voir le jackpot actuel",
+    "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Une erreur est survenue.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
+  },
   "help": {
     "title": "📚 Commandes disponibles",
     "description": "Voici toutes les commandes disponibles:",
@@ -224,6 +257,10 @@
       "casino": {
         "title": "🎰 Casino",
         "commands": "`{prefix}casino` - Menu du casino\n`{prefix}roue [montant] [couleur]` - Roulette (rouge/noir/vert)\n`{prefix}bj [montant]` - Blackjack\n`{prefix}machine [montant]` - Machine à sous"
+      },
+      "loto": {
+        "title": "🎟 Loterie",
+        "commands": "`{prefix}loto acheter [nombre]` - Acheter des tickets\n`{prefix}loto voir` - Voir vos tickets\n`{prefix}loto jackpot` - Voir le jackpot actuel"
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",

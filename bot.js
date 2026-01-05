@@ -34,6 +34,7 @@ const moderationCommand = require('./commands/moderation');
 const statsCommand = require('./commands/stats');
 const cadeauCommand = require('./commands/cadeau');
 const casinoCommand = require('./commands/casino');
+const lotoCommand = require('./commands/loto');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -42,6 +43,7 @@ client.commands.set(moderationCommand.name, moderationCommand);
 client.commands.set(statsCommand.name, statsCommand);
 client.commands.set(cadeauCommand.name, cadeauCommand);
 client.commands.set(casinoCommand.name, casinoCommand);
+client.commands.set(lotoCommand.name, lotoCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -97,6 +99,42 @@ client.once('clientReady', async () => {
             invites.set(guild.id, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
             console.log(`✅ Cached invites for guild: ${guild.name}`);
         }
+        
+        // Start lottery draw checker with smart scheduling
+        async function scheduleLotteryCheck() {
+            try {
+                const lotteryState = await db.getLotteryState();
+                if (lotteryState) {
+                    const now = new Date();
+                    const drawTime = new Date(lotteryState.next_draw_time);
+                    const msUntilDraw = drawTime.getTime() - now.getTime();
+                    
+                    // If draw time has passed, check immediately
+                    if (msUntilDraw <= 0) {
+                        await lotoCommand.checkDrawTime(client);
+                        // Reschedule for next draw
+                        setTimeout(scheduleLotteryCheck, 60000);
+                    } else if (msUntilDraw < 60000) {
+                        // If less than 1 minute away, wait and then check
+                        setTimeout(async () => {
+                            await lotoCommand.checkDrawTime(client);
+                            scheduleLotteryCheck();
+                        }, msUntilDraw + 1000);
+                    } else {
+                        // Otherwise, check in 1 hour or when close to draw time
+                        const checkInterval = Math.min(msUntilDraw - 60000, 3600000); // Check 1 minute before or every hour
+                        setTimeout(scheduleLotteryCheck, checkInterval);
+                    }
+                }
+            } catch (error) {
+                console.error('Error scheduling lottery check:', error);
+                // Retry in 1 minute on error
+                setTimeout(scheduleLotteryCheck, 60000);
+            }
+        }
+        
+        // Start the lottery scheduler
+        scheduleLotteryCheck();
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {
@@ -381,6 +419,9 @@ client.on('messageCreate', async (message) => {
             await invitesCommand.handleTopInvites(message, args);
         } else if (commandName === 'stats') {
             const command = client.commands.get('stats');
+            await command.execute(message, args);
+        } else if (commandName === 'loto') {
+            const command = client.commands.get('loto');
             await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);

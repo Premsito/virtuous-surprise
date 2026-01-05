@@ -7,7 +7,8 @@
     "initialBalance": 25
   },
   "channels": {
-    "inviteTracker": "1455345486071463936"
+    "inviteTracker": "1455345486071463936",
+    "lotteryAnnouncement": "1455345486071463936"
   },
   "emotes": {
     "invitePeople": "Invite_People",
@@ -41,6 +42,16 @@
     "machine": {
       "minBet": 5,
       "maxBet": 250
+    },
+    "loto": {
+      "ticketPrice": 20,
+      "baseJackpot": 10000,
+      "ticketIncrement": 20,
+      "drawDay": 0,
+      "drawHour": 20,
+      "drawMinute": 0,
+      "suspenseDelay": 8000,
+      "gifUrl": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXNrZHp3ZHFuNXhkdGdzaWUyZjc1aW5xZ3JpNW9hcDdyY3BzY3R2OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0HlNQ03J5JxX6lva/giphy.gif"
     }
   },
   "colors": {
