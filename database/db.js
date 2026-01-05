@@ -210,6 +210,98 @@ const db = {
         return result.rows[0];
     },
 
+    // Lottery operations
+    async getLotteryState() {
+        const result = await pool.query('SELECT * FROM lottery_state WHERE id = 1');
+        return result.rows[0];
+    },
+
+    async updateLotteryJackpot(amount) {
+        const result = await pool.query(
+            'UPDATE lottery_state SET jackpot = jackpot + $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1 RETURNING *',
+            [amount]
+        );
+        return result.rows[0];
+    },
+
+    async incrementTicketsSold(count = 1) {
+        const result = await pool.query(
+            'UPDATE lottery_state SET total_tickets_sold = total_tickets_sold + $1, updated_at = CURRENT_TIMESTAMP WHERE id = 1 RETURNING *',
+            [count]
+        );
+        return result.rows[0];
+    },
+
+    async purchaseLotteryTickets(userId, count, drawTime) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Get current total tickets to assign numbers
+            const stateResult = await client.query('SELECT total_tickets_sold FROM lottery_state WHERE id = 1');
+            const currentTotal = stateResult.rows[0].total_tickets_sold;
+
+            // Insert tickets
+            const tickets = [];
+            for (let i = 0; i < count; i++) {
+                const ticketNumber = currentTotal + i + 1;
+                await client.query(
+                    'INSERT INTO lottery_tickets (user_id, ticket_number, draw_time) VALUES ($1, $2, $3)',
+                    [userId, ticketNumber, drawTime]
+                );
+                tickets.push(ticketNumber);
+            }
+
+            await client.query('COMMIT');
+            return tickets;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    async getUserLotteryTickets(userId, drawTime) {
+        const result = await pool.query(
+            'SELECT ticket_number FROM lottery_tickets WHERE user_id = $1 AND draw_time = $2 ORDER BY ticket_number',
+            [userId, drawTime]
+        );
+        return result.rows.map(row => row.ticket_number);
+    },
+
+    async getAllLotteryTicketsForDraw(drawTime) {
+        const result = await pool.query(
+            'SELECT user_id, ticket_number FROM lottery_tickets WHERE draw_time = $1 ORDER BY ticket_number',
+            [drawTime]
+        );
+        return result.rows;
+    },
+
+    async resetLottery(nextDrawTime, baseJackpot) {
+        const result = await pool.query(
+            'UPDATE lottery_state SET jackpot = $1, next_draw_time = $2, total_tickets_sold = 0, updated_at = CURRENT_TIMESTAMP WHERE id = 1 RETURNING *',
+            [baseJackpot, nextDrawTime]
+        );
+        return result.rows[0];
+    },
+
+    async recordLotteryDraw(drawTime, winningTicket, winnerId, jackpot, totalTickets) {
+        const result = await pool.query(
+            'INSERT INTO lottery_draws (draw_time, winning_ticket, winner_id, jackpot_amount, total_tickets) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [drawTime, winningTicket, winnerId, jackpot, totalTickets]
+        );
+        return result.rows[0];
+    },
+
+    async getWinnerByTicket(ticketNumber, drawTime) {
+        const result = await pool.query(
+            'SELECT user_id FROM lottery_tickets WHERE ticket_number = $1 AND draw_time = $2',
+            [ticketNumber, drawTime]
+        );
+        return result.rows[0];
+    },
+
     // Initialize database
     async initialize() {
         let retryCount = 0;

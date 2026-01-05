@@ -34,6 +34,7 @@ const moderationCommand = require('./commands/moderation');
 const statsCommand = require('./commands/stats');
 const cadeauCommand = require('./commands/cadeau');
 const casinoCommand = require('./commands/casino');
+const lotoCommand = require('./commands/loto');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -42,6 +43,7 @@ client.commands.set(moderationCommand.name, moderationCommand);
 client.commands.set(statsCommand.name, statsCommand);
 client.commands.set(cadeauCommand.name, cadeauCommand);
 client.commands.set(casinoCommand.name, casinoCommand);
+client.commands.set(lotoCommand.name, lotoCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -97,6 +99,11 @@ client.once('clientReady', async () => {
             invites.set(guild.id, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
             console.log(`✅ Cached invites for guild: ${guild.name}`);
         }
+        
+        // Start lottery draw checker (check every minute)
+        setInterval(() => {
+            lotoCommand.checkDrawTime(client);
+        }, 60000); // Check every minute
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {
@@ -381,6 +388,9 @@ client.on('messageCreate', async (message) => {
             await invitesCommand.handleTopInvites(message, args);
         } else if (commandName === 'stats') {
             const command = client.commands.get('stats');
+            await command.execute(message, args);
+        } else if (commandName === 'loto') {
+            const command = client.commands.get('loto');
             await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
