@@ -421,13 +421,15 @@ async function handleLCInteraction(interaction, userId) {
                 }
                 
                 response = `💰 <@${userId}> a actuellement **${user.balance} LC**. (Astuce : Tapez \`!lc\` pour voir votre propre solde !)`;
+                // Make balance visible to everyone in the channel (not ephemeral)
+                await interaction.followUp({ content: response });
             } catch (error) {
                 console.error('Error fetching user balance:', error);
                 response = `❌ Une erreur est survenue lors de la récupération de votre solde.
-(Astuce : tapez \`!lc\` pour consulter votre solde.)`;
+(Astuce : Tapez \`!lc\` pour consulter votre solde.)`;
+                // Keep errors private
+                await interaction.followUp({ content: response, ephemeral: true });
             }
-            // Make balance visible to everyone in the channel (not ephemeral)
-            await interaction.followUp({ content: response });
         } else if (selectedValue === 'balance_other') {
             response = getResponse('menu.submenu.lc.balance_other.info');
             await interaction.followUp({ content: response, ephemeral: true });
