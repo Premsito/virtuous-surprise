@@ -101,7 +101,7 @@ module.exports = {
 ╚════════════════════════════════╝
 📋 Mise à jour : ${updateDate} à ${updateTime}`;
 
-            return message.reply(statsMessage);
+            return message.channel.send(statsMessage);
         } catch (error) {
             console.error(`[Stats] Error executing stats command for user ${message.author.username}:`, error);
             return message.reply(getResponse('errors.commandExecutionError') || '❌ Une erreur est survenue lors de la récupération de vos statistiques. Veuillez réessayer plus tard.');
