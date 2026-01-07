@@ -52,6 +52,10 @@
       "drawMinute": 0,
       "suspenseDelay": 8000,
       "gifUrl": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXNrZHp3ZHFuNXhkdGdzaWUyZjc1aW5xZ3JpNW9hcDdyY3BzY3R2OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0HlNQ03J5JxX6lva/giphy.gif"
+    },
+    "rapide": {
+      "minBet": 10,
+      "maxBet": 1000
     }
   },
   "colors": {

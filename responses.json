@@ -243,6 +243,10 @@
     "title": "📚 Commandes disponibles",
     "description": "Voici toutes les commandes disponibles:",
     "sections": {
+      "menu": {
+        "title": "🎮 Menu Interactif",
+        "commands": "`{prefix}menu` - Menu principal avec navigation interactive"
+      },
       "lc": {
         "title": "{currency_symbol} LC (Virtual Coins)",
         "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}lc @user` - Voir le solde d'un utilisateur\n`{prefix}don @user [montant]` - Transférer des LC\n`{prefix}cadeau` - Recevoir 25 LC quotidiennement"
@@ -257,7 +261,7 @@
       },
       "games": {
         "title": "🎮 Jeux",
-        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette"
+        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette\n`{prefix}rapide @user [montant]` - Jeu de frappe rapide"
       },
       "casino": {
         "title": "🎰 Casino",
@@ -277,5 +281,92 @@
   "errors": {
     "commandExecutionError": "❌ Une erreur est survenue lors de l'exécution de la commande.",
     "unknownCommand": "❌ Commande inconnue. Utilisez `{prefix}help` pour voir les commandes disponibles."
+  },
+  "menu": {
+    "main": {
+      "title": "🎮 Menu Principal - Virtuous Surprise",
+      "description": "Bienvenue dans le menu interactif ! Sélectionnez une catégorie ci-dessous pour explorer les options disponibles.",
+      "placeholder": "Choisissez une catégorie..."
+    },
+    "submenu": {
+      "placeholder": "Choisissez une option...",
+      "jeux_solo": {
+        "title": "🎮 Jeux Solo",
+        "description": "Explorez les jeux solo disponibles :\n\n**Roulette** - Participez à une roulette avec d'autres joueurs\n`!jeu roulette [montant]`"
+      },
+      "jeux_1v1": {
+        "title": "🤼 Jeux 1v1",
+        "description": "Défiez d'autres joueurs dans des duels passionnants !",
+        "rapide": {
+          "title": "⚡ Jeu Rapide",
+          "info": "**Commande:** `!rapide @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ Attendez que l'adversaire accepte (1 minute)\n3️⃣ Après l'acceptation, les règles s'affichent\n4️⃣ Un mot apparaît après le compte à rebours\n5️⃣ Le premier à taper le mot correctement gagne!\n\n💰 Le gagnant remporte la mise doublée!"
+        },
+        "duel": {
+          "title": "⚔️ Duel",
+          "info": "**Commande:** `!jeu duel @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ L'adversaire doit taper 'accepter' pour confirmer\n3️⃣ Le gagnant est déterminé aléatoirement\n\n💰 Le gagnant remporte la mise doublée!"
+        }
+      },
+      "casino": {
+        "title": "🎰 Casino",
+        "description": "Découvrez tous les jeux de casino disponibles !",
+        "roue": {
+          "title": "🎯 Roulette",
+          "info": "**Commande:** `!roue [montant] [couleur]`\n\n**Couleurs disponibles:** rouge, noir, vert\n\n**Gains:**\n• Rouge/Noir: x2 votre mise\n• Vert: x14 votre mise\n\n**Exemple:** `!roue 50 rouge`"
+        },
+        "blackjack": {
+          "title": "🃏 Blackjack",
+          "info": "**Commande:** `!bj [montant]`\n\n**Comment jouer:**\n1️⃣ Recevez 2 cartes au départ\n2️⃣ Tapez 'tirer' pour une carte ou 'rester' pour vous arrêter\n3️⃣ Battez le croupier sans dépasser 21!\n\n**Gains:**\n• Victoire normale: x2 votre mise\n• Blackjack (21 avec 2 cartes): x2.5 votre mise"
+        },
+        "machine": {
+          "title": "🎰 Machine à sous",
+          "info": "**Commande:** `!machine [montant]`\n\n**Comment jouer:**\nTentez votre chance avec la machine à sous!\nPlus de symboles identiques = plus de gains!\n\n💰 Jackpot possible pour les plus chanceux!"
+        }
+      },
+      "statistiques": {
+        "title": "📊 Statistiques",
+        "info": "**Commande:** `!stats` ou `!stats @user`\n\nConsultez vos statistiques complètes :\n• 💰 Balance LC\n• 👥 Invitations\n• 💬 Messages envoyés\n• 🎤 Temps vocal\n• 🎮 Parties jouées\n• 🏆 Classement"
+      }
+    },
+    "notYourMenu": "❌ Ce menu ne vous est pas destiné !"
+  },
+  "rapide": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!rapide @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Défi impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Défi impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Partie en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans une partie de Jeu Rapide!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "⚡ Défi Jeu Rapide !",
+      "description": "🎯 {challenger} défie {opponent} dans un duel de vitesse!\n\n💰 **Mise:** {bet} LC\n\n⏱️ {opponent}, vous avez **1 minute** pour accepter!",
+      "acceptField": "Pour accepter:",
+      "acceptValue": "Tapez **accepter** dans le chat"
+    },
+    "rules": {
+      "title": "📋 Règles du Jeu Rapide",
+      "description": "**Comment jouer:**\n\n1️⃣ Un compte à rebours de 5 secondes va commencer\n2️⃣ Un mot mystère apparaîtra à l'écran\n3️⃣ Le premier joueur à taper le mot **exactement** gagne!\n4️⃣ Vous avez **30 secondes** pour taper le mot\n\n⚡ Préparez vos doigts... C'est parti!"
+    },
+    "countdown": {
+      "title": "⏱️ Compte à rebours",
+      "description": "Le jeu commence dans **{seconds} secondes**...\n\n🎯 Préparez-vous!",
+      "count": "**{count}**"
+    },
+    "game": {
+      "title": "⚡ TAPEZ CE MOT !",
+      "description": "🎯 **{word}**\n\nLe premier à taper ce mot gagne!"
+    },
+    "result": {
+      "title": "🏆 Victoire !",
+      "description": "🎉 **{winner}** a gagné le duel de vitesse!\n\n💰 **Gains:** {winnings} LC\n😢 **{loser}** perd {bet} LC\n\n⚡ Quelle rapidité impressionnante!"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Personne n'a tapé le mot à temps!\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    },
+    "refused": {
+      "title": "❌ Défi refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Défi non accepté**\n║ \n║ {opponent} n'a pas accepté le défi\n║ dans le temps imparti.\n╚══════════════════════════════════════╝"
+    }
   }
 }
