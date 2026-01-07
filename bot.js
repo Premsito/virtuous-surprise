@@ -444,6 +444,9 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'quizduo') {
             const command = client.commands.get('quizduo');
             await command.execute(message, args);
+        } else if (commandName === 'pfc') {
+            const command = client.commands.get('pfc');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
