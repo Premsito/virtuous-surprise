@@ -252,12 +252,12 @@ module.exports = {
             
             // Create result embed
             const resultEmbed = new EmbedBuilder()
-                .setTitle(getResponse('pfc.result.title'))
                 .setTimestamp();
             
             if (isDraw) {
                 resultEmbed
                     .setColor(config.colors.warning)
+                    .setTitle('🤝 Pierre-Feuille-Ciseaux - **Égalité !**')
                     .setDescription(getResponse('pfc.result.draw', {
                         challenger: challenger,
                         challengerChoice: CHOICES[challengerChoice].emoji,
@@ -280,6 +280,7 @@ module.exports = {
                 
                 resultEmbed
                     .setColor(config.colors.success)
+                    .setTitle('🏆 Pierre-Feuille-Ciseaux - **Victoire de ' + winnerUser.username + ' !**')
                     .setDescription(getResponse('pfc.result.description', {
                         challenger: challenger,
                         challengerChoice: CHOICES[challengerChoice].emoji,

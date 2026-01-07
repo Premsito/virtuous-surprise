@@ -123,8 +123,10 @@ async function handleRoue(message, args) {
     
     // Step 3: Display the result
     let resultMessage;
+    let resultTitle;
     if (result === color) {
         // Win message
+        resultTitle = '🏆 Roulette - **Gagné !**';
         resultMessage = getResponse('casino.roue.result.win', {
             colorEmoji: getColorEmoji(result),
             color: formatColor(result),
@@ -133,6 +135,7 @@ async function handleRoue(message, args) {
         });
     } else {
         // Loss message
+        resultTitle = '❌ Roulette - **Perdu !**';
         resultMessage = getResponse('casino.roue.result.loss', {
             colorEmoji: getColorEmoji(result),
             color: formatColor(result),
@@ -142,6 +145,7 @@ async function handleRoue(message, args) {
     
     const resultEmbed = new EmbedBuilder()
         .setColor(result === color ? config.colors.success : config.colors.error)
+        .setTitle(resultTitle)
         .setDescription(resultMessage)
         .setTimestamp();
     
@@ -548,9 +552,19 @@ async function handleMachine(message, args) {
     // Record game
     await db.recordGame('machine', playerId, null, betAmount, winnings > 0 ? 'win' : 'loss', winnings);
     
+    // Enhanced title based on result
+    let machineTitle;
+    if (winType === 'jackpot') {
+        machineTitle = '🏆 Machine à Sous - **JACKPOT !**';
+    } else if (winType === 'match') {
+        machineTitle = '🏆 Machine à Sous - **Gagné !**';
+    } else {
+        machineTitle = '❌ Machine à Sous - **Perdu !**';
+    }
+    
     const embed = new EmbedBuilder()
         .setColor(winnings > 0 ? config.colors.success : config.colors.error)
-        .setTitle(getResponse('casino.machine.result.title'))
+        .setTitle(machineTitle)
         .setDescription(getResponse(`casino.machine.result.${winType}`, {
             reel1: reel1,
             reel2: reel2,
