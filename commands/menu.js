@@ -32,135 +32,103 @@ function createMainMenuOptions() {
     ];
 }
 
+// Helper function to create and attach collector to a menu message
+function attachMenuCollector(menuMessage, originalUserId, handleInteraction) {
+    const collector = menuMessage.createMessageComponentCollector({
+        componentType: ComponentType.StringSelect,
+        time: 120000 // 2 minutes
+    });
+    
+    collector.on('collect', async (interaction) => {
+        // Only allow the original user to interact
+        if (interaction.user.id !== originalUserId) {
+            return interaction.reply({
+                content: getResponse('menu.notYourMenu'),
+                ephemeral: true
+            });
+        }
+        
+        await handleInteraction(interaction, originalUserId);
+    });
+    
+    collector.on('end', async () => {
+        // Try to disable the menu after timeout
+        try {
+            const components = menuMessage.components;
+            if (components?.[0]?.components?.[0]?.data) {
+                components[0].components[0].data.disabled = true;
+                await menuMessage.edit({ components: components }).catch(() => {});
+            }
+        } catch (error) {
+            // Menu message may have been deleted, ignore error
+        }
+    });
+    
+    return collector;
+}
+
 module.exports = {
     name: 'menu',
     description: 'Display interactive menu with game categories',
     
     async execute(message, args) {
-        const mainMenuEmbed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setTitle(getResponse('menu.main.title'))
-            .setDescription(getResponse('menu.main.description'))
-            .setTimestamp();
-        
-        const mainMenuRow = new ActionRowBuilder()
-            .addComponents(
-                new StringSelectMenuBuilder()
-                    .setCustomId('main_menu')
-                    .setPlaceholder(getResponse('menu.main.placeholder'))
-                    .addOptions(createMainMenuOptions())
-            );
-        
-        const menuMessage = await message.reply({
-            embeds: [mainMenuEmbed],
-            components: [mainMenuRow]
-        });
-        
-        // Create unified collector for all menu interactions
-        const collector = menuMessage.createMessageComponentCollector({
-            componentType: ComponentType.StringSelect,
-            time: 120000 // 2 minutes
-        });
-        
-        collector.on('collect', async (interaction) => {
-            // Only allow the original user to interact
-            if (interaction.user.id !== message.author.id) {
-                return interaction.reply({
-                    content: getResponse('menu.notYourMenu'),
-                    ephemeral: true
-                });
-            }
-            
-            const selectedValue = interaction.values[0];
-            
-            // Handle main menu selections
-            if (interaction.customId === 'main_menu') {
-                switch (selectedValue) {
-                    case 'jeux_solo':
-                        await handleJeuxSolo(interaction);
-                        break;
-                    case 'jeux_1v1':
-                        await handleJeux1v1(interaction);
-                        break;
-                    case 'casino':
-                        await handleCasino(interaction);
-                        break;
-                    case 'statistiques':
-                        await handleStatistiques(interaction);
-                        break;
-                }
-            }
-            // Handle jeux_solo submenu
-            else if (interaction.customId === 'jeux_solo_submenu') {
-                if (selectedValue === 'back') {
-                    await recreateMainMenu(interaction);
-                } else if (selectedValue === 'roulette') {
-                    const infoEmbed = new EmbedBuilder()
-                        .setColor(config.colors.success)
-                        .setTitle('🎲 Roulette Multijoueur')
-                        .setDescription('**Commande:** `!jeu roulette [montant]`\n\n**Comment jouer:**\n1️⃣ Rejoignez la roulette avec votre mise\n2️⃣ D\'autres joueurs peuvent rejoindre\n3️⃣ Après 30 secondes, un gagnant est choisi\n4️⃣ Le gagnant remporte le pot total!\n\n💰 Le pot augmente avec chaque joueur!')
-                        .setTimestamp();
-                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
-                }
-            }
-            // Handle submenu selections
-            else if (interaction.customId === 'jeux_1v1_submenu') {
-                if (selectedValue === 'back') {
-                    await recreateMainMenu(interaction);
-                } else if (selectedValue === 'rapide') {
-                    const infoEmbed = new EmbedBuilder()
-                        .setColor(config.colors.success)
-                        .setTitle(getResponse('menu.submenu.jeux_1v1.rapide.title'))
-                        .setDescription(getResponse('menu.submenu.jeux_1v1.rapide.info'))
-                        .setTimestamp();
-                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
-                } else if (selectedValue === 'duel') {
-                    const infoEmbed = new EmbedBuilder()
-                        .setColor(config.colors.success)
-                        .setTitle(getResponse('menu.submenu.jeux_1v1.duel.title'))
-                        .setDescription(getResponse('menu.submenu.jeux_1v1.duel.info'))
-                        .setTimestamp();
-                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
-                }
-            }
-            else if (interaction.customId === 'casino_submenu') {
-                if (selectedValue === 'back') {
-                    await recreateMainMenu(interaction);
-                } else {
-                    let infoEmbed;
-                    if (selectedValue === 'roue') {
-                        infoEmbed = new EmbedBuilder()
-                            .setColor(config.colors.success)
-                            .setTitle(getResponse('menu.submenu.casino.roue.title'))
-                            .setDescription(getResponse('menu.submenu.casino.roue.info'))
-                            .setTimestamp();
-                    } else if (selectedValue === 'blackjack') {
-                        infoEmbed = new EmbedBuilder()
-                            .setColor(config.colors.success)
-                            .setTitle(getResponse('menu.submenu.casino.blackjack.title'))
-                            .setDescription(getResponse('menu.submenu.casino.blackjack.info'))
-                            .setTimestamp();
-                    } else if (selectedValue === 'machine') {
-                        infoEmbed = new EmbedBuilder()
-                            .setColor(config.colors.success)
-                            .setTitle(getResponse('menu.submenu.casino.machine.title'))
-                            .setDescription(getResponse('menu.submenu.casino.machine.info'))
-                            .setTimestamp();
-                    }
-                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
-                }
-            }
-        });
-        
-        collector.on('end', async () => {
-            // Disable the menu after timeout
-            mainMenuRow.components[0].setDisabled(true);
-            await menuMessage.edit({ components: [mainMenuRow] }).catch(() => {});
-        });
+        await showMainMenu(message, message.author.id);
     }
 };
 
-async function handleJeuxSolo(interaction) {
+async function showMainMenu(messageOrInteraction, userId, isFollowUp = false) {
+    const mainMenuEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(getResponse('menu.main.title'))
+        .setDescription(getResponse('menu.main.description'))
+        .setTimestamp();
+    
+    const mainMenuRow = new ActionRowBuilder()
+        .addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('main_menu')
+                .setPlaceholder(getResponse('menu.main.placeholder'))
+                .addOptions(createMainMenuOptions())
+        );
+    
+    let menuMessage;
+    if (isFollowUp) {
+        // messageOrInteraction is an interaction
+        menuMessage = await messageOrInteraction.followUp({
+            embeds: [mainMenuEmbed],
+            components: [mainMenuRow]
+        });
+    } else {
+        // messageOrInteraction is a message
+        menuMessage = await messageOrInteraction.reply({
+            embeds: [mainMenuEmbed],
+            components: [mainMenuRow]
+        });
+    }
+    
+    attachMenuCollector(menuMessage, userId, handleMainMenuInteraction);
+}
+
+async function handleMainMenuInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    switch (selectedValue) {
+        case 'jeux_solo':
+            await handleJeuxSolo(interaction, userId);
+            break;
+        case 'jeux_1v1':
+            await handleJeux1v1(interaction, userId);
+            break;
+        case 'casino':
+            await handleCasino(interaction, userId);
+            break;
+        case 'statistiques':
+            await handleStatistiques(interaction, userId);
+            break;
+    }
+}
+
+async function handleJeuxSolo(interaction, userId) {
     const submenuEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setTitle(getResponse('menu.submenu.jeux_solo.title'))
@@ -188,13 +156,53 @@ async function handleJeuxSolo(interaction) {
                 ])
         );
     
-    await interaction.update({
+    // Delete the original dropdown message and send new submenu
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const submenuMessage = await interaction.followUp({
         embeds: [submenuEmbed],
         components: [submenuRow]
     });
+    
+    attachMenuCollector(submenuMessage, userId, handleJeuxSoloInteraction);
 }
 
-async function handleJeux1v1(interaction) {
+async function handleJeuxSoloInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else if (selectedValue === 'roulette') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle('🎲 Roulette Multijoueur')
+            .setDescription('**Commande:** `!jeu roulette [montant]`\n\n**Comment jouer:**\n1️⃣ Rejoignez la roulette avec votre mise\n2️⃣ D\'autres joueurs peuvent rejoindre\n3️⃣ Après 30 secondes, un gagnant est choisi\n4️⃣ Le gagnant remporte le pot total!\n\n💰 Le pot augmente avec chaque joueur!')
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
+}
+
+async function handleJeux1v1(interaction, userId) {
     const submenuEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setTitle(getResponse('menu.submenu.jeux_1v1.title'))
@@ -228,13 +236,69 @@ async function handleJeux1v1(interaction) {
                 ])
         );
     
-    await interaction.update({
+    // Delete the original dropdown message and send new submenu
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const submenuMessage = await interaction.followUp({
         embeds: [submenuEmbed],
         components: [submenuRow]
     });
+    
+    attachMenuCollector(submenuMessage, userId, handleJeux1v1Interaction);
 }
 
-async function handleCasino(interaction) {
+async function handleJeux1v1Interaction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else if (selectedValue === 'rapide') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.jeux_1v1.rapide.title'))
+            .setDescription(getResponse('menu.submenu.jeux_1v1.rapide.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    } else if (selectedValue === 'duel') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.jeux_1v1.duel.title'))
+            .setDescription(getResponse('menu.submenu.jeux_1v1.duel.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
+}
+
+async function handleCasino(interaction, userId) {
     const submenuEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setTitle(getResponse('menu.submenu.casino.title'))
@@ -274,39 +338,81 @@ async function handleCasino(interaction) {
                 ])
         );
     
-    await interaction.update({
+    // Delete the original dropdown message and send new submenu
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const submenuMessage = await interaction.followUp({
         embeds: [submenuEmbed],
         components: [submenuRow]
     });
+    
+    attachMenuCollector(submenuMessage, userId, handleCasinoInteraction);
 }
 
-async function handleStatistiques(interaction) {
+async function handleCasinoInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else {
+        let infoEmbed;
+        if (selectedValue === 'roue') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.casino.roue.title'))
+                .setDescription(getResponse('menu.submenu.casino.roue.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'blackjack') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.casino.blackjack.title'))
+                .setDescription(getResponse('menu.submenu.casino.blackjack.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'machine') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.casino.machine.title'))
+                .setDescription(getResponse('menu.submenu.casino.machine.info'))
+                .setTimestamp();
+        }
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
+}
+
+async function handleStatistiques(interaction, userId) {
     const infoEmbed = new EmbedBuilder()
         .setColor(config.colors.success)
         .setTitle(getResponse('menu.submenu.statistiques.title'))
         .setDescription(getResponse('menu.submenu.statistiques.info'))
         .setTimestamp();
     
-    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
-}
-
-async function recreateMainMenu(interaction) {
-    const mainMenuEmbed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(getResponse('menu.main.title'))
-        .setDescription(getResponse('menu.main.description'))
-        .setTimestamp();
+    // Delete the menu message before showing info
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
     
-    const mainMenuRow = new ActionRowBuilder()
-        .addComponents(
-            new StringSelectMenuBuilder()
-                .setCustomId('main_menu')
-                .setPlaceholder(getResponse('menu.main.placeholder'))
-                .addOptions(createMainMenuOptions())
-        );
-    
-    await interaction.update({
-        embeds: [mainMenuEmbed],
-        components: [mainMenuRow]
-    });
+    await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
 }
