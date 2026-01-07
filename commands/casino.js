@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const responses = require('../responses.json');
@@ -216,7 +216,7 @@ async function handleBlackjack(message, args) {
             
             const embed = new EmbedBuilder()
                 .setColor(config.colors.success)
-                .setTitle(getResponse('casino.blackjack.blackjack.title'))
+                .setTitle('🏆 Blackjack - **BLACKJACK !**')
                 .setDescription(getResponse('casino.blackjack.blackjack.description', {
                     winnings: winnings,
                     playerHand: formatHand(playerHand)
@@ -246,16 +246,39 @@ async function handleBlackjack(message, args) {
         .setFooter({ text: getResponse('casino.blackjack.started.footer') })
         .setTimestamp();
     
-    await message.reply({ embeds: [embed] });
+    // Create action buttons
+    const tirerButton = new ButtonBuilder()
+        .setCustomId('blackjack_hit')
+        .setLabel('Tirer')
+        .setEmoji('🃏')
+        .setStyle(ButtonStyle.Primary);
     
-    // Wait for player action
-    const filter = m => m.author.id === playerId && ['tirer', 'rester'].includes(m.content.toLowerCase());
+    const resterButton = new ButtonBuilder()
+        .setCustomId('blackjack_stand')
+        .setLabel('Rester')
+        .setEmoji('🔒')
+        .setStyle(ButtonStyle.Secondary);
+    
+    const row = new ActionRowBuilder()
+        .addComponents(tirerButton, resterButton);
+    
+    const gameMessage = await message.reply({ embeds: [embed], components: [row] });
+    
+    // Wait for player action via button
+    const filter = i => i.user.id === playerId && (i.customId === 'blackjack_hit' || i.customId === 'blackjack_stand');
     
     try {
-        const collected = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] });
-        const action = collected.first().content.toLowerCase();
+        const interaction = await gameMessage.awaitMessageComponent({ filter, time: 60000 });
         
-        if (action === 'tirer') {
+        // Disable buttons after interaction
+        tirerButton.setDisabled(true);
+        resterButton.setDisabled(true);
+        await gameMessage.edit({ components: [row] });
+        
+        // Acknowledge the interaction
+        await interaction.deferUpdate();
+        
+        if (interaction.customId === 'blackjack_hit') {
             await handleBlackjackHit(message, playerId);
         } else {
             await handleBlackjackStand(message, playerId);
@@ -265,13 +288,18 @@ async function handleBlackjack(message, args) {
         activeBlackjacks.delete(playerId);
         await db.recordGame('blackjack', playerId, null, betAmount, 'loss', 0);
         
-        const embed = new EmbedBuilder()
+        // Disable buttons on timeout
+        tirerButton.setDisabled(true);
+        resterButton.setDisabled(true);
+        await gameMessage.edit({ components: [row] });
+        
+        const timeoutEmbed = new EmbedBuilder()
             .setColor(config.colors.error)
             .setTitle(getResponse('casino.blackjack.timeout.title'))
             .setDescription(getResponse('casino.blackjack.timeout.description'))
             .setTimestamp();
         
-        await message.channel.send({ embeds: [embed] });
+        await message.channel.send({ embeds: [timeoutEmbed] });
     }
 }
 
@@ -292,7 +320,7 @@ async function handleBlackjackHit(message, playerId) {
         
         const embed = new EmbedBuilder()
             .setColor(config.colors.error)
-            .setTitle(getResponse('casino.blackjack.bust.title'))
+            .setTitle('❌ Blackjack - **Perdu !**')
             .setDescription(getResponse('casino.blackjack.bust.description', {
                 playerHand: formatHand(game.playerHand),
                 playerScore: playerScore,
@@ -317,16 +345,39 @@ async function handleBlackjackHit(message, playerId) {
             .setFooter({ text: getResponse('casino.blackjack.started.footer') })
             .setTimestamp();
         
-        await message.channel.send({ embeds: [embed] });
+        // Create action buttons
+        const tirerButton = new ButtonBuilder()
+            .setCustomId('blackjack_hit')
+            .setLabel('Tirer')
+            .setEmoji('🃏')
+            .setStyle(ButtonStyle.Primary);
+        
+        const resterButton = new ButtonBuilder()
+            .setCustomId('blackjack_stand')
+            .setLabel('Rester')
+            .setEmoji('🔒')
+            .setStyle(ButtonStyle.Secondary);
+        
+        const row = new ActionRowBuilder()
+            .addComponents(tirerButton, resterButton);
+        
+        const gameMessage = await message.channel.send({ embeds: [embed], components: [row] });
         
         // Wait for next action
-        const filter = m => m.author.id === playerId && ['tirer', 'rester'].includes(m.content.toLowerCase());
+        const filter = i => i.user.id === playerId && (i.customId === 'blackjack_hit' || i.customId === 'blackjack_stand');
         
         try {
-            const collected = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] });
-            const action = collected.first().content.toLowerCase();
+            const interaction = await gameMessage.awaitMessageComponent({ filter, time: 60000 });
             
-            if (action === 'tirer') {
+            // Disable buttons after interaction
+            tirerButton.setDisabled(true);
+            resterButton.setDisabled(true);
+            await gameMessage.edit({ components: [row] });
+            
+            // Acknowledge the interaction
+            await interaction.deferUpdate();
+            
+            if (interaction.customId === 'blackjack_hit') {
                 await handleBlackjackHit(message, playerId);
             } else {
                 await handleBlackjackStand(message, playerId);
@@ -335,6 +386,11 @@ async function handleBlackjackHit(message, playerId) {
             // Timeout
             activeBlackjacks.delete(playerId);
             await db.recordGame('blackjack', playerId, null, game.betAmount, 'loss', 0);
+            
+            // Disable buttons on timeout
+            tirerButton.setDisabled(true);
+            resterButton.setDisabled(true);
+            await gameMessage.edit({ components: [row] });
             
             const timeoutEmbed = new EmbedBuilder()
                 .setColor(config.colors.error)
@@ -389,6 +445,7 @@ async function handleBlackjackStand(message, playerId) {
     
     // Get random variant for win/loss messages
     let description;
+    let title;
     
     if (result === 'win' || result === 'loss') {
         const variants = responses.casino.blackjack.result[result].variants;
@@ -402,17 +459,25 @@ async function handleBlackjackStand(message, playerId) {
             dealerHand: formatHand(game.dealerHand),
             variant: variant
         });
+        
+        // Enhanced titles with emojis and bold text
+        if (result === 'win') {
+            title = '🏆 Blackjack - **Gagné !**';
+        } else {
+            title = '❌ Blackjack - **Perdu !**';
+        }
     } else {
         description = getResponse(`casino.blackjack.result.${result}.description`, {
             playerHand: formatHand(game.playerHand),
             dealerHand: formatHand(game.dealerHand),
             bet: game.betAmount
         });
+        title = getResponse(`casino.blackjack.result.${result}.title`);
     }
     
     const embed = new EmbedBuilder()
         .setColor(result === 'win' ? config.colors.success : (result === 'push' ? config.colors.warning : config.colors.error))
-        .setTitle(getResponse(`casino.blackjack.result.${result}.title`))
+        .setTitle(title)
         .setDescription(description)
         .setTimestamp();
     
