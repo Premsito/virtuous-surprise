@@ -230,7 +230,7 @@ module.exports = {
                         
                         const resultEmbed = new EmbedBuilder()
                             .setColor(config.colors.success)
-                            .setTitle('🏆 Challenge 21 - **Victoire de ' + winnerUser.username + ' !**')
+                            .setTitle(`🏆 Challenge 21 - **Victoire de ${winnerUser.username} !**`)
                             .setDescription(getResponse('c21.result.description', {
                                 finalTotal: currentTotal,
                                 loser: loserUser,

@@ -185,7 +185,7 @@ async function handleDuel(message, args) {
         
         const resultEmbed = new EmbedBuilder()
             .setColor(config.colors.success)
-            .setTitle('🏆 Duel - **Victoire de ' + winnerUser.username + ' !**')
+            .setTitle(`🏆 Duel - **Victoire de ${winnerUser.username} !**`)
             .setDescription(getResponse('games.duel.result.description', {
                 winner: winnerUser,
                 totalWinnings: betAmount * 2,

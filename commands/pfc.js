@@ -280,7 +280,7 @@ module.exports = {
                 
                 resultEmbed
                     .setColor(config.colors.success)
-                    .setTitle('🏆 Pierre-Feuille-Ciseaux - **Victoire de ' + winnerUser.username + ' !**')
+                    .setTitle(`🏆 Pierre-Feuille-Ciseaux - **Victoire de ${winnerUser.username} !**`)
                     .setDescription(getResponse('pfc.result.description', {
                         challenger: challenger,
                         challengerChoice: CHOICES[challengerChoice].emoji,
