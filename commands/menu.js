@@ -76,7 +76,7 @@ module.exports = {
     }
 };
 
-async function showMainMenu(message, userId, isFollowUp = false, interaction = null) {
+async function showMainMenu(messageOrInteraction, userId, isFollowUp = false) {
     const mainMenuEmbed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setTitle(getResponse('menu.main.title'))
@@ -92,13 +92,15 @@ async function showMainMenu(message, userId, isFollowUp = false, interaction = n
         );
     
     let menuMessage;
-    if (isFollowUp && interaction) {
-        menuMessage = await interaction.followUp({
+    if (isFollowUp) {
+        // messageOrInteraction is an interaction
+        menuMessage = await messageOrInteraction.followUp({
             embeds: [mainMenuEmbed],
             components: [mainMenuRow]
         });
     } else {
-        menuMessage = await message.reply({
+        // messageOrInteraction is a message
+        menuMessage = await messageOrInteraction.reply({
             embeds: [mainMenuEmbed],
             components: [mainMenuRow]
         });
@@ -180,7 +182,7 @@ async function handleJeuxSoloInteraction(interaction, userId) {
         } catch (error) {
             console.error('Failed to delete menu message:', error);
         }
-        await showMainMenu(interaction.message, userId, true, interaction);
+        await showMainMenu(interaction, userId, true);
     } else if (selectedValue === 'roulette') {
         const infoEmbed = new EmbedBuilder()
             .setColor(config.colors.success)
@@ -260,7 +262,7 @@ async function handleJeux1v1Interaction(interaction, userId) {
         } catch (error) {
             console.error('Failed to delete menu message:', error);
         }
-        await showMainMenu(interaction.message, userId, true, interaction);
+        await showMainMenu(interaction, userId, true);
     } else if (selectedValue === 'rapide') {
         const infoEmbed = new EmbedBuilder()
             .setColor(config.colors.success)
@@ -362,7 +364,7 @@ async function handleCasinoInteraction(interaction, userId) {
         } catch (error) {
             console.error('Failed to delete menu message:', error);
         }
-        await showMainMenu(interaction.message, userId, true, interaction);
+        await showMainMenu(interaction, userId, true);
     } else {
         let infoEmbed;
         if (selectedValue === 'roue') {
