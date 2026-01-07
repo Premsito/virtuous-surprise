@@ -7,12 +7,6 @@ const { db, pool } = require('../database/db');
 function createMainMenuOptions() {
     return [
         {
-            label: 'Jeux Solo',
-            description: 'Jeux en solo pour tester votre chance',
-            value: 'jeux_solo',
-            emoji: '🎮'
-        },
-        {
             label: 'Jeux 1v1',
             description: 'Défiez d\'autres joueurs',
             value: 'jeux_1v1',
@@ -126,9 +120,6 @@ async function handleMainMenuInteraction(interaction, userId) {
     const selectedValue = interaction.values[0];
     
     switch (selectedValue) {
-        case 'jeux_solo':
-            await handleJeuxSolo(interaction, userId);
-            break;
         case 'jeux_1v1':
             await handleJeux1v1(interaction, userId);
             break;
@@ -144,80 +135,6 @@ async function handleMainMenuInteraction(interaction, userId) {
         case 'statistiques':
             await handleStatistiques(interaction, userId);
             break;
-    }
-}
-
-async function handleJeuxSolo(interaction, userId) {
-    const submenuEmbed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(getResponse('menu.submenu.jeux_solo.title'))
-        .setDescription(getResponse('menu.submenu.jeux_solo.description'))
-        .setTimestamp();
-    
-    const submenuRow = new ActionRowBuilder()
-        .addComponents(
-            new StringSelectMenuBuilder()
-                .setCustomId('jeux_solo_submenu')
-                .setPlaceholder(getResponse('menu.submenu.placeholder'))
-                .addOptions([
-                    {
-                        label: 'Roulette',
-                        description: 'Pariez et tentez votre chance',
-                        value: 'roulette',
-                        emoji: '🎲'
-                    },
-                    {
-                        label: 'Retour',
-                        description: 'Retour au menu principal',
-                        value: 'back',
-                        emoji: '◀️'
-                    }
-                ])
-        );
-    
-    // Delete the original dropdown message and send new submenu
-    await interaction.deferUpdate();
-    try {
-        await interaction.message.delete();
-    } catch (error) {
-        console.error('Failed to delete menu message:', error);
-    }
-    
-    const submenuMessage = await interaction.followUp({
-        embeds: [submenuEmbed],
-        components: [submenuRow]
-    });
-    
-    attachMenuCollector(submenuMessage, userId, handleJeuxSoloInteraction);
-}
-
-async function handleJeuxSoloInteraction(interaction, userId) {
-    const selectedValue = interaction.values[0];
-    
-    if (selectedValue === 'back') {
-        await interaction.deferUpdate();
-        try {
-            await interaction.message.delete();
-        } catch (error) {
-            console.error('Failed to delete menu message:', error);
-        }
-        await showMainMenu(interaction, userId, true);
-    } else if (selectedValue === 'roulette') {
-        const infoEmbed = new EmbedBuilder()
-            .setColor(config.colors.success)
-            .setTitle('🎲 Roulette Multijoueur')
-            .setDescription('**Commande:** `!jeu roulette [montant]`\n\n**Comment jouer:**\n1️⃣ Rejoignez la roulette avec votre mise\n2️⃣ D\'autres joueurs peuvent rejoindre\n3️⃣ Après 30 secondes, un gagnant est choisi\n4️⃣ Le gagnant remporte le pot total!\n\n💰 Le pot augmente avec chaque joueur!')
-            .setTimestamp();
-        
-        // Delete the menu message before showing info
-        await interaction.deferUpdate();
-        try {
-            await interaction.message.delete();
-        } catch (error) {
-            console.error('Failed to delete menu message:', error);
-        }
-        
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
     }
 }
 
