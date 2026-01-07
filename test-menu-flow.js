@@ -47,7 +47,7 @@ class MockInteraction {
         this.replied = false;
         this.followedUp = false;
         this.user = { id: 'test-user-123' };
-        this.values = ['jeux_solo']; // Simulated selection
+        this.values = ['jeux_1v1']; // Simulated selection
     }
     
     async deferUpdate() {
@@ -76,7 +76,7 @@ class MockInteraction {
 
 // Test scenario: User selects a menu option
 console.log('Test 1: Simulating menu interaction flow');
-console.log('Scenario: User selects "Jeux Solo" from main menu\n');
+console.log('Scenario: User selects "Jeux 1v1" from main menu\n');
 
 try {
     const originalMessage = new MockMessage();
@@ -85,7 +85,7 @@ try {
     console.log('Step 1: User interacts with dropdown');
     console.log('Step 2: Bot defers update...');
     
-    // Simulate what happens in handleJeuxSolo
+    // Simulate what happens in handleJeux1v1
     (async () => {
         await interaction.deferUpdate();
         await interaction.message.delete();

@@ -110,17 +110,19 @@ try {
     console.log(`   Found ${deletionAttempts} message deletion points`);
     
     // We expect deletions in:
-    // 1. handleJeuxSolo
-    // 2. handleJeux1v1
-    // 3. handleCasino
-    // 4. handleStatistiques
-    // 5. handleJeuxSoloInteraction (back button)
-    // 6. handleJeuxSoloInteraction (info)
-    // 7. handleJeux1v1Interaction (back button)
-    // 8. handleJeux1v1Interaction (rapide info)
-    // 9. handleJeux1v1Interaction (duel info)
-    // 10. handleCasinoInteraction (back button)
-    // 11. handleCasinoInteraction (game info)
+    // 1. handleJeux1v1
+    // 2. handleCasino
+    // 3. handleLC
+    // 4. handleLoto
+    // 5. handleStatistiques
+    // 6. handleJeux1v1Interaction (back button)
+    // 7. handleJeux1v1Interaction (rapide info)
+    // 8. handleJeux1v1Interaction (duel info)
+    // 9. handleCasinoInteraction (back button)
+    // 10. handleCasinoInteraction (game info)
+    // 11. handleLCInteraction (back button)
+    // 12. handleLotoInteraction (back button)
+    // 13. handleStatistiquesInteraction (back button)
     
     if (deletionAttempts < 10) {
         console.warn(`   ⚠️  Warning: Expected at least 10 deletion points, found ${deletionAttempts}`);

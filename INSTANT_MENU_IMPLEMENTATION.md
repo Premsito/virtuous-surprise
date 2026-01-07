@@ -194,8 +194,7 @@ function formatVoiceTime(seconds) {
 
 The pattern can be extended to:
 - Casino section (show game rules with statistics)
-- Jeux Solo section (show available games with user history)
-- Jeux 1v1 section (show recent duels/challenges)
+- Jeux 1v1 section (show recent duels/challenges with enhanced statistics)
 
 ## Files Modified
 

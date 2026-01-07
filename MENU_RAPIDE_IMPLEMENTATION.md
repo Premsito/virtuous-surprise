@@ -10,16 +10,13 @@ This document describes the implementation of the interactive menu system with d
 The menu system provides a user-friendly interface to navigate through bot features using Discord's dropdown menus.
 
 #### Main Menu Categories:
-- 🎮 **Jeux Solo** - Solo games
 - 🤼 **Jeux 1v1** - Player vs Player games
 - 🎰 **Casino** - Casino games
+- 🪙 **LC** - Virtual currency management
+- 🎟 **Loto** - Lottery
 - 📊 **Statistiques** - Statistics
 
 #### Dynamic Submenus:
-
-**Jeux Solo Submenu:**
-- Roulette (multiplayer game)
-- Back to main menu
 
 **Jeux 1v1 Submenu:**
 - Jeu Rapide (Fast typing game) - `!rapide @user [montant]`
@@ -161,8 +158,8 @@ Potential improvements for future versions:
 2. Implement difficulty levels (word length)
 3. Add streak tracking for consecutive wins
 4. Create leaderboards for fastest typing times
-5. Add more games to Jeux Solo category
-6. Implement game categories in the menu
+5. Add more 1v1 games to expand competitive gameplay
+6. Implement additional game categories in the menu
 
 ## Compatibility
 

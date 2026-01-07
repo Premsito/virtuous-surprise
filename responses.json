@@ -298,10 +298,6 @@
     },
     "submenu": {
       "placeholder": "Choisissez une option...",
-      "jeux_solo": {
-        "title": "🎮 Jeux Solo",
-        "description": "Explorez les jeux solo disponibles :\n\n**Roulette** - Participez à une roulette avec d'autres joueurs\n`!jeu roulette [montant]`"
-      },
       "jeux_1v1": {
         "title": "🤼 Jeux 1v1",
         "description": "Défiez d'autres joueurs dans des duels passionnants !",
