@@ -90,6 +90,19 @@ module.exports = {
                         break;
                 }
             }
+            // Handle jeux_solo submenu
+            else if (interaction.customId === 'jeux_solo_submenu') {
+                if (selectedValue === 'back') {
+                    await recreateMainMenu(interaction);
+                } else if (selectedValue === 'roulette') {
+                    const infoEmbed = new EmbedBuilder()
+                        .setColor(config.colors.success)
+                        .setTitle('🎲 Roulette Multijoueur')
+                        .setDescription('**Commande:** `!jeu roulette [montant]`\n\n**Comment jouer:**\n1️⃣ Rejoignez la roulette avec votre mise\n2️⃣ D\'autres joueurs peuvent rejoindre\n3️⃣ Après 30 secondes, un gagnant est choisi\n4️⃣ Le gagnant remporte le pot total!\n\n💰 Le pot augmente avec chaque joueur!')
+                        .setTimestamp();
+                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+                }
+            }
             // Handle submenu selections
             else if (interaction.customId === 'jeux_1v1_submenu') {
                 if (selectedValue === 'back') {
