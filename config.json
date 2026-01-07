@@ -65,6 +65,10 @@
       "minBet": 10,
       "maxBet": 1000,
       "questionCount": 5
+    },
+    "c21": {
+      "minBet": 10,
+      "maxBet": 1000
     }
   },
   "colors": {
