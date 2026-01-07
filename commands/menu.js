@@ -164,6 +164,12 @@ async function handleJeux1v1(interaction, userId) {
                         emoji: '⚔️'
                     },
                     {
+                        label: 'Pierre-Feuille-Ciseaux',
+                        description: 'Pierre-Feuille-Ciseaux - !pfc @user [montant]',
+                        value: 'pfc',
+                        emoji: '🪨'
+                    },
+                    {
                         label: 'Retour',
                         description: 'Retour au menu principal',
                         value: 'back',
@@ -220,6 +226,22 @@ async function handleJeux1v1Interaction(interaction, userId) {
             .setColor(config.colors.success)
             .setTitle(getResponse('menu.submenu.jeux_1v1.duel.title'))
             .setDescription(getResponse('menu.submenu.jeux_1v1.duel.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    } else if (selectedValue === 'pfc') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.jeux_1v1.pfc.title'))
+            .setDescription(getResponse('menu.submenu.jeux_1v1.pfc.info'))
             .setTimestamp();
         
         // Delete the menu message before showing info

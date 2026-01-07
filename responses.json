@@ -308,6 +308,10 @@
         "duel": {
           "title": "⚔️ Duel",
           "info": "**Commande:** `!jeu duel @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ L'adversaire doit taper 'accepter' pour confirmer\n3️⃣ Le gagnant est déterminé aléatoirement\n\n💰 Le gagnant remporte la mise doublée!"
+        },
+        "pfc": {
+          "title": "🪨✋✂️ Pierre-Feuille-Ciseaux",
+          "info": "**Commande:** `!pfc @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ L'adversaire doit accepter le défi (30 secondes)\n3️⃣ Chaque joueur choisit secrètement Pierre, Feuille ou Ciseaux\n4️⃣ Les choix sont révélés et le gagnant est déterminé!\n\n**Règles:**\n🪨 Pierre bat ✂️ Ciseaux\n✋ Feuille bat 🪨 Pierre\n✂️ Ciseaux bat ✋ Feuille\n\n💰 Le gagnant remporte la mise doublée!"
         }
       },
       "casino": {
