@@ -590,27 +590,6 @@ async function handleLotoInteraction(interaction, userId) {
         }
         await showMainMenu(interaction, userId, true);
     } else {
-        let infoEmbed;
-        if (selectedValue === 'acheter') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.acheter.title'))
-                .setDescription(getResponse('menu.submenu.loto.acheter.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'voir') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.voir.title'))
-                .setDescription(getResponse('menu.submenu.loto.voir.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'jackpot') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.jackpot.title'))
-                .setDescription(getResponse('menu.submenu.loto.jackpot.info'))
-                .setTimestamp();
-        }
-        
         // Delete the menu message before showing info
         await interaction.deferUpdate();
         try {
@@ -619,7 +598,64 @@ async function handleLotoInteraction(interaction, userId) {
             console.error('Failed to delete menu message:', error);
         }
         
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+        let response;
+        try {
+            if (selectedValue === 'voir') {
+                // Get actual tickets and show them immediately with command hint
+                const lotteryState = await db.getLotteryState();
+                if (!lotteryState) {
+                    response = `❌ Erreur lors de la récupération de l'état de la loterie.
+(Astuce : tapez \`!loto voir\` pour consulter vos tickets.)`;
+                } else {
+                    const tickets = await db.getUserLotteryTickets(userId, lotteryState.next_draw_time);
+                    
+                    if (tickets.length === 0) {
+                        response = `🎟 Vous n'avez aucun ticket pour le prochain tirage.
+💡 Achetez des tickets avec : \`!loto acheter [nombre]\`
+(Exemple : \`!loto acheter 5\`)`;
+                    } else {
+                        const drawDate = new Date(lotteryState.next_draw_time);
+                        const drawTimeStr = `<t:${Math.floor(drawDate.getTime() / 1000)}:F>`;
+                        const numbersStr = tickets.length > 10
+                            ? `${tickets.slice(0, 10).join(', ')} ... (${tickets.length} total)`
+                            : tickets.join(', ');
+                        
+                        response = `🎟 **Vos tickets de loterie**
+╔════════════════════════════════╗
+║ 🎫 **Tickets** : ${tickets.length}
+║ 🔢 **Numéros** : ${numbersStr}
+║ 📅 **Tirage** : ${drawTimeStr}
+╚════════════════════════════════╝
+
+(Astuce : tapez \`!loto voir\` pour consulter vos tickets plus rapidement la prochaine fois.)`;
+                    }
+                }
+            } else if (selectedValue === 'jackpot') {
+                // Get actual jackpot and show it immediately with command hint
+                const lotteryState = await db.getLotteryState();
+                if (!lotteryState) {
+                    response = `❌ Erreur lors de la récupération du jackpot.
+(Astuce : tapez \`!loto jackpot\` pour voir le jackpot.)`;
+                } else {
+                    const drawDate = new Date(lotteryState.next_draw_time);
+                    const drawTimeStr = `<t:${Math.floor(drawDate.getTime() / 1000)}:F>`;
+                    
+                    response = `💰 **Jackpot actuel : ${lotteryState.jackpot} LC**
+📅 Prochain tirage : ${drawTimeStr}
+
+💡 Tentez votre chance avec : \`!loto acheter [nombre]\`
+(Astuce : tapez \`!loto jackpot\` pour voir le jackpot plus rapidement la prochaine fois.)`;
+                }
+            } else if (selectedValue === 'acheter') {
+                response = getResponse('menu.submenu.loto.acheter.info');
+            }
+        } catch (error) {
+            console.error('Error fetching lottery data:', error);
+            response = `❌ Une erreur est survenue lors de la récupération des données de la loterie.
+(Astuce : utilisez les commandes \`!loto\` pour accéder à la loterie.)`;
+        }
+        
+        await interaction.followUp({ content: response, ephemeral: true });
     }
 }
 
