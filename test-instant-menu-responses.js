@@ -102,10 +102,9 @@ async function testLCBalanceInstantResponse() {
         await interaction.message.delete();
         
         const user = await mockDb.getUser(userId);
-        const response = `🪙 Votre solde actuel est **${user.balance} LC**.
-(Astuce : tapez \`!lc\` pour consulter votre solde plus rapidement la prochaine fois.)`;
+        const response = `💰 <@${userId}> a actuellement **${user.balance} LC**. (Astuce : Tapez \`!lc\` pour voir votre propre solde !)`;
         
-        await interaction.followUp({ content: response, ephemeral: true });
+        await interaction.followUp({ content: response });
         
         // Verify response
         if (!interaction.deferred) {
@@ -120,12 +119,16 @@ async function testLCBalanceInstantResponse() {
         if (!interaction.lastFollowUpContent.includes('!lc')) {
             throw new Error('Response should include command hint');
         }
+        if (!interaction.lastFollowUpContent.includes(`<@${userId}>`)) {
+            throw new Error('Response should include user mention');
+        }
         
         console.log('\n✅ LC Balance instant response test passed!');
         console.log('   - Balance fetched from database: ✓');
         console.log('   - Actual balance displayed: ✓');
+        console.log('   - User mention included: ✓');
         console.log('   - Command hint included: ✓');
-        console.log('   - Ephemeral message: ✓\n');
+        console.log('   - Public message (not ephemeral): ✓\n');
         
     } catch (error) {
         console.error('❌ Test failed:', error.message);
