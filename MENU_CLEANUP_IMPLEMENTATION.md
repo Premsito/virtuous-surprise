@@ -7,7 +7,7 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
 
 ✅ **1. Delete Dropdown Menu after Interaction**
 - When a user interacts with a dropdown menu from the `!menu` command, the bot automatically deletes its original dropdown message
-- Example: User selects "Jeux Solo" → Bot responds with submenu and deletes the original dropdown menu message
+- Example: User selects "Jeux 1v1" → Bot responds with submenu and deletes the original dropdown menu message
 
 ✅ **2. Fallback for Errors**
 - If the bot cannot delete the message (e.g., permissions issues), errors are logged to console
@@ -15,10 +15,12 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
 
 ✅ **3. Compatibility with Dynamic Menus**
 - Implementation applies to all dynamic menus managed by the bot:
-  - Main menu (Jeux Solo, Jeux 1v1, Casino, Statistiques)
-  - Jeux Solo submenu
+  - Main menu (Jeux 1v1, Casino, LC, Loto, Statistiques)
   - Jeux 1v1 submenu
   - Casino submenu
+  - LC submenu
+  - Loto submenu
+  - Statistiques submenu
 
 ## Implementation Approach
 
@@ -35,7 +37,7 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
    - Creates new menu message with proper collector attachment
 
 3. **Updated Menu Handlers**
-   - `handleJeuxSolo()`, `handleJeux1v1()`, `handleCasino()`, `handleStatistiques()`
+   - `handleJeux1v1()`, `handleCasino()`, `handleLC()`, `handleLoto()`, `handleStatistiques()`
    - Each handler follows the pattern:
      1. Call `interaction.deferUpdate()` to acknowledge interaction
      2. Delete original message with try-catch error handling
@@ -43,7 +45,7 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
      4. Attach collector to new message (if it's a menu)
 
 4. **Submenu Interaction Handlers**
-   - `handleJeuxSoloInteraction()`, `handleJeux1v1Interaction()`, `handleCasinoInteraction()`
+   - `handleJeux1v1Interaction()`, `handleCasinoInteraction()`, `handleLCInteraction()`, `handleLotoInteraction()`, `handleStatistiquesInteraction()`
    - Handle both "back" navigation and info display
    - Follow the same deletion pattern for consistency
 
@@ -52,7 +54,7 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
 ### Example 1: Main Menu → Submenu
 1. User runs `!menu`
 2. Bot sends main menu dropdown
-3. User selects "Jeux Solo"
+3. User selects "Jeux 1v1"
 4. Bot:
    - Defers the interaction
    - Deletes the main menu message
@@ -60,7 +62,7 @@ Update the virtuous-surprise bot to automatically delete dropdown messages after
    - Attaches collector to submenu
 
 ### Example 2: Submenu → Main Menu (Back Button)
-1. User is viewing "Jeux Solo" submenu
+1. User is viewing "Jeux 1v1" submenu
 2. User selects "Retour"
 3. Bot:
    - Defers the interaction
