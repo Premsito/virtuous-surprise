@@ -38,6 +38,7 @@ const lotoCommand = require('./commands/loto');
 const menuCommand = require('./commands/menu');
 const rapideCommand = require('./commands/rapide');
 const pfcCommand = require('./commands/pfc');
+const quizCommand = require('./commands/quiz');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -50,6 +51,7 @@ client.commands.set(lotoCommand.name, lotoCommand);
 client.commands.set(menuCommand.name, menuCommand);
 client.commands.set(rapideCommand.name, rapideCommand);
 client.commands.set(pfcCommand.name, pfcCommand);
+client.commands.set(quizCommand.name, quizCommand);
 
 // Store invites for tracking
 const invites = new Map();
