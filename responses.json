@@ -420,5 +420,41 @@
       "title": "✅ Défi Accepté",
       "description": "╔══════════════════════════════════════╗\n║ ✅ **Défi accepté**\n║ \n║ {opponent} a accepté le défi!\n║ Préparez-vous...\n╚══════════════════════════════════════╝"
     }
+  },
+  "pfc": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!pfc @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Partie impossible**\n║ \n║ Vous ne pouvez pas jouer contre\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Partie impossible**\n║ \n║ Vous ne pouvez pas jouer contre\n║ un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Partie en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans une partie de PFC!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🪨✋✂️ Défi Pierre-Feuille-Ciseaux !",
+      "description": "🎯 {challenger} défie {opponent} à une partie de Pierre-Feuille-Ciseaux!\n\n💰 **Mise:** {bet} LC\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Partie Refusée",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Partie refusée**\n║ \n║ {opponent} a refusé la partie.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Partie Acceptée",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Partie acceptée**\n║ \n║ {opponent} a accepté la partie!\n║ Faites vos choix...\n╚══════════════════════════════════════╝"
+    },
+    "game": {
+      "title": "🪨✋✂️ Pierre-Feuille-Ciseaux",
+      "description": "**Faites votre choix :**\n\n🪨 **Pierre** - Bat les Ciseaux\n✋ **Feuille** - Bat la Pierre\n✂️ **Ciseaux** - Bat la Feuille\n\n⏱️ Vous avez **30 secondes** pour choisir!"
+    },
+    "alreadyChosen": "Vous avez déjà fait votre choix!",
+    "choiceMade": "✅ Votre choix a été enregistré! En attente de l'autre joueur...",
+    "result": {
+      "title": "🏆 Résultat",
+      "description": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur :** {winner}\n║ 💰 **Gains :** {winnings} LC\n╚══════════════════════════════════════╝",
+      "draw": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🤝 **ÉGALITÉ !**\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un ou plusieurs joueurs n'ont pas\n║ fait leur choix à temps!\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    }
   }
 }
