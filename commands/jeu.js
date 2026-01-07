@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
@@ -107,13 +107,67 @@ async function handleDuel(message, args) {
         }))
         .setTimestamp();
     
-    const challengeMsg = await message.reply({ embeds: [embed] });
+    // Create buttons for acceptance
+    const acceptButton = new ButtonBuilder()
+        .setCustomId('duel_accept')
+        .setLabel('Accepter')
+        .setEmoji('✅')
+        .setStyle(ButtonStyle.Success);
     
-    // Wait for acceptance
-    const filter = m => m.author.id === opponentId && m.content.toLowerCase() === 'accepter';
+    const refuseButton = new ButtonBuilder()
+        .setCustomId('duel_refuse')
+        .setLabel('Refuser')
+        .setEmoji('❌')
+        .setStyle(ButtonStyle.Danger);
+    
+    const row = new ActionRowBuilder()
+        .addComponents(acceptButton, refuseButton);
+    
+    const challengeMsg = await message.reply({ embeds: [embed], components: [row] });
+    
+    // Wait for button interaction
+    const filter = i => {
+        return i.user.id === opponentId && (i.customId === 'duel_accept' || i.customId === 'duel_refuse');
+    };
     
     try {
-        await message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+        const interaction = await challengeMsg.awaitMessageComponent({ filter, time: 30000 });
+        
+        // Disable buttons after interaction
+        acceptButton.setDisabled(true);
+        refuseButton.setDisabled(true);
+        await challengeMsg.edit({ components: [row] });
+        
+        // Check if refused
+        if (interaction.customId === 'duel_refuse') {
+            await interaction.update({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(config.colors.error)
+                        .setTitle(getResponse('games.duel.refused.title'))
+                        .setDescription(getResponse('games.duel.refused.description', {
+                            opponent: opponentMention
+                        }))
+                        .setTimestamp()
+                ],
+                components: []
+            });
+            return;
+        }
+        
+        // Accepted - acknowledge the interaction
+        await interaction.update({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor(config.colors.success)
+                    .setTitle(getResponse('games.duel.accepted.title'))
+                    .setDescription(getResponse('games.duel.accepted.description', {
+                        opponent: opponentMention
+                    }))
+                    .setTimestamp()
+            ],
+            components: []
+        });
         
         // Execute duel
         const winner = Math.random() < 0.5 ? challengerId : opponentId;

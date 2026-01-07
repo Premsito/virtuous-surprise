@@ -161,6 +161,14 @@
       "timeout": {
         "title": "⚔️ Duel Annulé",
         "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {opponent} n'a pas accepté le duel\n║ à temps.\n╚══════════════════════════════════════╝"
+      },
+      "refused": {
+        "title": "⚔️ Duel Refusé",
+        "description": "╔══════════════════════════════════════╗\n║ ❌ **Duel refusé**\n║ \n║ {opponent} a refusé le duel.\n╚══════════════════════════════════════╝"
+      },
+      "accepted": {
+        "title": "⚔️ Duel Accepté",
+        "description": "╔══════════════════════════════════════╗\n║ ✅ **Duel accepté**\n║ \n║ {opponent} a accepté le duel!\n║ Le combat commence...\n╚══════════════════════════════════════╝"
       }
     },
     "roulette": {
@@ -406,7 +414,116 @@
     },
     "refused": {
       "title": "❌ Défi refusé",
-      "description": "╔══════════════════════════════════════╗\n║ ❌ **Défi non accepté**\n║ \n║ {opponent} n'a pas accepté le défi\n║ dans le temps imparti.\n╚══════════════════════════════════════╝"
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Défi refusé**\n║ \n║ {opponent} a refusé le défi.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Défi Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Défi accepté**\n║ \n║ {opponent} a accepté le défi!\n║ Préparez-vous...\n╚══════════════════════════════════════╝"
+    }
+  },
+  "pfc": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!pfc @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Partie impossible**\n║ \n║ Vous ne pouvez pas jouer contre\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Partie impossible**\n║ \n║ Vous ne pouvez pas jouer contre\n║ un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Partie en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans une partie de PFC!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🪨✋✂️ Défi Pierre-Feuille-Ciseaux !",
+      "description": "🎯 {challenger} défie {opponent} à une partie de Pierre-Feuille-Ciseaux!\n\n💰 **Mise:** {bet} LC\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Partie Refusée",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Partie refusée**\n║ \n║ {opponent} a refusé la partie.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Partie Acceptée",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Partie acceptée**\n║ \n║ {opponent} a accepté la partie!\n║ Faites vos choix...\n╚══════════════════════════════════════╝"
+    },
+    "game": {
+      "title": "🪨✋✂️ Pierre-Feuille-Ciseaux",
+      "description": "**Faites votre choix :**\n\n🪨 **Pierre** - Bat les Ciseaux\n✋ **Feuille** - Bat la Pierre\n✂️ **Ciseaux** - Bat la Feuille\n\n⏱️ Vous avez **30 secondes** pour choisir!"
+    },
+    "alreadyChosen": "Vous avez déjà fait votre choix!",
+    "choiceMade": "✅ Votre choix a été enregistré! En attente de l'autre joueur...",
+    "result": {
+      "title": "🏆 Résultat",
+      "description": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur :** {winner}\n║ 💰 **Gains :** {winnings} LC\n╚══════════════════════════════════════╝",
+      "draw": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🤝 **ÉGALITÉ !**\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un ou plusieurs joueurs n'ont pas\n║ fait leur choix à temps!\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    }
+  },
+  "quiz": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!quiz @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Quiz impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Quiz impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Quiz en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans un duel de quiz!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🧠 Duel de Quiz !",
+      "description": "🎯 {challenger} défie {opponent} à un duel de quiz!\n\n💰 **Mise:** {bet} LC\n📝 **Questions:** {questionCount}\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Duel Refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Duel refusé**\n║ \n║ {opponent} a refusé le duel.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Duel Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Duel accepté**\n║ \n║ {opponent} a accepté le duel!\n║ Le quiz commence...\n╚══════════════════════════════════════╝"
+    },
+    "question": {
+      "title": "❓ Question {number}/{total}"
+    },
+    "alreadyAnswered": "Vous avez déjà répondu à cette question!",
+    "answerRecorded": "✅ Votre réponse a été enregistrée!",
+    "feedback": {
+      "title": "📊 Résultat de la question",
+      "description": "**Bonne réponse:** {correctAnswer} {correctAnswerLetter} - {correctAnswerText}"
+    },
+    "result": {
+      "title": "🏆 Résultat Final",
+      "description": "╔══════════════════════════════════════╗\n║ 🏆 **Vainqueur:** {winner}\n║ 📊 **Score:** {winnerScore} vs {loserScore}\n║ 💰 **Gains:** {winnings} LC\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 😢 **Perdant:** {loser}\n╚══════════════════════════════════════╝",
+      "draw": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ !**\n║ 📊 **Scores:**\n║ - {challenger}: {challengerScore}\n║ - {opponent}: {opponentScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
+    }
+  },
+  "c21": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!c21 @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Challenge impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Challenge impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Challenge en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans un Challenge de 21!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🎯 Challenge de 21 !",
+      "description": "🎯 {challenger} défie {opponent} au Challenge de 21!\n\n💰 **Mise:** {bet} LC\n\n**Règles:** Ne soyez PAS le joueur qui atteint 21!\nÀ tour de rôle, ajoutez 1, 2 ou 3 au total.\nLe joueur qui atteint ou dépasse 21 perd!\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Challenge Refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Challenge refusé**\n║ \n║ {opponent} a refusé le challenge.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Challenge Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Challenge accepté**\n║ \n║ {opponent} a accepté le challenge!\n║ Le jeu commence...\n╚══════════════════════════════════════╝"
+    },
+    "turn": {
+      "title": "🎯 Tour {turn}",
+      "description": "**Total actuel:** {currentTotal}\n\n{currentPlayer}, c'est votre tour!\nChoisissez combien ajouter (1, 2 ou 3):",
+      "chosen": "{player} ajoute {addition}! **Nouveau total: {newTotal}**"
+    },
+    "result": {
+      "title": "🏆 Fin de partie !",
+      "description": "╔══════════════════════════════════════╗\n║ 🎯 **Total final:** {finalTotal}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 😢 **Perdant:** {loser}\n║ (A atteint 21!)\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur:** {winner}\n║ 💰 **Gains:** {winnings} LC\n╚══════════════════════════════════════╝"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {loser} n'a pas répondu à temps!\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur:** {winner}\n╚══════════════════════════════════════╝"
     }
   }
 }

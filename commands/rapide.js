@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
@@ -90,31 +90,121 @@ module.exports = {
                 opponent: opponentMention,
                 bet: betAmount
             }))
-            .addFields(
-                {
-                    name: getResponse('rapide.challenge.acceptField'),
-                    value: getResponse('rapide.challenge.acceptValue'),
-                    inline: false
-                }
-            )
             .setTimestamp();
         
-        await message.reply({ embeds: [challengeEmbed] });
+        // Create buttons for acceptance
+        const acceptButton = new ButtonBuilder()
+            .setCustomId('rapide_accept')
+            .setLabel('Accepter')
+            .setEmoji('✅')
+            .setStyle(ButtonStyle.Success);
         
-        // Wait for acceptance
-        const filter = m => m.author.id === opponentId && m.content.toLowerCase() === 'accepter';
+        const refuseButton = new ButtonBuilder()
+            .setCustomId('rapide_refuse')
+            .setLabel('Refuser')
+            .setEmoji('❌')
+            .setStyle(ButtonStyle.Danger);
+        
+        const row = new ActionRowBuilder()
+            .addComponents(acceptButton, refuseButton);
+        
+        const challengeMsg = await message.reply({ embeds: [challengeEmbed], components: [row] });
+        
+        // Wait for button interaction
+        const filter = i => {
+            return i.user.id === opponentId && (i.customId === 'rapide_accept' || i.customId === 'rapide_refuse');
+        };
         
         try {
-            await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] });
+            const interaction = await challengeMsg.awaitMessageComponent({ filter, time: 60000 });
             
-            // Show rules
+            // Disable buttons after interaction
+            acceptButton.setDisabled(true);
+            refuseButton.setDisabled(true);
+            await challengeMsg.edit({ components: [row] });
+            
+            // Check if refused
+            if (interaction.customId === 'rapide_refuse') {
+                await interaction.update({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor(config.colors.error)
+                            .setTitle(getResponse('rapide.refused.title'))
+                            .setDescription(getResponse('rapide.refused.description', {
+                                opponent: opponentMention
+                            }))
+                            .setTimestamp()
+                    ],
+                    components: []
+                });
+                return;
+            }
+            
+            // Accepted - acknowledge the interaction
+            await interaction.update({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(config.colors.success)
+                        .setTitle(getResponse('rapide.accepted.title'))
+                        .setDescription(getResponse('rapide.accepted.description', {
+                            opponent: opponentMention
+                        }))
+                        .setTimestamp()
+                ],
+                components: []
+            });
+            
+            // Show rules and ready button
             const rulesEmbed = new EmbedBuilder()
                 .setColor(config.colors.primary)
                 .setTitle(getResponse('rapide.rules.title'))
                 .setDescription(getResponse('rapide.rules.description'))
                 .setTimestamp();
             
-            await message.channel.send({ embeds: [rulesEmbed] });
+            const readyButton = new ButtonBuilder()
+                .setCustomId('rapide_ready')
+                .setLabel('Prêt')
+                .setEmoji('👍')
+                .setStyle(ButtonStyle.Primary);
+            
+            const readyRow = new ActionRowBuilder()
+                .addComponents(readyButton);
+            
+            const rulesMsg = await message.channel.send({ embeds: [rulesEmbed], components: [readyRow] });
+            
+            // Wait for both players to be ready
+            const readyPlayers = new Set();
+            const readyFilter = i => {
+                return (i.user.id === challengerId || i.user.id === opponentId) && i.customId === 'rapide_ready';
+            };
+            
+            const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 30000 });
+            
+            readyCollector.on('collect', async i => {
+                readyPlayers.add(i.user.id);
+                await i.reply({ content: `${i.user} est prêt! (${readyPlayers.size}/2)`, ephemeral: false });
+                
+                if (readyPlayers.size === 2) {
+                    readyCollector.stop('both_ready');
+                }
+            });
+            
+            await new Promise((resolve, reject) => {
+                readyCollector.on('end', (collected, reason) => {
+                    if (reason === 'both_ready') {
+                        resolve();
+                    } else {
+                        reject(new Error('timeout'));
+                    }
+                });
+            });
+            
+            // Disable ready button
+            readyButton.setDisabled(true);
+            await rulesMsg.edit({ components: [readyRow] });
+            
+            // Extended delay before countdown
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Countdown
             const countdownEmbed = new EmbedBuilder()
