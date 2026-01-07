@@ -265,7 +265,7 @@ module.exports = {
                 
                 const questionMsg = await message.channel.send({ embeds: [questionEmbed], components: [answerRow] });
                 
-                // Wait for both players to answer with 10-second timer
+                // Wait up to 10 seconds for players to answer
                 const answers = new Map();
                 const answerTimes = new Map();
                 const questionStartTime = Date.now();
@@ -374,9 +374,6 @@ module.exports = {
             } else {
                 // Someone won
                 const winner = challengerScore > opponentScore ? challenger : opponentMention;
-                const loser = challengerScore > opponentScore ? opponentMention : challenger;
-                const winnerScore = Math.max(challengerScore, opponentScore);
-                const loserScore = Math.min(challengerScore, opponentScore);
                 
                 resultEmbed
                     .setColor(config.colors.success)
