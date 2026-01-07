@@ -488,6 +488,36 @@
       "draw": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ !**\n║ 📊 **Scores:**\n║ - {challenger}: {challengerScore}\n║ - {opponent}: {opponentScore}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝"
     }
   },
+  "quizduo": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!quizduo @user`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Duel en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans un Duel de Quiz!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🧠 Duel de Quiz !",
+      "description": "🎯 {challenger} défie {opponent} à un Duel de Quiz!\n\n📝 **Questions:** {questionCount}\n⏱️ **Temps par question:** 10 secondes\n\n{opponent}, acceptez-vous le défi ?"
+    },
+    "refused": {
+      "title": "❌ Duel Refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Duel refusé**\n║ \n║ {opponent} a refusé le duel.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Duel Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Duel accepté**\n║ \n║ {opponent} a accepté le duel!\n║ Le quiz commence...\n╚══════════════════════════════════════╝"
+    },
+    "question": {
+      "title": "❓ Question {number}/{total}"
+    },
+    "alreadyAnswered": "Vous avez déjà répondu à cette question!",
+    "answerRecorded": "✅ Votre réponse a été enregistrée!",
+    "feedback": {
+      "title": "📊 Résultat de la question"
+    },
+    "timeout": {
+      "title": "⏱️ Délai expiré",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️ **Jeu terminé**\n║ \n║ Un joueur n'a pas répondu à temps.\n║ Le duel est annulé.\n╚══════════════════════════════════════╝"
+    }
+  },
   "c21": {
     "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!c21 @user 50`\n╚══════════════════════════════════════╝",
     "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Challenge impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",

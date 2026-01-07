@@ -39,6 +39,7 @@ const menuCommand = require('./commands/menu');
 const rapideCommand = require('./commands/rapide');
 const pfcCommand = require('./commands/pfc');
 const quizCommand = require('./commands/quiz');
+const quizduoCommand = require('./commands/quizduo');
 const c21Command = require('./commands/c21');
 
 client.commands.set(lcCommand.name, lcCommand);
@@ -53,6 +54,7 @@ client.commands.set(menuCommand.name, menuCommand);
 client.commands.set(rapideCommand.name, rapideCommand);
 client.commands.set(pfcCommand.name, pfcCommand);
 client.commands.set(quizCommand.name, quizCommand);
+client.commands.set(quizduoCommand.name, quizduoCommand);
 client.commands.set(c21Command.name, c21Command);
 
 // Store invites for tracking
@@ -438,6 +440,9 @@ client.on('messageCreate', async (message) => {
             await command.execute(message, args);
         } else if (commandName === 'rapide') {
             const command = client.commands.get('rapide');
+            await command.execute(message, args);
+        } else if (commandName === 'quizduo') {
+            const command = client.commands.get('quizduo');
             await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
