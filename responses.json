@@ -161,6 +161,14 @@
       "timeout": {
         "title": "⚔️ Duel Annulé",
         "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {opponent} n'a pas accepté le duel\n║ à temps.\n╚══════════════════════════════════════╝"
+      },
+      "refused": {
+        "title": "⚔️ Duel Refusé",
+        "description": "╔══════════════════════════════════════╗\n║ ❌ **Duel refusé**\n║ \n║ {opponent} a refusé le duel.\n╚══════════════════════════════════════╝"
+      },
+      "accepted": {
+        "title": "⚔️ Duel Accepté",
+        "description": "╔══════════════════════════════════════╗\n║ ✅ **Duel accepté**\n║ \n║ {opponent} a accepté le duel!\n║ Le combat commence...\n╚══════════════════════════════════════╝"
       }
     },
     "roulette": {
@@ -406,7 +414,11 @@
     },
     "refused": {
       "title": "❌ Défi refusé",
-      "description": "╔══════════════════════════════════════╗\n║ ❌ **Défi non accepté**\n║ \n║ {opponent} n'a pas accepté le défi\n║ dans le temps imparti.\n╚══════════════════════════════════════╝"
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Défi refusé**\n║ \n║ {opponent} a refusé le défi.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Défi Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Défi accepté**\n║ \n║ {opponent} a accepté le défi!\n║ Préparez-vous...\n╚══════════════════════════════════════╝"
     }
   }
 }
