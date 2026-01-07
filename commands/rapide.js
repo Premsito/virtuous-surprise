@@ -120,7 +120,7 @@ module.exports = {
             const countdownEmbed = new EmbedBuilder()
                 .setColor(config.colors.warning)
                 .setTitle(getResponse('rapide.countdown.title'))
-                .setDescription(getResponse('rapide.countdown.description', { seconds: 30 }))
+                .setDescription(getResponse('rapide.countdown.description', { seconds: 5 }))
                 .setTimestamp();
             
             const countdownMsg = await message.channel.send({ embeds: [countdownEmbed] });

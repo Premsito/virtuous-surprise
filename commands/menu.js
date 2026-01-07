@@ -2,6 +2,36 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType }
 const { getResponse } = require('../utils/responseHelper');
 const config = require('../config.json');
 
+// Helper function to create main menu options
+function createMainMenuOptions() {
+    return [
+        {
+            label: 'Jeux Solo',
+            description: 'Jeux en solo pour tester votre chance',
+            value: 'jeux_solo',
+            emoji: '🎮'
+        },
+        {
+            label: 'Jeux 1v1',
+            description: 'Défiez d\'autres joueurs',
+            value: 'jeux_1v1',
+            emoji: '🤼'
+        },
+        {
+            label: 'Casino',
+            description: 'Jeux de casino et paris',
+            value: 'casino',
+            emoji: '🎰'
+        },
+        {
+            label: 'Statistiques',
+            description: 'Consultez vos statistiques',
+            value: 'statistiques',
+            emoji: '📊'
+        }
+    ];
+}
+
 module.exports = {
     name: 'menu',
     description: 'Display interactive menu with game categories',
@@ -18,32 +48,7 @@ module.exports = {
                 new StringSelectMenuBuilder()
                     .setCustomId('main_menu')
                     .setPlaceholder(getResponse('menu.main.placeholder'))
-                    .addOptions([
-                        {
-                            label: 'Jeux Solo',
-                            description: 'Jeux en solo pour tester votre chance',
-                            value: 'jeux_solo',
-                            emoji: '🎮'
-                        },
-                        {
-                            label: 'Jeux 1v1',
-                            description: 'Défiez d\'autres joueurs',
-                            value: 'jeux_1v1',
-                            emoji: '🤼'
-                        },
-                        {
-                            label: 'Casino',
-                            description: 'Jeux de casino et paris',
-                            value: 'casino',
-                            emoji: '🎰'
-                        },
-                        {
-                            label: 'Statistiques',
-                            description: 'Consultez vos statistiques',
-                            value: 'statistiques',
-                            emoji: '📊'
-                        }
-                    ])
+                    .addOptions(createMainMenuOptions())
             );
         
         const menuMessage = await message.reply({
@@ -51,7 +56,7 @@ module.exports = {
             components: [mainMenuRow]
         });
         
-        // Create collector for main menu
+        // Create unified collector for all menu interactions
         const collector = menuMessage.createMessageComponentCollector({
             componentType: ComponentType.StringSelect,
             time: 120000 // 2 minutes
@@ -68,19 +73,69 @@ module.exports = {
             
             const selectedValue = interaction.values[0];
             
-            switch (selectedValue) {
-                case 'jeux_solo':
-                    await handleJeuxSolo(interaction);
-                    break;
-                case 'jeux_1v1':
-                    await handleJeux1v1(interaction);
-                    break;
-                case 'casino':
-                    await handleCasino(interaction);
-                    break;
-                case 'statistiques':
-                    await handleStatistiques(interaction);
-                    break;
+            // Handle main menu selections
+            if (interaction.customId === 'main_menu') {
+                switch (selectedValue) {
+                    case 'jeux_solo':
+                        await handleJeuxSolo(interaction);
+                        break;
+                    case 'jeux_1v1':
+                        await handleJeux1v1(interaction);
+                        break;
+                    case 'casino':
+                        await handleCasino(interaction);
+                        break;
+                    case 'statistiques':
+                        await handleStatistiques(interaction);
+                        break;
+                }
+            }
+            // Handle submenu selections
+            else if (interaction.customId === 'jeux_1v1_submenu') {
+                if (selectedValue === 'back') {
+                    await recreateMainMenu(interaction);
+                } else if (selectedValue === 'rapide') {
+                    const infoEmbed = new EmbedBuilder()
+                        .setColor(config.colors.success)
+                        .setTitle(getResponse('menu.submenu.jeux_1v1.rapide.title'))
+                        .setDescription(getResponse('menu.submenu.jeux_1v1.rapide.info'))
+                        .setTimestamp();
+                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+                } else if (selectedValue === 'duel') {
+                    const infoEmbed = new EmbedBuilder()
+                        .setColor(config.colors.success)
+                        .setTitle(getResponse('menu.submenu.jeux_1v1.duel.title'))
+                        .setDescription(getResponse('menu.submenu.jeux_1v1.duel.info'))
+                        .setTimestamp();
+                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+                }
+            }
+            else if (interaction.customId === 'casino_submenu') {
+                if (selectedValue === 'back') {
+                    await recreateMainMenu(interaction);
+                } else {
+                    let infoEmbed;
+                    if (selectedValue === 'roue') {
+                        infoEmbed = new EmbedBuilder()
+                            .setColor(config.colors.success)
+                            .setTitle(getResponse('menu.submenu.casino.roue.title'))
+                            .setDescription(getResponse('menu.submenu.casino.roue.info'))
+                            .setTimestamp();
+                    } else if (selectedValue === 'blackjack') {
+                        infoEmbed = new EmbedBuilder()
+                            .setColor(config.colors.success)
+                            .setTitle(getResponse('menu.submenu.casino.blackjack.title'))
+                            .setDescription(getResponse('menu.submenu.casino.blackjack.info'))
+                            .setTimestamp();
+                    } else if (selectedValue === 'machine') {
+                        infoEmbed = new EmbedBuilder()
+                            .setColor(config.colors.success)
+                            .setTitle(getResponse('menu.submenu.casino.machine.title'))
+                            .setDescription(getResponse('menu.submenu.casino.machine.info'))
+                            .setTimestamp();
+                    }
+                    await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+                }
             }
         });
         
@@ -164,44 +219,6 @@ async function handleJeux1v1(interaction) {
         embeds: [submenuEmbed],
         components: [submenuRow]
     });
-    
-    // Add collector for submenu
-    const submenuCollector = interaction.message.createMessageComponentCollector({
-        componentType: ComponentType.StringSelect,
-        time: 120000
-    });
-    
-    submenuCollector.on('collect', async (subInteraction) => {
-        if (subInteraction.user.id !== interaction.user.id) {
-            return subInteraction.reply({
-                content: getResponse('menu.notYourMenu'),
-                ephemeral: true
-            });
-        }
-        
-        const selectedValue = subInteraction.values[0];
-        
-        if (selectedValue === 'back') {
-            // Recreate main menu
-            await recreateMainMenu(subInteraction);
-        } else if (selectedValue === 'rapide') {
-            const infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.jeux_1v1.rapide.title'))
-                .setDescription(getResponse('menu.submenu.jeux_1v1.rapide.info'))
-                .setTimestamp();
-            
-            await subInteraction.reply({ embeds: [infoEmbed], ephemeral: true });
-        } else if (selectedValue === 'duel') {
-            const infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.jeux_1v1.duel.title'))
-                .setDescription(getResponse('menu.submenu.jeux_1v1.duel.info'))
-                .setTimestamp();
-            
-            await subInteraction.reply({ embeds: [infoEmbed], ephemeral: true });
-        }
-    });
 }
 
 async function handleCasino(interaction) {
@@ -248,50 +265,6 @@ async function handleCasino(interaction) {
         embeds: [submenuEmbed],
         components: [submenuRow]
     });
-    
-    // Add collector for submenu
-    const submenuCollector = interaction.message.createMessageComponentCollector({
-        componentType: ComponentType.StringSelect,
-        time: 120000
-    });
-    
-    submenuCollector.on('collect', async (subInteraction) => {
-        if (subInteraction.user.id !== interaction.user.id) {
-            return subInteraction.reply({
-                content: getResponse('menu.notYourMenu'),
-                ephemeral: true
-            });
-        }
-        
-        const selectedValue = subInteraction.values[0];
-        
-        if (selectedValue === 'back') {
-            await recreateMainMenu(subInteraction);
-        } else {
-            let infoEmbed;
-            if (selectedValue === 'roue') {
-                infoEmbed = new EmbedBuilder()
-                    .setColor(config.colors.success)
-                    .setTitle(getResponse('menu.submenu.casino.roue.title'))
-                    .setDescription(getResponse('menu.submenu.casino.roue.info'))
-                    .setTimestamp();
-            } else if (selectedValue === 'blackjack') {
-                infoEmbed = new EmbedBuilder()
-                    .setColor(config.colors.success)
-                    .setTitle(getResponse('menu.submenu.casino.blackjack.title'))
-                    .setDescription(getResponse('menu.submenu.casino.blackjack.info'))
-                    .setTimestamp();
-            } else if (selectedValue === 'machine') {
-                infoEmbed = new EmbedBuilder()
-                    .setColor(config.colors.success)
-                    .setTitle(getResponse('menu.submenu.casino.machine.title'))
-                    .setDescription(getResponse('menu.submenu.casino.machine.info'))
-                    .setTimestamp();
-            }
-            
-            await subInteraction.reply({ embeds: [infoEmbed], ephemeral: true });
-        }
-    });
 }
 
 async function handleStatistiques(interaction) {
@@ -316,32 +289,7 @@ async function recreateMainMenu(interaction) {
             new StringSelectMenuBuilder()
                 .setCustomId('main_menu')
                 .setPlaceholder(getResponse('menu.main.placeholder'))
-                .addOptions([
-                    {
-                        label: 'Jeux Solo',
-                        description: 'Jeux en solo pour tester votre chance',
-                        value: 'jeux_solo',
-                        emoji: '🎮'
-                    },
-                    {
-                        label: 'Jeux 1v1',
-                        description: 'Défiez d\'autres joueurs',
-                        value: 'jeux_1v1',
-                        emoji: '🤼'
-                    },
-                    {
-                        label: 'Casino',
-                        description: 'Jeux de casino et paris',
-                        value: 'casino',
-                        emoji: '🎰'
-                    },
-                    {
-                        label: 'Statistiques',
-                        description: 'Consultez vos statistiques',
-                        value: 'statistiques',
-                        emoji: '📊'
-                    }
-                ])
+                .addOptions(createMainMenuOptions())
         );
     
     await interaction.update({
