@@ -24,6 +24,18 @@ function createMainMenuOptions() {
             emoji: '🎰'
         },
         {
+            label: 'LC',
+            description: 'Gérez votre monnaie virtuelle',
+            value: 'lc',
+            emoji: '🪙'
+        },
+        {
+            label: 'Loto',
+            description: 'Participez à la loterie',
+            value: 'loto',
+            emoji: '🎟'
+        },
+        {
             label: 'Statistiques',
             description: 'Consultez vos statistiques',
             value: 'statistiques',
@@ -121,6 +133,12 @@ async function handleMainMenuInteraction(interaction, userId) {
             break;
         case 'casino':
             await handleCasino(interaction, userId);
+            break;
+        case 'lc':
+            await handleLC(interaction, userId);
+            break;
+        case 'loto':
+            await handleLoto(interaction, userId);
             break;
         case 'statistiques':
             await handleStatistiques(interaction, userId);
@@ -399,14 +417,47 @@ async function handleCasinoInteraction(interaction, userId) {
     }
 }
 
-async function handleStatistiques(interaction, userId) {
-    const infoEmbed = new EmbedBuilder()
-        .setColor(config.colors.success)
-        .setTitle(getResponse('menu.submenu.statistiques.title'))
-        .setDescription(getResponse('menu.submenu.statistiques.info'))
+async function handleLC(interaction, userId) {
+    const submenuEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(getResponse('menu.submenu.lc.title'))
+        .setDescription(getResponse('menu.submenu.lc.description'))
         .setTimestamp();
     
-    // Delete the menu message before showing info
+    const submenuRow = new ActionRowBuilder()
+        .addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('lc_submenu')
+                .setPlaceholder(getResponse('menu.submenu.placeholder'))
+                .addOptions([
+                    {
+                        label: 'Voir votre solde',
+                        description: 'Consultez votre solde de LC',
+                        value: 'balance',
+                        emoji: '💰'
+                    },
+                    {
+                        label: 'Voir le solde d\'un autre utilisateur',
+                        description: 'Consultez le solde d\'un membre',
+                        value: 'balance_other',
+                        emoji: '👤'
+                    },
+                    {
+                        label: 'Transférer des LC',
+                        description: 'Envoyez des LC à quelqu\'un',
+                        value: 'transfer',
+                        emoji: '💸'
+                    },
+                    {
+                        label: 'Retour',
+                        description: 'Retour au menu principal',
+                        value: 'back',
+                        emoji: '◀️'
+                    }
+                ])
+        );
+    
+    // Delete the original dropdown message and send new submenu
     await interaction.deferUpdate();
     try {
         await interaction.message.delete();
@@ -414,5 +465,252 @@ async function handleStatistiques(interaction, userId) {
         console.error('Failed to delete menu message:', error);
     }
     
-    await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    const submenuMessage = await interaction.followUp({
+        embeds: [submenuEmbed],
+        components: [submenuRow]
+    });
+    
+    attachMenuCollector(submenuMessage, userId, handleLCInteraction);
+}
+
+async function handleLCInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else {
+        let infoEmbed;
+        if (selectedValue === 'balance') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.lc.balance.title'))
+                .setDescription(getResponse('menu.submenu.lc.balance.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'balance_other') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.lc.balance_other.title'))
+                .setDescription(getResponse('menu.submenu.lc.balance_other.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'transfer') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.lc.transfer.title'))
+                .setDescription(getResponse('menu.submenu.lc.transfer.info'))
+                .setTimestamp();
+        }
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
+}
+
+async function handleLoto(interaction, userId) {
+    const submenuEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(getResponse('menu.submenu.loto.title'))
+        .setDescription(getResponse('menu.submenu.loto.description'))
+        .setTimestamp();
+    
+    const submenuRow = new ActionRowBuilder()
+        .addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('loto_submenu')
+                .setPlaceholder(getResponse('menu.submenu.placeholder'))
+                .addOptions([
+                    {
+                        label: 'Acheter des tickets',
+                        description: 'Achetez des tickets de loterie',
+                        value: 'acheter',
+                        emoji: '🎫'
+                    },
+                    {
+                        label: 'Voir vos tickets',
+                        description: 'Consultez vos tickets actifs',
+                        value: 'voir',
+                        emoji: '🎟'
+                    },
+                    {
+                        label: 'Jackpot actuel',
+                        description: 'Voir le montant du jackpot',
+                        value: 'jackpot',
+                        emoji: '💰'
+                    },
+                    {
+                        label: 'Retour',
+                        description: 'Retour au menu principal',
+                        value: 'back',
+                        emoji: '◀️'
+                    }
+                ])
+        );
+    
+    // Delete the original dropdown message and send new submenu
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const submenuMessage = await interaction.followUp({
+        embeds: [submenuEmbed],
+        components: [submenuRow]
+    });
+    
+    attachMenuCollector(submenuMessage, userId, handleLotoInteraction);
+}
+
+async function handleLotoInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else {
+        let infoEmbed;
+        if (selectedValue === 'acheter') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.loto.acheter.title'))
+                .setDescription(getResponse('menu.submenu.loto.acheter.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'voir') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.loto.voir.title'))
+                .setDescription(getResponse('menu.submenu.loto.voir.info'))
+                .setTimestamp();
+        } else if (selectedValue === 'jackpot') {
+            infoEmbed = new EmbedBuilder()
+                .setColor(config.colors.success)
+                .setTitle(getResponse('menu.submenu.loto.jackpot.title'))
+                .setDescription(getResponse('menu.submenu.loto.jackpot.info'))
+                .setTimestamp();
+        }
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
+}
+
+async function handleStatistiques(interaction, userId) {
+    const submenuEmbed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(getResponse('menu.submenu.statistiques.title'))
+        .setDescription(getResponse('menu.submenu.statistiques.description'))
+        .setTimestamp();
+    
+    const submenuRow = new ActionRowBuilder()
+        .addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('statistiques_submenu')
+                .setPlaceholder(getResponse('menu.submenu.placeholder'))
+                .addOptions([
+                    {
+                        label: 'Vos statistiques',
+                        description: 'Consultez vos propres statistiques',
+                        value: 'stats_own',
+                        emoji: '📈'
+                    },
+                    {
+                        label: 'Statistiques d\'un autre utilisateur',
+                        description: 'Voir les stats d\'un autre membre',
+                        value: 'stats_other',
+                        emoji: '👤'
+                    },
+                    {
+                        label: 'Retour',
+                        description: 'Retour au menu principal',
+                        value: 'back',
+                        emoji: '◀️'
+                    }
+                ])
+        );
+    
+    // Delete the original dropdown message and send new submenu
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const submenuMessage = await interaction.followUp({
+        embeds: [submenuEmbed],
+        components: [submenuRow]
+    });
+    
+    attachMenuCollector(submenuMessage, userId, handleStatistiquesInteraction);
+}
+
+async function handleStatistiquesInteraction(interaction, userId) {
+    const selectedValue = interaction.values[0];
+    
+    if (selectedValue === 'back') {
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        await showMainMenu(interaction, userId, true);
+    } else if (selectedValue === 'stats_own') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.statistiques.own.title'))
+            .setDescription(getResponse('menu.submenu.statistiques.own.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    } else if (selectedValue === 'stats_other') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.statistiques.other.title'))
+            .setDescription(getResponse('menu.submenu.statistiques.other.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    }
 }

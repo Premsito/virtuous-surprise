@@ -322,9 +322,49 @@
           "info": "**Commande:** `!machine [montant]`\n\n**Comment jouer:**\nTentez votre chance avec la machine à sous!\nPlus de symboles identiques = plus de gains!\n\n💰 Jackpot possible pour les plus chanceux!"
         }
       },
+      "lc": {
+        "title": "🪙 LC - Monnaie Virtuelle",
+        "description": "Gérez votre monnaie virtuelle LC !",
+        "balance": {
+          "title": "💰 Voir votre solde",
+          "info": "**Commande:** `!lc`\n\nAffichez votre solde de LC actuel."
+        },
+        "balance_other": {
+          "title": "👤 Voir le solde d'un autre utilisateur",
+          "info": "**Commande:** `!lc @user`\n\nConsultez le solde de LC d'un autre membre du serveur."
+        },
+        "transfer": {
+          "title": "💸 Transférer des LC",
+          "info": "**Commande:** `!don @user [montant]`\n\n**Comment faire:**\n1️⃣ Mentionnez l'utilisateur destinataire\n2️⃣ Indiquez le montant à transférer\n3️⃣ Confirmez la transaction\n\n**Exemple:** `!don @user 100`"
+        }
+      },
+      "loto": {
+        "title": "🎟 Loterie",
+        "description": "Participez à la loterie hebdomadaire !",
+        "acheter": {
+          "title": "🎫 Acheter des tickets",
+          "info": "**Commande:** `!loto acheter [nombre]`\n\n**Comment jouer:**\n1️⃣ Achetez un ou plusieurs tickets\n2️⃣ Attendez le tirage hebdomadaire\n3️⃣ Gagnez le jackpot si votre ticket est tiré!\n\n**Exemple:** `!loto acheter 5`"
+        },
+        "voir": {
+          "title": "🎟 Voir vos tickets",
+          "info": "**Commande:** `!loto voir`\n\nAffichez tous vos tickets de loterie actifs pour le prochain tirage."
+        },
+        "jackpot": {
+          "title": "💰 Jackpot actuel",
+          "info": "**Commande:** `!loto jackpot`\n\nConsultez le montant actuel du jackpot et la date du prochain tirage."
+        }
+      },
       "statistiques": {
         "title": "📊 Statistiques",
-        "info": "**Commande:** `!stats` ou `!stats @user`\n\nConsultez vos statistiques complètes :\n• 💰 Balance LC\n• 👥 Invitations\n• 💬 Messages envoyés\n• 🎤 Temps vocal\n• 🎮 Parties jouées\n• 🏆 Classement"
+        "description": "Consultez les statistiques des joueurs !",
+        "own": {
+          "title": "📈 Vos statistiques",
+          "info": "**Commande:** `!stats`\n\nConsultez vos statistiques complètes :\n• 💰 Balance LC\n• 👥 Invitations\n• 💬 Messages envoyés\n• 🎤 Temps vocal\n• 🎮 Parties jouées\n• 🏆 Classement"
+        },
+        "other": {
+          "title": "👤 Statistiques d'un autre utilisateur",
+          "info": "**Commande:** `!stats @user`\n\nConsultez les statistiques d'un autre membre du serveur."
+        }
       }
     },
     "notYourMenu": "❌ Ce menu ne vous est pas destiné !"
