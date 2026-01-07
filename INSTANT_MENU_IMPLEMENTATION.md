@@ -11,11 +11,10 @@ This implementation adds instant, data-driven responses to dropdown menu selecti
 - **Behavior**: Fetches and displays user's actual balance from database
 - **Response Format**:
   ```
-  🪙 Votre solde actuel est **[BALANCE] LC**.
-  (Astuce : tapez `!lc` pour consulter votre solde plus rapidement la prochaine fois.)
+  💰 @[USERNAME] a actuellement **[BALANCE] LC**. (Astuce : Tapez `!lc` pour voir votre propre solde !)
   ```
 - **Error Handling**: Shows error message with command hint if database fails
-- **Privacy**: Response is ephemeral (only visible to user)
+- **Privacy**: Response is **public** (visible to everyone in channel to encourage social interaction)
 
 #### "Transférer LC" (Transfer LC)
 - **Behavior**: Shows transfer command syntax with example
@@ -142,7 +141,8 @@ function formatVoiceTime(seconds) {
 - User-friendly error messages
 
 ### Privacy & UX
-- All responses use `ephemeral: true` flag
+- Most responses use `ephemeral: true` flag for privacy
+- Exception: LC balance is public to encourage social interaction
 - Command hints included in every response
 - Consistent formatting across all sections
 - Menu messages properly deleted after interaction
@@ -176,7 +176,8 @@ function formatVoiceTime(seconds) {
 
 1. **User Experience**
    - Instant access to data (no command typing needed)
-   - Privacy-focused (ephemeral messages)
+   - Privacy-focused for most features (ephemeral messages)
+   - Public LC balance to encourage social interaction and engagement
    - Educational (command hints for future use)
 
 2. **Code Quality**
