@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require('discord.js');
 const { getResponse } = require('../utils/responseHelper');
 const config = require('../config.json');
+const { db, pool } = require('../database/db');
 
 // Helper function to create main menu options
 function createMainMenuOptions() {
@@ -431,7 +432,7 @@ async function handleLC(interaction, userId) {
                 .setPlaceholder(getResponse('menu.submenu.placeholder'))
                 .addOptions([
                     {
-                        label: 'Voir votre solde',
+                        label: 'Voir mon solde',
                         description: 'Consultez votre solde de LC',
                         value: 'balance',
                         emoji: '💰'
@@ -443,7 +444,7 @@ async function handleLC(interaction, userId) {
                         emoji: '👤'
                     },
                     {
-                        label: 'Transférer des LC',
+                        label: 'Transférer LC',
                         description: 'Envoyez des LC à quelqu\'un',
                         value: 'transfer',
                         emoji: '💸'
@@ -485,27 +486,6 @@ async function handleLCInteraction(interaction, userId) {
         }
         await showMainMenu(interaction, userId, true);
     } else {
-        let infoEmbed;
-        if (selectedValue === 'balance') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.lc.balance.title'))
-                .setDescription(getResponse('menu.submenu.lc.balance.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'balance_other') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.lc.balance_other.title'))
-                .setDescription(getResponse('menu.submenu.lc.balance_other.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'transfer') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.lc.transfer.title'))
-                .setDescription(getResponse('menu.submenu.lc.transfer.info'))
-                .setTimestamp();
-        }
-        
         // Delete the menu message before showing info
         await interaction.deferUpdate();
         try {
@@ -514,7 +494,31 @@ async function handleLCInteraction(interaction, userId) {
             console.error('Failed to delete menu message:', error);
         }
         
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+        let response;
+        if (selectedValue === 'balance') {
+            // Get actual balance and show it immediately with command hint
+            try {
+                let user = await db.getUser(userId);
+                if (!user) {
+                    user = await db.createUser(userId, interaction.user.username);
+                }
+                
+                response = `🪙 Votre solde actuel est **${user.balance} LC**.
+(Astuce : tapez \`!lc\` pour consulter votre solde plus rapidement la prochaine fois.)`;
+            } catch (error) {
+                console.error('Error fetching user balance:', error);
+                response = `❌ Une erreur est survenue lors de la récupération de votre solde.
+(Astuce : tapez \`!lc\` pour consulter votre solde.)`;
+            }
+        } else if (selectedValue === 'balance_other') {
+            response = getResponse('menu.submenu.lc.balance_other.info');
+        } else if (selectedValue === 'transfer') {
+            response = `💸 Pour transférer des LC à quelqu'un, utilisez : 
+\`!don @user [montant]\` 
+(Exemple : \`!don @Premsito 500\`)`;
+        }
+        
+        await interaction.followUp({ content: response, ephemeral: true });
     }
 }
 
@@ -586,27 +590,6 @@ async function handleLotoInteraction(interaction, userId) {
         }
         await showMainMenu(interaction, userId, true);
     } else {
-        let infoEmbed;
-        if (selectedValue === 'acheter') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.acheter.title'))
-                .setDescription(getResponse('menu.submenu.loto.acheter.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'voir') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.voir.title'))
-                .setDescription(getResponse('menu.submenu.loto.voir.info'))
-                .setTimestamp();
-        } else if (selectedValue === 'jackpot') {
-            infoEmbed = new EmbedBuilder()
-                .setColor(config.colors.success)
-                .setTitle(getResponse('menu.submenu.loto.jackpot.title'))
-                .setDescription(getResponse('menu.submenu.loto.jackpot.info'))
-                .setTimestamp();
-        }
-        
         // Delete the menu message before showing info
         await interaction.deferUpdate();
         try {
@@ -615,7 +598,64 @@ async function handleLotoInteraction(interaction, userId) {
             console.error('Failed to delete menu message:', error);
         }
         
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+        let response;
+        try {
+            if (selectedValue === 'voir') {
+                // Get actual tickets and show them immediately with command hint
+                const lotteryState = await db.getLotteryState();
+                if (!lotteryState) {
+                    response = `❌ Erreur lors de la récupération de l'état de la loterie.
+(Astuce : tapez \`!loto voir\` pour consulter vos tickets.)`;
+                } else {
+                    const tickets = await db.getUserLotteryTickets(userId, lotteryState.next_draw_time);
+                    
+                    if (tickets.length === 0) {
+                        response = `🎟 Vous n'avez aucun ticket pour le prochain tirage.
+💡 Achetez des tickets avec : \`!loto acheter [nombre]\`
+(Exemple : \`!loto acheter 5\`)`;
+                    } else {
+                        const drawDate = new Date(lotteryState.next_draw_time);
+                        const drawTimeStr = `<t:${Math.floor(drawDate.getTime() / 1000)}:F>`;
+                        const numbersStr = tickets.length > 10
+                            ? `${tickets.slice(0, 10).join(', ')} ... (${tickets.length} total)`
+                            : tickets.join(', ');
+                        
+                        response = `🎟 **Vos tickets de loterie**
+╔════════════════════════════════╗
+║ 🎫 **Tickets** : ${tickets.length}
+║ 🔢 **Numéros** : ${numbersStr}
+║ 📅 **Tirage** : ${drawTimeStr}
+╚════════════════════════════════╝
+
+(Astuce : tapez \`!loto voir\` pour consulter vos tickets plus rapidement la prochaine fois.)`;
+                    }
+                }
+            } else if (selectedValue === 'jackpot') {
+                // Get actual jackpot and show it immediately with command hint
+                const lotteryState = await db.getLotteryState();
+                if (!lotteryState) {
+                    response = `❌ Erreur lors de la récupération du jackpot.
+(Astuce : tapez \`!loto jackpot\` pour voir le jackpot.)`;
+                } else {
+                    const drawDate = new Date(lotteryState.next_draw_time);
+                    const drawTimeStr = `<t:${Math.floor(drawDate.getTime() / 1000)}:F>`;
+                    
+                    response = `💰 **Jackpot actuel : ${lotteryState.jackpot} LC**
+📅 Prochain tirage : ${drawTimeStr}
+
+💡 Tentez votre chance avec : \`!loto acheter [nombre]\`
+(Astuce : tapez \`!loto jackpot\` pour voir le jackpot plus rapidement la prochaine fois.)`;
+                }
+            } else if (selectedValue === 'acheter') {
+                response = getResponse('menu.submenu.loto.acheter.info');
+            }
+        } catch (error) {
+            console.error('Error fetching lottery data:', error);
+            response = `❌ Une erreur est survenue lors de la récupération des données de la loterie.
+(Astuce : utilisez les commandes \`!loto\` pour accéder à la loterie.)`;
+        }
+        
+        await interaction.followUp({ content: response, ephemeral: true });
     }
 }
 
@@ -633,13 +673,13 @@ async function handleStatistiques(interaction, userId) {
                 .setPlaceholder(getResponse('menu.submenu.placeholder'))
                 .addOptions([
                     {
-                        label: 'Vos statistiques',
+                        label: 'Voir mes stats',
                         description: 'Consultez vos propres statistiques',
                         value: 'stats_own',
                         emoji: '📈'
                     },
                     {
-                        label: 'Statistiques d\'un autre utilisateur',
+                        label: 'Voir stats utilisateur',
                         description: 'Voir les stats d\'un autre membre',
                         value: 'stats_other',
                         emoji: '👤'
@@ -681,12 +721,6 @@ async function handleStatistiquesInteraction(interaction, userId) {
         }
         await showMainMenu(interaction, userId, true);
     } else if (selectedValue === 'stats_own') {
-        const infoEmbed = new EmbedBuilder()
-            .setColor(config.colors.success)
-            .setTitle(getResponse('menu.submenu.statistiques.own.title'))
-            .setDescription(getResponse('menu.submenu.statistiques.own.info'))
-            .setTimestamp();
-        
         // Delete the menu message before showing info
         await interaction.deferUpdate();
         try {
@@ -695,14 +729,89 @@ async function handleStatistiquesInteraction(interaction, userId) {
             console.error('Failed to delete menu message:', error);
         }
         
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+        // Get actual stats and show them immediately with command hint
+        try {
+            const username = interaction.user.username;
+            
+            // Ensure user exists in database
+            let user = await db.getUser(userId);
+            if (!user) {
+                user = await db.createUser(userId, username);
+            }
+
+            // Get game statistics
+            const gameStatsResult = await pool.query(
+                `SELECT 
+                    COUNT(*) as games_played,
+                    COUNT(CASE WHEN result = 'win' THEN 1 END) as games_won
+                 FROM game_history 
+                 WHERE player_id = $1`,
+                [userId]
+            );
+            
+            const gameStats = gameStatsResult.rows[0] || { games_played: 0, games_won: 0 };
+
+            // Fetch member data from Discord API to get accurate join date
+            let joinDate = 'N/A';
+            let joinDateLabel = '📅 **Arrivé**       :';
+            
+            try {
+                // Force refresh member cache to ensure accurate data
+                const member = await interaction.guild.members.fetch(userId);
+                
+                if (member && member.joinedAt) {
+                    // Use Discord server join date
+                    joinDate = member.joinedAt.toLocaleDateString('fr-FR');
+                } else if (interaction.user.createdAt) {
+                    // Fallback to account creation date with clear indication
+                    joinDate = `${interaction.user.createdAt.toLocaleDateString('fr-FR')} (compte créé)`;
+                    joinDateLabel = '📅 **Compte créé**  :';
+                }
+            } catch (fetchError) {
+                console.error(`[Stats Menu] Error fetching member data:`, fetchError);
+                
+                // Try fallback to user creation date
+                if (interaction.user.createdAt) {
+                    joinDate = `${interaction.user.createdAt.toLocaleDateString('fr-FR')} (compte créé)`;
+                    joinDateLabel = '📅 **Compte créé**  :';
+                }
+            }
+
+            // Format voice time (convert seconds to hours and minutes)
+            const voiceTime = formatVoiceTime(user.voice_time || 0);
+
+            // Format current time
+            const now = new Date();
+            const updateTime = now.toLocaleString('fr-FR', { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            // Create compact stats message
+            const statsMessage = 
+`🏆 **Profil : @${username}**
+╔════════════════════════════════╗
+║ 💰 **Balance**      : ${user.balance} LC
+║ 🤝 **Invitations**  : ${user.invites}
+║ 📩 **Messages**     : ${user.message_count || 0}
+║ 🎙️ **Temps vocal**  : ${voiceTime}
+║ ${joinDateLabel} ${joinDate}
+╠════════════════════════════════╣
+║ 🎮 **Jouées**       : ${gameStats.games_played}
+║ 🎉 **Gagnées**      : ${gameStats.games_won}
+╚════════════════════════════════╝
+📋 Mise à jour : Aujourd'hui à ${updateTime}
+
+(Astuce : tapez \`!stats\` pour consulter vos statistiques plus rapidement la prochaine fois.)`;
+
+            await interaction.followUp({ content: statsMessage, ephemeral: true });
+        } catch (error) {
+            console.error('Error fetching user stats:', error);
+            const errorMessage = `❌ Une erreur est survenue lors de la récupération de vos statistiques.
+(Astuce : tapez \`!stats\` pour consulter vos statistiques.)`;
+            await interaction.followUp({ content: errorMessage, ephemeral: true });
+        }
     } else if (selectedValue === 'stats_other') {
-        const infoEmbed = new EmbedBuilder()
-            .setColor(config.colors.success)
-            .setTitle(getResponse('menu.submenu.statistiques.other.title'))
-            .setDescription(getResponse('menu.submenu.statistiques.other.info'))
-            .setTimestamp();
-        
         // Delete the menu message before showing info
         await interaction.deferUpdate();
         try {
@@ -711,6 +820,22 @@ async function handleStatistiquesInteraction(interaction, userId) {
             console.error('Failed to delete menu message:', error);
         }
         
-        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+        const response = getResponse('menu.submenu.statistiques.other.info');
+        await interaction.followUp({ content: response, ephemeral: true });
     }
+}
+
+// Helper function to format voice time
+function formatVoiceTime(seconds) {
+    if (seconds === 0) {
+        return '0m';
+    }
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
 }
