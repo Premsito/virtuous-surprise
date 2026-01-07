@@ -35,6 +35,8 @@ const statsCommand = require('./commands/stats');
 const cadeauCommand = require('./commands/cadeau');
 const casinoCommand = require('./commands/casino');
 const lotoCommand = require('./commands/loto');
+const menuCommand = require('./commands/menu');
+const rapideCommand = require('./commands/rapide');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -44,6 +46,8 @@ client.commands.set(statsCommand.name, statsCommand);
 client.commands.set(cadeauCommand.name, cadeauCommand);
 client.commands.set(casinoCommand.name, casinoCommand);
 client.commands.set(lotoCommand.name, lotoCommand);
+client.commands.set(menuCommand.name, menuCommand);
+client.commands.set(rapideCommand.name, rapideCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -423,6 +427,12 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'loto') {
             const command = client.commands.get('loto');
             await command.execute(message, args);
+        } else if (commandName === 'menu') {
+            const command = client.commands.get('menu');
+            await command.execute(message, args);
+        } else if (commandName === 'rapide') {
+            const command = client.commands.get('rapide');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
@@ -439,6 +449,11 @@ async function showHelp(message) {
         .setTitle(getResponse('help.title'))
         .setDescription(getResponse('help.description'))
         .addFields(
+            {
+                name: getResponse('help.sections.menu.title'),
+                value: getResponse('help.sections.menu.commands'),
+                inline: false
+            },
             {
                 name: getResponse('help.sections.lc.title'),
                 value: getResponse('help.sections.lc.commands'),
@@ -462,6 +477,11 @@ async function showHelp(message) {
             {
                 name: getResponse('help.sections.casino.title'),
                 value: getResponse('help.sections.casino.commands'),
+                inline: false
+            },
+            {
+                name: getResponse('help.sections.loto.title'),
+                value: getResponse('help.sections.loto.commands'),
                 inline: false
             },
             {
