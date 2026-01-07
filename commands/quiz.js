@@ -227,8 +227,12 @@ module.exports = {
                 components: []
             });
             
-            // Select random questions
-            const shuffled = [...quizQuestions].sort(() => 0.5 - Math.random());
+            // Select random questions using Fisher-Yates shuffle
+            const shuffled = [...quizQuestions];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
             const selectedQuestions = shuffled.slice(0, config.games.quiz.questionCount);
             
             // Track scores

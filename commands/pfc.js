@@ -231,6 +231,11 @@ module.exports = {
             const challengerChoice = choices.get(challengerId);
             const opponentChoice = choices.get(opponentId);
             
+            // Safety check - should not happen due to promise reject, but just in case
+            if (!challengerChoice || !opponentChoice) {
+                throw new Error('timeout');
+            }
+            
             let winner = null;
             let loser = null;
             let isDraw = false;
