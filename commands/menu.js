@@ -55,7 +55,7 @@ function attachMenuCollector(menuMessage, originalUserId, handleInteraction) {
         // Try to disable the menu after timeout
         try {
             const components = menuMessage.components;
-            if (components && components.length > 0) {
+            if (components?.[0]?.components?.[0]?.data) {
                 components[0].components[0].data.disabled = true;
                 await menuMessage.edit({ components: components }).catch(() => {});
             }
@@ -123,7 +123,7 @@ async function handleMainMenuInteraction(interaction, userId) {
             await handleCasino(interaction, userId);
             break;
         case 'statistiques':
-            await handleStatistiques(interaction);
+            await handleStatistiques(interaction, userId);
             break;
     }
 }
@@ -399,7 +399,7 @@ async function handleCasinoInteraction(interaction, userId) {
     }
 }
 
-async function handleStatistiques(interaction) {
+async function handleStatistiques(interaction, userId) {
     const infoEmbed = new EmbedBuilder()
         .setColor(config.colors.success)
         .setTitle(getResponse('menu.submenu.statistiques.title'))
