@@ -195,47 +195,59 @@ module.exports = {
                 
                 const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 60000 });
                 
-            readyCollector.on('collect', async i => {
-                // Check if the player clicked their own button
-                const isChallenger = i.user.id === challengerId;
-                const isOpponent = i.user.id === opponentId;
-                const clickedChallengerButton = i.customId === `007_ready_${challengerId}`;
-                const clickedOpponentButton = i.customId === `007_ready_${opponentId}`;
-                
-                // Verify player clicked their own button
-                if ((isChallenger && clickedChallengerButton) || (isOpponent && clickedOpponentButton)) {
-                    if (!readyPlayers.has(i.user.id)) {
-                        readyPlayers.add(i.user.id);
-                        await i.reply({ content: `✅ ${i.user.username} est prêt !`, ephemeral: false });
-                        
-                        // Check if both players are ready
-                        if (readyPlayers.size === 2) {
-                            readyCollector.stop('both_ready');
+                readyCollector.on('collect', async i => {
+                    // Check if the player clicked their own button
+                    const isChallenger = i.user.id === challengerId;
+                    const isOpponent = i.user.id === opponentId;
+                    const clickedChallengerButton = i.customId === `007_ready_${challengerId}`;
+                    const clickedOpponentButton = i.customId === `007_ready_${opponentId}`;
+                    
+                    // Verify player clicked their own button
+                    if ((isChallenger && clickedChallengerButton) || (isOpponent && clickedOpponentButton)) {
+                        if (!readyPlayers.has(i.user.id)) {
+                            readyPlayers.add(i.user.id);
+                            await i.reply({ content: `✅ ${i.user.username} est prêt !`, ephemeral: false });
+                            
+                            // Check if both players are ready
+                            if (readyPlayers.size === 2) {
+                                readyCollector.stop('both_ready');
+                            }
+                        } else {
+                            await i.reply({ content: 'Vous êtes déjà prêt !', ephemeral: true });
                         }
                     } else {
-                        await i.reply({ content: 'Vous êtes déjà prêt !', ephemeral: true });
-                    }
-                } else {
-                    await i.reply({ content: 'Ce n\'est pas votre bouton !', ephemeral: true });
-                }
-            });
-            
-            await new Promise((resolve, reject) => {
-                readyCollector.on('end', (collected, reason) => {
-                    if (reason === 'both_ready') {
-                        resolve();
-                    } else {
-                        reject(new Error('ready_timeout'));
+                        await i.reply({ content: 'Ce n\'est pas votre bouton !', ephemeral: true });
                     }
                 });
-            });
-            
-            // Disable ready buttons and recreate row
-            readyButton1.setDisabled(true);
-            readyButton2.setDisabled(true);
-            const disabledReadyRow = new ActionRowBuilder()
-                .addComponents(readyButton1, readyButton2);
-            await rulesMsg.edit({ components: [disabledReadyRow] });
+                
+                await new Promise((resolve, reject) => {
+                    readyCollector.on('end', (collected, reason) => {
+                        if (reason === 'both_ready') {
+                            resolve();
+                        } else {
+                            reject(new Error('ready_timeout'));
+                        }
+                    });
+                });
+                
+                // Disable ready buttons by recreating them
+                const disabledReadyButton1 = new ButtonBuilder()
+                    .setCustomId(`007_ready_${challengerId}`)
+                    .setLabel(`Prêt ${challenger.username}`)
+                    .setEmoji('✅')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(true);
+                
+                const disabledReadyButton2 = new ButtonBuilder()
+                    .setCustomId(`007_ready_${opponentId}`)
+                    .setLabel(`Prêt ${opponentMention.username}`)
+                    .setEmoji('✅')
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(true);
+                
+                const disabledReadyRow = new ActionRowBuilder()
+                    .addComponents(disabledReadyButton1, disabledReadyButton2);
+                await rulesMsg.edit({ components: [disabledReadyRow] });
             
             // Initialize game state
             const gameState = {
@@ -268,11 +280,23 @@ module.exports = {
                         .setDescription(getResponse('007.timeout.ready'))
                         .setTimestamp();
                     
-                    // Disable buttons and update the rules message
-                    readyButton1.setDisabled(true);
-                    readyButton2.setDisabled(true);
+                    // Disable buttons by recreating them
+                    const disabledReadyButton1 = new ButtonBuilder()
+                        .setCustomId(`007_ready_${challengerId}`)
+                        .setLabel(`Prêt ${challenger.username}`)
+                        .setEmoji('✅')
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true);
+                    
+                    const disabledReadyButton2 = new ButtonBuilder()
+                        .setCustomId(`007_ready_${opponentId}`)
+                        .setLabel(`Prêt ${opponentMention.username}`)
+                        .setEmoji('✅')
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true);
+                    
                     const disabledReadyRow = new ActionRowBuilder()
-                        .addComponents(readyButton1, readyButton2);
+                        .addComponents(disabledReadyButton1, disabledReadyButton2);
                     await rulesMsg.edit({ embeds: [timeoutEmbed], components: [disabledReadyRow] });
                 } else {
                     throw readyError; // Re-throw other errors
