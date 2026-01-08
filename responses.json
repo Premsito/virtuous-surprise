@@ -561,5 +561,47 @@
       "title": "⏱️ Temps écoulé !",
       "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {loser} n'a pas répondu à temps!\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur:** {winner}\n╚══════════════════════════════════════╝"
     }
+  },
+  "007": {
+    "noOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire manquant**\n║ \n║ Vous devez mentionner un adversaire!\n║ Exemple: `!007 @user 50`\n╚══════════════════════════════════════╝",
+    "selfChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas vous défier\n║ vous-même!\n╚══════════════════════════════════════╝",
+    "botChallenge": "╔══════════════════════════════════════╗\n║ ❌ **Duel impossible**\n║ \n║ Vous ne pouvez pas défier un bot!\n╚══════════════════════════════════════╝",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Adversaire sans fonds**\n║ \n║ {opponent} n'a pas assez de LC\n║ pour ce pari.\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "╔══════════════════════════════════════╗\n║ ❌ **Duel en cours**\n║ \n║ Vous ou votre adversaire êtes déjà\n║ dans un duel 007!\n╚══════════════════════════════════════╝",
+    "challenge": {
+      "title": "🔫 Duel 007 !",
+      "description": "🔫 {challenger} défie {opponent} au duel 007!\n\n💰 **Mise:** {bet} LC\n\n**Règles:**\n• Chaque joueur commence avec 1 balle\n• 🔄 **Recharger** : +1 balle\n• 🔫 **Tirer** : Utilise 1 balle pour tirer\n• 🛡️ **Bouclier** : Protection contre un tir\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Duel Refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Duel refusé**\n║ \n║ {opponent} a refusé le duel.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Duel Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Duel accepté**\n║ \n║ {opponent} a accepté le duel!\n║ Le duel commence...\n╚══════════════════════════════════════╝"
+    },
+    "turn": {
+      "title": "🎮 Jeu 007 : Choisissez votre action !",
+      "description": "**Tour {turn}**\n\n{player1Status}\n{player2Status}\n\n{currentPlayer}, choisissez votre action :",
+      "playerStatus": "**{player}** : {bullets} 🔫 {shieldStatus}",
+      "shieldActive": "(🛡️ Bouclier actif)",
+      "shieldUsed": ""
+    },
+    "actionChosen": "✅ Votre action a été enregistrée!",
+    "alreadyChosen": "❌ Vous avez déjà choisi votre action pour ce tour!",
+    "result": {
+      "title": "🏆 Fin du duel !",
+      "bothShot": "Les deux joueurs se sont tirés dessus en même temps! C'est une **égalité** ! 🤝",
+      "player1Shot": "{player1} a tiré sur {player2} qui n'avait pas de bouclier! 💥\n\n🏆 **Vainqueur:** {player1}\n💰 **Gains:** {winnings} LC",
+      "player2Shot": "{player2} a tiré sur {player1} qui n'avait pas de bouclier! 💥\n\n🏆 **Vainqueur:** {player2}\n💰 **Gains:** {winnings} LC",
+      "shieldBlocked": "{shooter} a tiré mais {defender} s'est protégé avec un bouclier! 🛡️",
+      "draw": "╔══════════════════════════════════════╗\n║ 🤝 **ÉGALITÉ!**\n║ \n║ Les deux joueurs se sont neutralisés!\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🔄 **Mise rendue**\n╚══════════════════════════════════════╝"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un joueur n'a pas répondu à temps!\n║ Le duel est annulé.\n╚══════════════════════════════════════╝"
+    }
   }
 }
