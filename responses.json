@@ -2,8 +2,8 @@
   "lc": {
     "balance": {
       "title": "💰 Solde LC",
-      "description": "💰 **Votre Solde LC :** {balance} LC",
-      "otherDescription": "👤 **{username}**\n💰 **Solde LC :** {balance} LC",
+      "description": "💰 Votre Solde : **{balance} LC** 💵",
+      "otherDescription": "💰 Solde de **{username}** : **{balance} LC** 💵",
       "footer": "Utilisez {prefix}don pour transférer des LC"
     },
     "invalidCommand": "❌ Commande invalide. Utilisez `!lc` pour voir votre solde ou `!don` pour transférer des LC."
