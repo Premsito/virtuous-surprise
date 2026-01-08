@@ -152,6 +152,81 @@ module.exports = {
                 components: []
             });
             
+            // Show rules and ready buttons
+            const rulesEmbed = new EmbedBuilder()
+                .setColor(config.colors.primary)
+                .setTitle('🎮 Règles du jeu 007')
+                .setDescription(
+                    '**📋 Comment jouer :**\n' +
+                    '- Débutez avec 1 balle par joueur.\n' +
+                    '- Choisissez parmi ces actions : 🔄 Recharger, 🔫 Tirer, 🛡️ Bouclier.\n' +
+                    '- Si vous n\'avez pas de balle, "Tirer" sera désactivé.\n' +
+                    '- Eliminez votre adversaire tout en survivant.\n\n' +
+                    `🎮 **Jeu 007 prêt à démarrer !**\n` +
+                    `Cliquez sur "Prêt" pour commencer.`
+                )
+                .setTimestamp();
+            
+            // Create ready buttons for both players
+            const readyButton1 = new ButtonBuilder()
+                .setCustomId(`007_ready_${challengerId}`)
+                .setLabel(`Prêt ${challenger.username}`)
+                .setEmoji('✅')
+                .setStyle(ButtonStyle.Success);
+            
+            const readyButton2 = new ButtonBuilder()
+                .setCustomId(`007_ready_${opponentId}`)
+                .setLabel(`Prêt ${opponentMention.username}`)
+                .setEmoji('✅')
+                .setStyle(ButtonStyle.Success);
+            
+            const readyRow = new ActionRowBuilder()
+                .addComponents(readyButton1, readyButton2);
+            
+            const rulesMsg = await message.channel.send({ embeds: [rulesEmbed], components: [readyRow] });
+            
+            // Wait for both players to click ready
+            const readyPlayers = new Set();
+            const readyFilter = i => {
+                return (i.customId === `007_ready_${challengerId}` || i.customId === `007_ready_${opponentId}`);
+            };
+            
+            const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 60000 });
+            
+            readyCollector.on('collect', async i => {
+                // Check if the correct player clicked their button
+                if (i.customId === `007_ready_${i.user.id}`) {
+                    if (!readyPlayers.has(i.user.id)) {
+                        readyPlayers.add(i.user.id);
+                        await i.reply({ content: `✅ ${i.user.username} est prêt !`, ephemeral: false });
+                        
+                        // Check if both players are ready
+                        if (readyPlayers.size === 2) {
+                            readyCollector.stop('both_ready');
+                        }
+                    } else {
+                        await i.reply({ content: 'Vous êtes déjà prêt !', ephemeral: true });
+                    }
+                } else {
+                    await i.reply({ content: 'Ce n\'est pas votre bouton !', ephemeral: true });
+                }
+            });
+            
+            await new Promise((resolve, reject) => {
+                readyCollector.on('end', (collected, reason) => {
+                    if (reason === 'both_ready') {
+                        resolve();
+                    } else {
+                        reject(new Error('ready_timeout'));
+                    }
+                });
+            });
+            
+            // Disable ready buttons
+            readyButton1.setDisabled(true);
+            readyButton2.setDisabled(true);
+            await rulesMsg.edit({ components: [readyRow] });
+            
             // Initialize game state
             const gameState = {
                 players: {
@@ -176,13 +251,23 @@ module.exports = {
             
         } catch (error) {
             // Timeout or error
-            const timeoutEmbed = new EmbedBuilder()
-                .setColor(config.colors.error)
-                .setTitle(getResponse('007.timeout.title'))
-                .setDescription(getResponse('007.timeout.description'))
-                .setTimestamp();
-            
-            await challengeMsg.edit({ embeds: [timeoutEmbed], components: [] });
+            if (error.message === 'ready_timeout') {
+                const timeoutEmbed = new EmbedBuilder()
+                    .setColor(config.colors.error)
+                    .setTitle(getResponse('007.timeout.title'))
+                    .setDescription('⏱️ Un ou plusieurs joueurs n\'ont pas cliqué sur "Prêt" à temps.')
+                    .setTimestamp();
+                
+                await message.channel.send({ embeds: [timeoutEmbed] });
+            } else {
+                const timeoutEmbed = new EmbedBuilder()
+                    .setColor(config.colors.error)
+                    .setTitle(getResponse('007.timeout.title'))
+                    .setDescription(getResponse('007.timeout.description'))
+                    .setTimestamp();
+                
+                await challengeMsg.edit({ embeds: [timeoutEmbed], components: [] });
+            }
         } finally {
             active007Games.delete(challengerId);
             active007Games.delete(opponentId);
