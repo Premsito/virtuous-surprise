@@ -14,7 +14,7 @@ try {
         passed++;
     } else {
         console.log('❌ Success message is incorrect');
-        console.log('   Expected: 🎁 **Cadeau récupéré !** +25 LC\\n🕒 Revenez demain pour un autre cadeau !');
+        console.log('   Expected: 🎁 **Cadeau récupéré !** +25 LC\n🕒 Revenez demain pour un autre cadeau !');
         console.log('   Got:', successMsg);
         failed++;
     }
