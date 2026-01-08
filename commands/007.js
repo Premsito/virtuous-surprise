@@ -187,7 +187,6 @@ module.exports = {
             
             // Wait for both players to click ready and start game
             try {
-                // Wait for both players to click ready
                 const readyPlayers = new Set();
                 const readyFilter = i => {
                     return (i.customId === `007_ready_${challengerId}` || i.customId === `007_ready_${opponentId}`);
