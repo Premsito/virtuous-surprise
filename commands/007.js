@@ -219,13 +219,23 @@ module.exports = {
                 actionCollector.on('collect', async i => {
                     const playerId = i.user.id;
                     
+                    // Parse custom ID: 007_action_${playerId}_${action}
+                    const parts = i.customId.split('_');
+                    const buttonPlayerId = parts[2];
+                    const action = parts[3];
+                    
+                    // Validate that the player is clicking their own button
+                    if (playerId !== buttonPlayerId) {
+                        await i.reply({ content: '❌ Vous ne pouvez pas choisir pour l\'autre joueur!', ephemeral: true });
+                        return;
+                    }
+                    
                     // Only allow one action per player per turn
                     if (gameState[playerId].action) {
                         await i.reply({ content: getResponse('007.alreadyChosen'), ephemeral: true });
                         return;
                     }
                     
-                    const action = i.customId.replace('007_action_', '').split('_')[1];
                     gameState[playerId].action = action;
                     
                     // Apply action effects (for display purposes)
