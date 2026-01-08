@@ -304,20 +304,20 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     
     // Create action buttons
     const rechargerButton = new ButtonBuilder()
-        .setCustomId('007_recharger')
+        .setCustomId(`007_recharger_${playerId}`)
         .setLabel('Recharger')
         .setEmoji('🔄')
         .setStyle(ButtonStyle.Primary);
     
     const tirerButton = new ButtonBuilder()
-        .setCustomId('007_tirer')
+        .setCustomId(`007_tirer_${playerId}`)
         .setLabel('Tirer')
         .setEmoji('🔫')
         .setStyle(ButtonStyle.Danger)
         .setDisabled(!hasBullets); // Disabled if no bullets
     
     const bouclierButton = new ButtonBuilder()
-        .setCustomId('007_bouclier')
+        .setCustomId(`007_bouclier_${playerId}`)
         .setLabel('Bouclier')
         .setEmoji('🛡️')
         .setStyle(ButtonStyle.Success);
@@ -325,7 +325,7 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     const actionRow = new ActionRowBuilder()
         .addComponents(rechargerButton, tirerButton, bouclierButton);
     
-    // Send DM or channel message with buttons
+    // Send in channel with user mention
     try {
         const user = await message.client.users.fetch(playerId);
         const embed = new EmbedBuilder()
@@ -334,10 +334,20 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
             .setDescription(getResponse('007.action.description', { bullets: playerData.bullets }))
             .setFooter({ text: getResponse('007.action.footer') });
         
-        await user.send({ embeds: [embed], components: [actionRow] });
+        // Try to send DM first
+        try {
+            await user.send({ embeds: [embed], components: [actionRow] });
+        } catch (dmError) {
+            // If DM fails, send in channel with ephemeral-like behavior
+            console.log(`Could not send DM to ${playerId}, buttons will be in channel`);
+            await message.channel.send({ 
+                content: `<@${playerId}>`, 
+                embeds: [embed], 
+                components: [actionRow] 
+            });
+        }
     } catch (error) {
-        // If DM fails, send in channel (ephemeral would be better but requires slash commands)
-        console.log(`Could not send DM to ${playerId}, action selection will be visible in channel`);
+        console.error(`Error sending action buttons to ${playerId}:`, error);
     }
 }
 
@@ -346,18 +356,21 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
  */
 async function waitForActions(channel, actionChoices, challengerId, opponentId, challengerData, opponentData) {
     return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            collector.stop('timeout');
-        }, 10000); // 10 second timeout
-        
         const filter = i => {
             return (i.user.id === challengerId || i.user.id === opponentId) && 
                    i.customId.startsWith('007_') &&
-                   (i.customId === '007_recharger' || i.customId === '007_tirer' || i.customId === '007_bouclier');
+                   (i.customId.includes('_recharger_') || i.customId.includes('_tirer_') || i.customId.includes('_bouclier_'));
         };
         
-        const collector = channel.client.on('interactionCreate', async (i) => {
-            if (!filter(i)) return;
+        // Use a collector
+        const collector = channel.createMessageComponentCollector({ filter, time: 10000 });
+        
+        collector.on('collect', async (i) => {
+            // Check if this button is for this user
+            if (!i.customId.endsWith(i.user.id)) {
+                await i.reply({ content: getResponse('007.wrongPlayer'), ephemeral: true });
+                return;
+            }
             
             // Ignore if player already chose
             if (actionChoices.has(i.user.id)) {
@@ -365,7 +378,9 @@ async function waitForActions(channel, actionChoices, challengerId, opponentId, 
                 return;
             }
             
-            const action = i.customId.replace('007_', '');
+            // Extract action from customId (007_ACTION_PLAYERID)
+            const parts = i.customId.split('_');
+            const action = parts[1]; // recharger, tirer, or bouclier
             const playerData = i.user.id === challengerId ? challengerData : opponentData;
             
             // Validate action
@@ -381,19 +396,17 @@ async function waitForActions(channel, actionChoices, challengerId, opponentId, 
             
             // Check if both players have chosen
             if (actionChoices.size === 2) {
-                clearTimeout(timeout);
-                channel.client.removeListener('interactionCreate', collector);
-                resolve();
+                collector.stop('both_chosen');
             }
         });
         
-        // Handle timeout
-        setTimeout(() => {
-            if (actionChoices.size < 2) {
-                channel.client.removeListener('interactionCreate', collector);
+        collector.on('end', (collected, reason) => {
+            if (reason === 'both_chosen') {
+                resolve();
+            } else {
                 reject(new Error('timeout'));
             }
-        }, 10000);
+        });
     });
 }
 

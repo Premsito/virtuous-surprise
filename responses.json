@@ -269,7 +269,7 @@
       },
       "games": {
         "title": "🎮 Jeux",
-        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette\n`{prefix}rapide @user [montant]` - Jeu de frappe rapide"
+        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette\n`{prefix}rapide @user [montant]` - Jeu de frappe rapide\n`{prefix}pfc @user [montant]` - Pierre-Feuille-Ciseaux\n`{prefix}007 @user [montant]` - Jeu 007 interactif"
       },
       "casino": {
         "title": "🎰 Casino",
@@ -596,6 +596,7 @@
     "alreadyChosen": "❌ Vous avez déjà choisi votre action pour ce round!",
     "choiceMade": "✅ Action sélectionnée! En attente de l'adversaire...",
     "noBullets": "❌ Vous n'avez pas de balles! Rechargez d'abord!",
+    "wrongPlayer": "❌ Ce bouton n'est pas pour vous!",
     "result": {
       "shot": "💥 {winner} a tiré sur {loser} qui rechargeait!",
       "blocked": "🛡️ {blocker} a bloqué le tir de {shooter}!",
