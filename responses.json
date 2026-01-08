@@ -269,7 +269,7 @@
       },
       "games": {
         "title": "🎮 Jeux",
-        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette\n`{prefix}rapide @user [montant]` - Jeu de frappe rapide"
+        "commands": "`{prefix}jeu duel @user [montant]` - Défier un joueur\n`{prefix}jeu roulette [montant]` - Jouer à la roulette\n`{prefix}rapide @user [montant]` - Jeu de frappe rapide\n`{prefix}pfc @user [montant]` - Pierre-Feuille-Ciseaux\n`{prefix}007 @user [montant]` - Jeu 007 interactif"
       },
       "casino": {
         "title": "🎰 Casino",
@@ -560,6 +560,57 @@
     "timeout": {
       "title": "⏱️ Temps écoulé !",
       "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {loser} n'a pas répondu à temps!\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur:** {winner}\n╚══════════════════════════════════════╝"
+    }
+  },
+  "007": {
+    "noOpponent": "❌ Vous devez mentionner un adversaire!\nExemple: `!007 @user 50`",
+    "selfChallenge": "❌ Vous ne pouvez pas vous défier vous-même!",
+    "botChallenge": "❌ Vous ne pouvez pas défier un bot!",
+    "invalidBet": "╔══════════════════════════════════════╗\n║ ❌ **Montant invalide**\n║ \n║ Le montant doit être entre\n║ {minBet} et {maxBet} LC.\n╚══════════════════════════════════════╝",
+    "insufficientBalanceChallenger": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ Votre solde: **{balance} LC**\n╚══════════════════════════════════════╝",
+    "insufficientBalanceOpponent": "╔══════════════════════════════════════╗\n║ ❌ **Solde insuffisant**\n║ \n║ {opponent} n'a pas assez de LC!\n╚══════════════════════════════════════╝",
+    "alreadyInGame": "❌ Vous ou votre adversaire êtes déjà dans une partie!",
+    "challenge": {
+      "title": "🔫 Challenge 007 !",
+      "description": "🔫 {challenger} défie {opponent} au jeu 007!\n\n💰 **Mise:** {bet} LC\n\n**Règles:**\n• Chaque joueur commence avec **1 balle** 🔫\n• 🔄 **Recharger** : +1 balle\n• 🔫 **Tirer** : Éliminer l'adversaire (nécessite 1 balle)\n• 🛡️ **Bouclier** : Protéger contre un tir\n\n⏱️ {opponent}, acceptez-vous ?"
+    },
+    "refused": {
+      "title": "❌ Challenge Refusé",
+      "description": "╔══════════════════════════════════════╗\n║ ❌ **Challenge refusé**\n║ \n║ {opponent} a refusé le challenge.\n╚══════════════════════════════════════╝"
+    },
+    "accepted": {
+      "title": "✅ Challenge Accepté",
+      "description": "╔══════════════════════════════════════╗\n║ ✅ **Challenge accepté**\n║ \n║ {opponent} a accepté le challenge!\n║ Le jeu commence...\n╚══════════════════════════════════════╝"
+    },
+    "round": {
+      "title": "🎮 Jeu 007 - Round {round}",
+      "description": "**État du jeu:**\n\n{challenger}: {challengerBullets} 🔫\n{opponent}: {opponentBullets} 🔫\n\n⏱️ Choisissez votre action (10 secondes)!",
+      "resultTitle": "📊 Résultat du Round",
+      "resultDescription": "**Actions:**\n\n{challenger} → {challengerAction} {challengerActionName}\n{opponent} → {opponentAction} {opponentActionName}"
+    },
+    "action": {
+      "title": "🎮 Jeu 007 - Choisissez votre action !",
+      "description": "**Vos balles:** {bullets} 🔫\n\nChoisissez une action:",
+      "footer": "Vous avez 10 secondes pour choisir!"
+    },
+    "alreadyChosen": "❌ Vous avez déjà choisi votre action pour ce round!",
+    "choiceMade": "✅ Action sélectionnée! En attente de l'adversaire...",
+    "noBullets": "❌ Vous n'avez pas de balles! Rechargez d'abord!",
+    "wrongPlayer": "❌ Ce bouton n'est pas pour vous!",
+    "result": {
+      "shot": "💥 {winner} a tiré sur {loser} qui rechargeait!",
+      "blocked": "🛡️ {blocker} a bloqué le tir de {shooter}!",
+      "bothShot": "🔫 Les deux joueurs ont tiré!"
+    },
+    "victory": {
+      "title": "🏆 Victoire !",
+      "description": "╔══════════════════════════════════════╗\n║ 🎯 **Partie terminée!**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur:** {winner}\n║ 😢 **Perdant:** {loser}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 💰 **Gains:** {winnings} LC\n╚══════════════════════════════════════╝"
+    },
+    "timeout": {
+      "title": "⏱️ Temps écoulé !",
+      "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un joueur n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
+      "player": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {player} n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
+      "both": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Aucun joueur n'a répondu à temps!\n╚══════════════════════════════════════╝"
     }
   }
 }
