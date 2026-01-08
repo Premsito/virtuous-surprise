@@ -185,14 +185,16 @@ module.exports = {
             
             const rulesMsg = await message.channel.send({ embeds: [rulesEmbed], components: [readyRow] });
             
-            // Wait for both players to click ready
-            const readyPlayers = new Set();
-            const readyFilter = i => {
-                return (i.customId === `007_ready_${challengerId}` || i.customId === `007_ready_${opponentId}`);
-            };
-            
-            const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 60000 });
-            
+            // Wait for both players to click ready and start game
+            try {
+                // Wait for both players to click ready
+                const readyPlayers = new Set();
+                const readyFilter = i => {
+                    return (i.customId === `007_ready_${challengerId}` || i.customId === `007_ready_${opponentId}`);
+                };
+                
+                const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 60000 });
+                
             readyCollector.on('collect', async i => {
                 // Check if the player clicked their own button
                 const isChallenger = i.user.id === challengerId;
@@ -228,10 +230,12 @@ module.exports = {
                 });
             });
             
-            // Disable ready buttons
+            // Disable ready buttons and recreate row
             readyButton1.setDisabled(true);
             readyButton2.setDisabled(true);
-            await rulesMsg.edit({ components: [readyRow] });
+            const disabledReadyRow = new ActionRowBuilder()
+                .addComponents(readyButton1, readyButton2);
+            await rulesMsg.edit({ components: [disabledReadyRow] });
             
             // Initialize game state
             const gameState = {
@@ -255,25 +259,35 @@ module.exports = {
             // Start game rounds
             await playRound(message, gameState, challengerId, opponentId, betAmount);
             
-        } catch (error) {
-            // Timeout or error
-            if (error.message === 'ready_timeout') {
-                const timeoutEmbed = new EmbedBuilder()
-                    .setColor(config.colors.error)
-                    .setTitle(getResponse('007.timeout.title'))
-                    .setDescription(getResponse('007.timeout.ready'))
-                    .setTimestamp();
-                
-                await message.channel.send({ embeds: [timeoutEmbed] });
-            } else {
-                const timeoutEmbed = new EmbedBuilder()
-                    .setColor(config.colors.error)
-                    .setTitle(getResponse('007.timeout.title'))
-                    .setDescription(getResponse('007.timeout.description'))
-                    .setTimestamp();
-                
-                await challengeMsg.edit({ embeds: [timeoutEmbed], components: [] });
+            } catch (readyError) {
+                // Ready timeout - update the rules message
+                if (readyError.message === 'ready_timeout') {
+                    const timeoutEmbed = new EmbedBuilder()
+                        .setColor(config.colors.error)
+                        .setTitle(getResponse('007.timeout.title'))
+                        .setDescription(getResponse('007.timeout.ready'))
+                        .setTimestamp();
+                    
+                    // Disable buttons and update the rules message
+                    readyButton1.setDisabled(true);
+                    readyButton2.setDisabled(true);
+                    const disabledReadyRow = new ActionRowBuilder()
+                        .addComponents(readyButton1, readyButton2);
+                    await rulesMsg.edit({ embeds: [timeoutEmbed], components: [disabledReadyRow] });
+                } else {
+                    throw readyError; // Re-throw other errors
+                }
             }
+            
+        } catch (error) {
+            // Timeout or error during challenge acceptance
+            const timeoutEmbed = new EmbedBuilder()
+                .setColor(config.colors.error)
+                .setTitle(getResponse('007.timeout.title'))
+                .setDescription(getResponse('007.timeout.description'))
+                .setTimestamp();
+            
+            await challengeMsg.edit({ embeds: [timeoutEmbed], components: [] });
         } finally {
             active007Games.delete(challengerId);
             active007Games.delete(opponentId);
