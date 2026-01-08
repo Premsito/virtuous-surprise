@@ -265,18 +265,14 @@ module.exports = {
                 opponentChoice: CHOICES[opponentChoice].emoji,
                 opponentChoiceName: CHOICES[opponentChoice].name
             });
-            const playersDisplay = getResponse('pfc.result.playersDisplay', {
-                challenger: challenger,
-                opponent: opponentMention
-            });
             
             if (isDraw) {
                 resultEmbed
                     .setColor(config.colors.warning)
                     .setTitle(getResponse('pfc.result.titleDraw'))
-                    .setDescription(`${vsDisplay}\n${playersDisplay}\n\n${getResponse('pfc.result.drawMessage')}`)
-                    .setThumbnail(challengerAvatar)
-                    .setImage(opponentAvatar);
+                    .setAuthor({ name: challenger.username, iconURL: challengerAvatar })
+                    .setDescription(`${vsDisplay}\n\n${getResponse('pfc.result.drawMessage')}`)
+                    .setThumbnail(opponentAvatar);
             } else {
                 // Transfer LC
                 await db.updateBalance(winner, betAmount);
@@ -298,9 +294,9 @@ module.exports = {
                 resultEmbed
                     .setColor(config.colors.success)
                     .setTitle(getResponse('pfc.result.titleVictory'))
-                    .setDescription(`${vsDisplay}\n${playersDisplay}${victoryMessage}`)
-                    .setThumbnail(challengerAvatar)
-                    .setImage(opponentAvatar);
+                    .setAuthor({ name: challenger.username, iconURL: challengerAvatar })
+                    .setDescription(`${vsDisplay}${victoryMessage}`)
+                    .setThumbnail(opponentAvatar);
             }
             
             await message.channel.send({ embeds: [resultEmbed] });

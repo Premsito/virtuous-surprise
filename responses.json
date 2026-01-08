@@ -449,14 +449,14 @@
     "choiceMade": "✅ Votre choix a été enregistré! En attente de l'autre joueur...",
     "result": {
       "title": "🏆 Résultat",
-      "titleDraw": "🤝 Pierre-Feuille-Ciseaux - **Égalité !**",
-      "titleVictory": "🏆 Pierre-Feuille-Ciseaux - Résultat",
-      "vsDisplay": "{challengerChoice} **{challengerChoiceName}**                  🆚                  **{opponentChoiceName}** {opponentChoice}",
-      "playersDisplay": "{challenger}                           {opponent}",
+      "titleDraw": "🤝 Égalité !",
+      "titleVictory": "🏆 Résultat PFC",
+      "vsDisplay": "{challengerChoice} **{challengerChoiceName}**      🆚      **{opponentChoiceName}** {opponentChoice}",
+      "playersDisplay": "{challenger}      vs      {opponent}",
       "description": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🏆 **Vainqueur :** {winner}\n║ 💰 **Gains :** {winnings} LC\n╚══════════════════════════════════════╝",
       "draw": "╔══════════════════════════════════════╗\n║ **Résultat :**\n║ - {challenger} a choisi {challengerChoice} {challengerChoiceName}\n║ - {opponent} a choisi {opponentChoice} {opponentChoiceName}\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 🤝 **ÉGALITÉ !**\n║ Les mises sont rendues.\n╚══════════════════════════════════════╝",
-      "drawMessage": "**Les deux joueurs ont choisi la même option !**\nLes mises sont rendues.",
-      "victoryMessage": "\n💰 **Victoire de {winner} 🎉**\n🏆 **Gains : +{winnings} LC**"
+      "drawMessage": "🤝 **Égalité !** Les mises sont rendues.",
+      "victoryMessage": "\n🏆 **Victoire de {winner} 🎉**\n💰 **Gains : +{winnings} LC**"
     },
     "timeout": {
       "title": "⏱️ Temps écoulé !",
