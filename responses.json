@@ -2,8 +2,8 @@
   "lc": {
     "balance": {
       "title": "💰 Solde LC",
-      "description": "╔══════════════════════════════════════╗\n║ 💵 **Balance** : {balance} LC\n╚══════════════════════════════════════╝",
-      "otherDescription": "╔══════════════════════════════════════╗\n║ 👤 **Utilisateur** : {username}\n║ 💵 **Balance** : {balance} LC\n╚══════════════════════════════════════╝",
+      "description": "💰 **Votre Solde LC :** {balance} LC",
+      "otherDescription": "👤 **{username}**\n💰 **Solde LC :** {balance} LC",
       "footer": "Utilisez {prefix}don pour transférer des LC"
     },
     "invalidCommand": "❌ Commande invalide. Utilisez `!lc` pour voir votre solde ou `!don` pour transférer des LC."
@@ -205,9 +205,9 @@
     }
   },
   "cadeau": {
-    "success": "╔══════════════════════════════════════╗\n║ 🎁 **Cadeau quotidien récupéré!**\n║ \n║ 💰 Vous avez reçu **25 LC**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 📅 Revenez demain pour un autre\n║    cadeau!\n╚══════════════════════════════════════╝",
-    "cooldown": "╔══════════════════════════════════════╗\n║ ⏳ **Cadeau déjà récupéré**\n║ \n║ Temps restant: **{hours}h {minutes}min**\n║ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n║ 📅 Revenez plus tard!\n╚══════════════════════════════════════╝",
-    "error": "╔══════════════════════════════════════╗\n║ ❌ **Erreur**\n║ \n║ Une erreur est survenue.\n║ Veuillez réessayer.\n╚══════════════════════════════════════╝"
+    "success": "🎁 **Cadeau récupéré !** +25 LC\n🕒 Revenez demain pour un autre cadeau !",
+    "cooldown": "⏳ **Cadeau déjà récupéré**\nTemps restant : **{hours}h {minutes}min**\n🕒 Revenez plus tard !",
+    "error": "❌ Une erreur est survenue. Veuillez réessayer."
   },
   "loto": {
     "purchase": {

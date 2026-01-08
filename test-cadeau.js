@@ -9,12 +9,12 @@ let failed = 0;
 // Test 1: Success message
 try {
     const successMsg = getResponse('cadeau.success');
-    if (successMsg === '🎁 Félicitations ! Vous avez récupéré 25 LC en cadeau ! Revenez demain pour un autre cadeau !') {
+    if (successMsg === '🎁 **Cadeau récupéré !** +25 LC\n🕒 Revenez demain pour un autre cadeau !') {
         console.log('✅ Success message is correct');
         passed++;
     } else {
         console.log('❌ Success message is incorrect');
-        console.log('   Expected: 🎁 Félicitations ! Vous avez récupéré 25 LC en cadeau ! Revenez demain pour un autre cadeau !');
+        console.log('   Expected: 🎁 **Cadeau récupéré !** +25 LC\\n🕒 Revenez demain pour un autre cadeau !');
         console.log('   Got:', successMsg);
         failed++;
     }

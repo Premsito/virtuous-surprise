@@ -29,9 +29,12 @@ module.exports = {
             const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
             const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
             
-            return message.channel.send(
-                getResponse('cadeau.cooldown', { hours, minutes })
-            );
+            const embed = new EmbedBuilder()
+                .setColor(config.colors.warning)
+                .setDescription(getResponse('cadeau.cooldown', { hours, minutes }))
+                .setTimestamp();
+            
+            return message.channel.send({ embeds: [embed] });
         }
 
         // Update user's last_gift_time and add 25 LC
@@ -40,7 +43,12 @@ module.exports = {
             await db.updateBalance(userId, 25);
             await db.recordTransaction(null, userId, 25, 'daily_gift', 'Daily gift via !cadeau');
 
-            return message.channel.send(getResponse('cadeau.success'));
+            const embed = new EmbedBuilder()
+                .setColor(config.colors.gold)
+                .setDescription(getResponse('cadeau.success'))
+                .setTimestamp();
+            
+            return message.channel.send({ embeds: [embed] });
         } catch (error) {
             console.error('Error claiming gift:', error);
             return message.reply(getResponse('cadeau.error'));

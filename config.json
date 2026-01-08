@@ -78,6 +78,8 @@
     "primary": "#5865F2",
     "success": "#57F287",
     "error": "#ED4245",
-    "warning": "#FEE75C"
+    "warning": "#FEE75C",
+    "gold": "#FFD700",
+    "blue": "#3498db"
   }
 }
