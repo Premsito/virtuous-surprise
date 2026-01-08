@@ -401,10 +401,10 @@ function processActions(gameState, player1Id, player2Id) {
     }
     
     // Process shooting
-    const player1Shoots = player1Action === ACTIONS.SHOOT;
-    const player2Shoots = player2Action === ACTIONS.SHOOT;
+    const player1Shoots = player1Action === ACTIONS.SHOOT && gameState[player1Id].bullets > 0;
+    const player2Shoots = player2Action === ACTIONS.SHOOT && gameState[player2Id].bullets > 0;
     
-    // Deduct bullets for shooting
+    // Deduct bullets for shooting (only if player actually has bullets)
     if (player1Shoots) {
         gameState[player1Id].bullets--;
     }
