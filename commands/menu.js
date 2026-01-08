@@ -170,6 +170,12 @@ async function handleJeux1v1(interaction, userId) {
                         emoji: '🪨'
                     },
                     {
+                        label: '007',
+                        description: 'Jeu 007 - !007 @user [montant]',
+                        value: '007',
+                        emoji: '🔫'
+                    },
+                    {
                         label: 'Retour',
                         description: 'Retour au menu principal',
                         value: 'back',
@@ -242,6 +248,22 @@ async function handleJeux1v1Interaction(interaction, userId) {
             .setColor(config.colors.success)
             .setTitle(getResponse('menu.submenu.jeux_1v1.pfc.title'))
             .setDescription(getResponse('menu.submenu.jeux_1v1.pfc.info'))
+            .setTimestamp();
+        
+        // Delete the menu message before showing info
+        await interaction.deferUpdate();
+        try {
+            await interaction.message.delete();
+        } catch (error) {
+            console.error('Failed to delete menu message:', error);
+        }
+        
+        await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
+    } else if (selectedValue === '007') {
+        const infoEmbed = new EmbedBuilder()
+            .setColor(config.colors.success)
+            .setTitle(getResponse('menu.submenu.jeux_1v1.007.title'))
+            .setDescription(getResponse('menu.submenu.jeux_1v1.007.info'))
             .setTimestamp();
         
         // Delete the menu message before showing info
