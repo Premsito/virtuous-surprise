@@ -312,6 +312,10 @@
         "pfc": {
           "title": "🪨✋✂️ Pierre-Feuille-Ciseaux",
           "info": "**Commande:** `!pfc @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ L'adversaire doit accepter le défi (30 secondes)\n3️⃣ Chaque joueur choisit secrètement Pierre, Feuille ou Ciseaux\n4️⃣ Les choix sont révélés et le gagnant est déterminé!\n\n**Règles:**\n🪨 Pierre bat ✂️ Ciseaux\n✋ Feuille bat 🪨 Pierre\n✂️ Ciseaux bat ✋ Feuille\n\n💰 Le gagnant remporte la mise doublée!"
+        },
+        "007": {
+          "title": "🔫 Jeu 007",
+          "info": "**Commande:** `!007 @user [montant]`\n\n**🎮 Règles du jeu 007 :**\n- Débutez avec 1 balle par joueur.\n- Choisissez parmi ces actions : 🔄 Recharger, 🔫 Tirer, 🛡️ Bouclier.\n- Si vous n'avez pas de balle, \"Tirer\" sera désactivé.\n- Eliminez votre adversaire tout en survivant.\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ L'adversaire doit accepter le défi (30 secondes)\n3️⃣ Chaque round, les deux joueurs choisissent une action\n4️⃣ Les actions sont révélées et le résultat est calculé\n5️⃣ Le premier à éliminer son adversaire gagne!\n\n💰 Le gagnant remporte la mise doublée!"
         }
       },
       "casino": {
@@ -610,6 +614,7 @@
       "title": "⏱️ Temps écoulé !",
       "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un joueur n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
       "player": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {player} n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
+      "ready": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un ou plusieurs joueurs n'ont pas\n║ cliqué sur \"Prêt\" à temps.\n╚══════════════════════════════════════╝",
       "both": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Aucun joueur n'a répondu à temps!\n╚══════════════════════════════════════╝"
     }
   }
