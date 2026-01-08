@@ -25,7 +25,7 @@ module.exports = {
             : getResponse('lc.balance.description', { balance: user.balance });
 
         const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
+            .setColor(config.colors.blue)
             .setTitle(getResponse('lc.balance.title'))
             .setDescription(description)
             .setFooter({ text: getResponse('lc.balance.footer') })
