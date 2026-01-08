@@ -26,10 +26,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.blue)
-            .setTitle(getResponse('lc.balance.title'))
-            .setDescription(description)
-            .setFooter({ text: getResponse('lc.balance.footer') })
-            .setTimestamp();
+            .setDescription(description);
         
         return message.reply({ embeds: [embed] });
     }
