@@ -17,6 +17,7 @@ A feature-rich Discord bot for managing virtual coins (LC), invite tracking, gam
 ### 🎮 Games
 - **Duel**: Challenge another member with `!jeu duel @user [amount]`
 - **Roulette**: Join a roulette game with `!jeu roulette [amount]`
+- **007**: Challenge another member to a 007 duel with `!007 @user [amount]`
 
 ### 🛡️ Moderation (Admin Only)
 - Manually adjust LC with `!setlc @user [amount]`
@@ -95,6 +96,7 @@ The bot uses PostgreSQL with the following tables:
 ### Game Commands
 - `!jeu duel @user [amount]` - Challenge a member to a duel
 - `!jeu roulette [amount]` - Join a roulette game
+- `!007 @user [amount]` - Challenge a member to a 007 duel
 
 ### Moderation Commands (Admin only)
 - `!setlc @user [amount]` - Set a user's LC balance

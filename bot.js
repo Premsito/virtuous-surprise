@@ -41,6 +41,7 @@ const pfcCommand = require('./commands/pfc');
 const quizCommand = require('./commands/quiz');
 const quizduoCommand = require('./commands/quizduo');
 const c21Command = require('./commands/c21');
+const game007Command = require('./commands/007');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -56,6 +57,7 @@ client.commands.set(pfcCommand.name, pfcCommand);
 client.commands.set(quizCommand.name, quizCommand);
 client.commands.set(quizduoCommand.name, quizduoCommand);
 client.commands.set(c21Command.name, c21Command);
+client.commands.set(game007Command.name, game007Command);
 
 // Store invites for tracking
 const invites = new Map();
