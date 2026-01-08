@@ -254,18 +254,21 @@ module.exports = {
             const resultEmbed = new EmbedBuilder()
                 .setTimestamp();
             
+            // Get avatars
+            const challengerAvatar = challenger.displayAvatarURL({ size: 64 });
+            const opponentAvatar = opponentMention.displayAvatarURL({ size: 64 });
+            
             if (isDraw) {
+                // Create visual VS display for draw
+                const vsDisplay = `${CHOICES[challengerChoice].emoji} **${CHOICES[challengerChoice].name}**                  🆚                  **${CHOICES[opponentChoice].name}** ${CHOICES[opponentChoice].emoji}`;
+                const playersDisplay = `${challenger}                           ${opponentMention}`;
+                
                 resultEmbed
                     .setColor(config.colors.warning)
                     .setTitle('🤝 Pierre-Feuille-Ciseaux - **Égalité !**')
-                    .setDescription(getResponse('pfc.result.draw', {
-                        challenger: challenger,
-                        challengerChoice: CHOICES[challengerChoice].emoji,
-                        challengerChoiceName: CHOICES[challengerChoice].name,
-                        opponent: opponentMention,
-                        opponentChoice: CHOICES[opponentChoice].emoji,
-                        opponentChoiceName: CHOICES[opponentChoice].name
-                    }));
+                    .setDescription(`${vsDisplay}\n${playersDisplay}\n\n**Les deux joueurs ont choisi la même option !**\nLes mises sont rendues.`)
+                    .setThumbnail(challengerAvatar)
+                    .setImage(opponentAvatar);
             } else {
                 // Transfer LC
                 await db.updateBalance(winner, betAmount);
@@ -277,20 +280,22 @@ module.exports = {
                 
                 const winnerUser = winner === challengerId ? challenger : opponentMention;
                 const loserUser = winner === challengerId ? opponentMention : challenger;
+                const winnerChoice = winner === challengerId ? challengerChoice : opponentChoice;
+                const loserChoice = winner === challengerId ? opponentChoice : challengerChoice;
+                
+                // Create visual VS display
+                const vsDisplay = `${CHOICES[challengerChoice].emoji} **${CHOICES[challengerChoice].name}**                  🆚                  **${CHOICES[opponentChoice].name}** ${CHOICES[opponentChoice].emoji}`;
+                const playersDisplay = `${challenger}                           ${opponentMention}`;
+                
+                // Victory announcement
+                const victoryMessage = `\n💰 **Victoire de ${winnerUser} 🎉**\n🏆 **Gains : +${betAmount} LC**`;
                 
                 resultEmbed
                     .setColor(config.colors.success)
-                    .setTitle(`🏆 Pierre-Feuille-Ciseaux - **Victoire de ${winnerUser.username} !**`)
-                    .setDescription(getResponse('pfc.result.description', {
-                        challenger: challenger,
-                        challengerChoice: CHOICES[challengerChoice].emoji,
-                        challengerChoiceName: CHOICES[challengerChoice].name,
-                        opponent: opponentMention,
-                        opponentChoice: CHOICES[opponentChoice].emoji,
-                        opponentChoiceName: CHOICES[opponentChoice].name,
-                        winner: winnerUser,
-                        winnings: betAmount * 2
-                    }));
+                    .setTitle('🏆 Pierre-Feuille-Ciseaux - Résultat')
+                    .setDescription(`${vsDisplay}\n${playersDisplay}${victoryMessage}`)
+                    .setThumbnail(challengerAvatar)
+                    .setImage(opponentAvatar);
             }
             
             await message.channel.send({ embeds: [resultEmbed] });
