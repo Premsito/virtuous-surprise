@@ -194,8 +194,14 @@ module.exports = {
             const readyCollector = rulesMsg.createMessageComponentCollector({ filter: readyFilter, time: 60000 });
             
             readyCollector.on('collect', async i => {
-                // Check if the correct player clicked their button
-                if (i.customId === `007_ready_${i.user.id}`) {
+                // Check if the player clicked their own button
+                const isChallenger = i.user.id === challengerId;
+                const isOpponent = i.user.id === opponentId;
+                const clickedChallengerButton = i.customId === `007_ready_${challengerId}`;
+                const clickedOpponentButton = i.customId === `007_ready_${opponentId}`;
+                
+                // Verify player clicked their own button
+                if ((isChallenger && clickedChallengerButton) || (isOpponent && clickedOpponentButton)) {
                     if (!readyPlayers.has(i.user.id)) {
                         readyPlayers.add(i.user.id);
                         await i.reply({ content: `✅ ${i.user.username} est prêt !`, ephemeral: false });
@@ -255,7 +261,7 @@ module.exports = {
                 const timeoutEmbed = new EmbedBuilder()
                     .setColor(config.colors.error)
                     .setTitle(getResponse('007.timeout.title'))
-                    .setDescription('⏱️ Un ou plusieurs joueurs n\'ont pas cliqué sur "Prêt" à temps.')
+                    .setDescription(getResponse('007.timeout.ready'))
                     .setTimestamp();
                 
                 await message.channel.send({ embeds: [timeoutEmbed] });

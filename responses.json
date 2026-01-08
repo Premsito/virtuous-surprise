@@ -614,6 +614,7 @@
       "title": "⏱️ Temps écoulé !",
       "description": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un joueur n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
       "player": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ {player} n'a pas répondu à temps!\n╚══════════════════════════════════════╝",
+      "ready": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un ou plusieurs joueurs n'ont pas\n║ cliqué sur \"Prêt\" à temps.\n╚══════════════════════════════════════╝",
       "both": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Aucun joueur n'a répondu à temps!\n╚══════════════════════════════════════╝"
     }
   }
