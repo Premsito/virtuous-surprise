@@ -272,7 +272,8 @@ module.exports = {
                     .setTitle(getResponse('pfc.result.titleDraw'))
                     .setAuthor({ name: challenger.username, iconURL: challengerAvatar })
                     .setDescription(`${vsDisplay}\n\n${getResponse('pfc.result.drawMessage')}`)
-                    .setThumbnail(opponentAvatar);
+                    .setThumbnail(opponentAvatar)
+                    .setFooter({ text: opponentMention.username, iconURL: opponentAvatar });
             } else {
                 // Transfer LC
                 await db.updateBalance(winner, betAmount);
@@ -296,7 +297,8 @@ module.exports = {
                     .setTitle(getResponse('pfc.result.titleVictory'))
                     .setAuthor({ name: challenger.username, iconURL: challengerAvatar })
                     .setDescription(`${vsDisplay}${victoryMessage}`)
-                    .setThumbnail(opponentAvatar);
+                    .setThumbnail(opponentAvatar)
+                    .setFooter({ text: opponentMention.username, iconURL: opponentAvatar });
             }
             
             await message.channel.send({ embeds: [resultEmbed] });
