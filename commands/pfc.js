@@ -262,7 +262,6 @@ module.exports = {
             const vsDisplay = getResponse('pfc.result.vsDisplay', {
                 challengerChoice: CHOICES[challengerChoice].emoji,
                 challengerChoiceName: CHOICES[challengerChoice].name,
-                opponent: opponentMention,
                 opponentChoice: CHOICES[opponentChoice].emoji,
                 opponentChoiceName: CHOICES[opponentChoice].name
             });
