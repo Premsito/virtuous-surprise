@@ -178,10 +178,8 @@ module.exports = {
             // Timeout or error
             const timeoutEmbed = new EmbedBuilder()
                 .setColor(config.colors.error)
-                .setTitle(getResponse('007.refused.title'))
-                .setDescription(getResponse('007.refused.description', {
-                    opponent: opponentMention
-                }))
+                .setTitle(getResponse('007.timeout.title'))
+                .setDescription(getResponse('007.timeout.description'))
                 .setTimestamp();
             
             await challengeMsg.edit({ embeds: [timeoutEmbed], components: [] });
@@ -339,7 +337,7 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
             await user.send({ embeds: [embed], components: [actionRow] });
         } catch (dmError) {
             // If DM fails, send in channel with ephemeral-like behavior
-            console.log(`Could not send DM to ${playerId}, buttons will be in channel`);
+            console.error(`Could not send DM to ${playerId}, buttons will be in channel`);
             await message.channel.send({ 
                 content: `<@${playerId}>`, 
                 embeds: [embed], 
