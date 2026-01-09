@@ -23,34 +23,21 @@ module.exports = {
             const totalXP = user.xp || 0;
             const progress = getXPProgress(totalXP);
             
-            // Create progress bar (20 characters)
-            const progressBarLength = 20;
+            // Create compact progress bar (10 sections, each representing 10%)
+            const progressBarLength = 10;
             const filledLength = Math.floor((progress.progress / 100) * progressBarLength);
             const emptyLength = progressBarLength - filledLength;
             const progressBar = '█'.repeat(filledLength) + '░'.repeat(emptyLength);
+            
+            // Create compact single-line description
+            const description = `🏆 Niveau : ${progress.level} | 🌟 Progression : [${progressBar}] ${progress.progress}% (${progress.currentLevelXP}/${progress.nextLevelXP} XP)`;
             
             // Create embed
             const embed = new EmbedBuilder()
                 .setColor(config.colors.primary)
                 .setTitle(`📊 Niveau de ${targetUser.username}`)
+                .setDescription(description)
                 .setThumbnail(targetUser.displayAvatarURL({ size: 128 }))
-                .addFields(
-                    {
-                        name: '🎯 Niveau',
-                        value: `**${progress.level}**`,
-                        inline: true
-                    },
-                    {
-                        name: '⭐ XP Total',
-                        value: `**${totalXP.toLocaleString()}**`,
-                        inline: true
-                    },
-                    {
-                        name: '📈 Progression',
-                        value: `\`${progressBar}\` ${progress.progress}%\n${progress.currentLevelXP} / ${progress.nextLevelXP} XP`,
-                        inline: false
-                    }
-                )
                 .setFooter({ text: `${progress.nextLevelXP - progress.currentLevelXP} XP pour le niveau ${progress.level + 1}` })
                 .setTimestamp();
             
