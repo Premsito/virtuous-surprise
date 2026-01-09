@@ -1,7 +1,8 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { getResponse } = require('../utils/responseHelper');
 const config = require('../config.json');
 const { db, pool } = require('../database/db');
+const { ITEMS } = require('../utils/inventoryItems');
 
 // Helper function to create main menu options
 function createMainMenuOptions() {
@@ -17,6 +18,12 @@ function createMainMenuOptions() {
             description: 'Jeux de casino et paris',
             value: 'casino',
             emoji: '🎰'
+        },
+        {
+            label: 'Inventaire',
+            description: 'Gérez vos bonus et items',
+            value: 'inventaire',
+            emoji: '🎒'
         },
         {
             label: 'LC',
@@ -125,6 +132,9 @@ async function handleMainMenuInteraction(interaction, userId) {
             break;
         case 'casino':
             await handleCasino(interaction, userId);
+            break;
+        case 'inventaire':
+            await handleInventaire(interaction, userId);
             break;
         case 'lc':
             await handleLC(interaction, userId);
@@ -377,6 +387,93 @@ async function handleCasinoInteraction(interaction, userId) {
         
         await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
     }
+}
+
+async function handleInventaire(interaction, userId) {
+    // Delete the original dropdown message
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const username = interaction.user.username;
+    
+    // Ensure user exists
+    let user = await db.getUser(userId);
+    if (!user) {
+        user = await db.createUser(userId, username);
+    }
+
+    // Get inventory
+    const inventory = await db.getInventory(userId);
+
+    // Check for active multiplier
+    const activeMultiplier = await db.getActiveMultiplier(userId);
+
+    // Build embed
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(`🎒 Inventaire de ${username}`)
+        .setTimestamp();
+
+    // Display active multiplier if any
+    if (activeMultiplier) {
+        embed.addFields({
+            name: '⚡ Bonus Actif',
+            value: `🎫 **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+            inline: false
+        });
+    }
+
+    // Build inventory display
+    if (inventory.length === 0) {
+        embed.setDescription('Votre sac est vide. Jouez et gagnez des items bonus !\n\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.');
+        
+        await interaction.followUp({ 
+            embeds: [embed],
+            ephemeral: true
+        });
+        return;
+    }
+
+    // Create buttons for items with quantity > 0
+    const buttons = [];
+    let description = '**📦 Vos items disponibles:**\n\n';
+
+    for (const item of inventory) {
+        const itemDef = ITEMS[item.item_type];
+        if (!itemDef) continue;
+
+        description += `${itemDef.emoji} **${itemDef.name}** x${item.quantity}\n`;
+        description += `└ *${itemDef.description}*\n\n`;
+
+        // Add button for this item
+        const button = new ButtonBuilder()
+            .setCustomId(itemDef.buttonId)
+            .setLabel(`${itemDef.buttonLabel} (${item.quantity})`)
+            .setStyle(ButtonStyle.Primary);
+
+        buttons.push(button);
+    }
+
+    description += '\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.';
+    embed.setDescription(description);
+
+    // Create action rows (max 5 buttons per row)
+    const actionRows = [];
+    for (let i = 0; i < buttons.length; i += 5) {
+        const row = new ActionRowBuilder()
+            .addComponents(buttons.slice(i, i + 5));
+        actionRows.push(row);
+    }
+
+    await interaction.followUp({ 
+        embeds: [embed],
+        components: actionRows,
+        ephemeral: true
+    });
 }
 
 async function handleLC(interaction, userId) {
