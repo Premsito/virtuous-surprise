@@ -2,31 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
-
-// Item definitions
-const ITEMS = {
-    jackpot: {
-        name: 'Jackpot',
-        emoji: '🎁',
-        description: 'Ouvre un jackpot pour gagner des LC aléatoires (50, 100, 250 ou 1000 LC)',
-        buttonId: 'use_jackpot',
-        buttonLabel: 'Ouvrir Jackpot 🎁'
-    },
-    multiplier_x2: {
-        name: 'Multiplieur x2',
-        emoji: '🎫',
-        description: 'Active un bonus x2 LC pour vos 2 prochaines parties',
-        buttonId: 'use_multiplier_x2',
-        buttonLabel: 'Activer x2 🎫'
-    },
-    multiplier_x3: {
-        name: 'Multiplieur x3',
-        emoji: '🎫',
-        description: 'Active un bonus x3 LC pour vos 2 prochaines parties',
-        buttonId: 'use_multiplier_x3',
-        buttonLabel: 'Activer x3 🎫'
-    }
-};
+const { ITEMS } = require('../utils/inventoryItems');
 
 module.exports = {
     name: 'sac',

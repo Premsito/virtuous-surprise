@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
+const { ITEM_TYPE_MAP, ITEM_DISPLAY_NAMES } = require('../utils/inventoryItems');
 
 module.exports = {
     name: 'moderation',
@@ -101,21 +102,7 @@ async function handleGiveItem(message, args) {
     }
 
     const itemInput = args[1]?.toLowerCase();
-    
-    // Map user-friendly names to internal item types
-    const itemTypeMap = {
-        'jackpot': 'jackpot',
-        'multiplier_x2': 'multiplier_x2',
-        'multiplieur_x2': 'multiplier_x2',
-        'multiplieurx2': 'multiplier_x2',
-        'x2': 'multiplier_x2',
-        'multiplier_x3': 'multiplier_x3',
-        'multiplieur_x3': 'multiplier_x3',
-        'multiplieurx3': 'multiplier_x3',
-        'x3': 'multiplier_x3'
-    };
-    
-    const itemType = itemTypeMap[itemInput];
+    const itemType = ITEM_TYPE_MAP[itemInput];
     
     if (!itemType) {
         return message.reply(`❌ Type d'item invalide! Utilisez: Jackpot, Multiplieur_x2, Multiplieur_x3 (ou x2, x3)`);
@@ -137,16 +124,10 @@ async function handleGiveItem(message, args) {
     // Add item to inventory
     await db.addInventoryItem(targetId, itemType, quantity);
 
-    const itemNames = {
-        'jackpot': 'Jackpot 🎁',
-        'multiplier_x2': 'Multiplieur x2 🎫',
-        'multiplier_x3': 'Multiplieur x3 🎫'
-    };
-
     const embed = new EmbedBuilder()
         .setColor(config.colors.success)
         .setTitle('✅ Bonus Donné')
-        .setDescription(`**${itemNames[itemType]}** x${quantity} a été donné à ${targetUser}`)
+        .setDescription(`**${ITEM_DISPLAY_NAMES[itemType]}** x${quantity} a été donné à ${targetUser}`)
         .setTimestamp();
 
     return message.reply({ embeds: [embed] });
