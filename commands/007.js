@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
+const { grantGameXP } = require('../utils/gameXPHelper');
 
 // Active games storage
 const active007Games = new Map();
@@ -608,6 +609,10 @@ async function endGame(message, winnerId, challengerId, opponentId, challengerUs
     // Record game
     await db.recordGame('007', challengerId, opponentId, betAmount, winnerId === challengerId ? 'win' : 'loss', winnerId === challengerId ? betAmount : 0);
     await db.recordGame('007', opponentId, challengerId, betAmount, winnerId === opponentId ? 'win' : 'loss', winnerId === opponentId ? betAmount : 0);
+    
+    // Grant XP for game participation
+    await grantGameXP(challengerId, challengerUser.username, winnerId === challengerId ? 'win' : 'loss', message);
+    await grantGameXP(opponentId, opponentUser.username, winnerId === opponentId ? 'win' : 'loss', message);
     
     // Victory announcement
     const victoryEmbed = new EmbedBuilder()

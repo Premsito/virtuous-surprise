@@ -4,6 +4,7 @@ const config = require('../config.json');
 const responses = require('../responses.json');
 const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
 const multiplierHelper = require('../utils/multiplierHelper');
+const { grantGameXP } = require('../utils/gameXPHelper');
 
 // Active games storage
 const activeRoues = new Map();
@@ -136,6 +137,9 @@ async function handleRoue(message, args) {
     // Record game
     await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', finalWinnings);
     
+    // Grant XP for game participation
+    await grantGameXP(playerId, message.author.username, result === color ? 'win' : 'loss', message);
+    
     // Step 3: Display the result
     let resultMessage;
     let resultTitle;
@@ -220,6 +224,7 @@ async function handleBlackjack(message, args) {
             // Push - return bet
             await db.updateBalance(playerId, betAmount);
             await db.recordGame('blackjack', playerId, null, betAmount, 'push', 0);
+            // No XP for push
             
             const embed = new EmbedBuilder()
                 .setColor(config.colors.warning)
@@ -240,6 +245,9 @@ async function handleBlackjack(message, args) {
             
             await db.updateBalance(playerId, finalWinnings);
             await db.recordGame('blackjack', playerId, null, betAmount, 'win', finalWinnings);
+            
+            // Grant XP for win
+            await grantGameXP(playerId, message.author.username, 'win', message);
             
             let description = getResponse('casino.blackjack.blackjack.description', {
                 winnings: finalWinnings,
@@ -321,6 +329,9 @@ async function handleBlackjack(message, args) {
         activeBlackjacks.delete(playerId);
         await db.recordGame('blackjack', playerId, null, betAmount, 'loss', 0);
         
+        // Grant XP for loss
+        await grantGameXP(playerId, message.author.username, 'loss', message);
+        
         // Disable buttons on timeout
         tirerButton.setDisabled(true);
         resterButton.setDisabled(true);
@@ -350,6 +361,9 @@ async function handleBlackjackHit(message, playerId) {
         // Bust
         activeBlackjacks.delete(playerId);
         await db.recordGame('blackjack', playerId, null, game.betAmount, 'loss', 0);
+        
+        // Grant XP for loss
+        await grantGameXP(playerId, message.author.username, 'loss', message);
         
         const embed = new EmbedBuilder()
             .setColor(config.colors.error)
@@ -419,6 +433,9 @@ async function handleBlackjackHit(message, playerId) {
             // Timeout
             activeBlackjacks.delete(playerId);
             await db.recordGame('blackjack', playerId, null, game.betAmount, 'loss', 0);
+            
+            // Grant XP for loss
+            await grantGameXP(playerId, message.author.username, 'loss', message);
             
             // Disable buttons on timeout
             tirerButton.setDisabled(true);
@@ -490,6 +507,13 @@ async function handleBlackjackStand(message, playerId) {
     
     await db.recordGame('blackjack', playerId, null, game.betAmount, result, finalWinnings);
     activeBlackjacks.delete(playerId);
+    
+    // Grant XP for game participation (skip push)
+    if (result === 'win') {
+        await grantGameXP(playerId, message.author.username, 'win', message);
+    } else if (result === 'loss') {
+        await grantGameXP(playerId, message.author.username, 'loss', message);
+    }
     
     // Get random variant for win/loss messages
     let description;
@@ -610,6 +634,9 @@ async function handleMachine(message, args) {
     
     // Record game
     await db.recordGame('machine', playerId, null, betAmount, finalWinnings > 0 ? 'win' : 'loss', finalWinnings);
+    
+    // Grant XP for game participation
+    await grantGameXP(playerId, message.author.username, finalWinnings > 0 ? 'win' : 'loss', message);
     
     // Enhanced title based on result
     let machineTitle;

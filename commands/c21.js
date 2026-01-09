@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
+const { grantGameXP } = require('../utils/gameXPHelper');
 
 // Active games storage
 const active21Games = new Map();
@@ -228,6 +229,10 @@ module.exports = {
                         await db.recordGame('c21', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);
                         await db.recordGame('c21', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? betAmount : 0);
                         
+                        // Grant XP for game participation
+                        await grantGameXP(challengerId, challenger.username, winner === challengerId ? 'win' : 'loss', message);
+                        await grantGameXP(opponentId, opponentMention.username, winner === opponentId ? 'win' : 'loss', message);
+                        
                         const resultEmbed = new EmbedBuilder()
                             .setColor(config.colors.success)
                             .setTitle(`🏆 Challenge 21 - **Victoire de ${winnerUser.username} !**`)
@@ -271,6 +276,10 @@ module.exports = {
                     // Record game
                     await db.recordGame('c21', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);
                     await db.recordGame('c21', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? betAmount : 0);
+                    
+                    // Grant XP for game participation
+                    await grantGameXP(challengerId, challenger.username, winner === challengerId ? 'win' : 'loss', message);
+                    await grantGameXP(opponentId, opponentMention.username, winner === opponentId ? 'win' : 'loss', message);
                     
                     const timeoutEmbed = new EmbedBuilder()
                         .setColor(config.colors.error)
