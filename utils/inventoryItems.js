@@ -4,7 +4,7 @@ module.exports = {
         jackpot: {
             name: 'Jackpot',
             emoji: '🎁',
-            description: 'Ouvre un jackpot pour gagner des LC aléatoires (50, 100, 250 ou 1000 LC)',
+            description: 'Ouvre un jackpot pour gagner des LC aléatoires (25, 50 ou 100 LC)',
             buttonId: 'use_jackpot',
             buttonLabel: 'Ouvrir Jackpot 🎁'
         },
