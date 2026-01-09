@@ -42,7 +42,7 @@ function section(message) {
     log('='.repeat(70), 'blue');
 }
 
-let checksPasssed = 0;
+let checksPassed = 0;
 let checksFailed = 0;
 
 function check(description, testFn) {
@@ -50,7 +50,7 @@ function check(description, testFn) {
         const result = testFn();
         if (result) {
             success(description);
-            checksPasssed++;
+            checksPassed++;
             return true;
         } else {
             error(description);
@@ -224,11 +224,11 @@ check('README.md mentions database', () =>
 // Summary
 section('Verification Summary');
 
-log(`Total Checks: ${checksPasssed + checksFailed}`, 'blue');
-log(`Passed: ${checksPasssed}`, checksPasssed > 0 ? 'green' : 'red');
+log(`Total Checks: ${checksPassed + checksFailed}`, 'blue');
+log(`Passed: ${checksPassed}`, checksPassed > 0 ? 'green' : 'red');
 log(`Failed: ${checksFailed}`, checksFailed === 0 ? 'green' : 'red');
 
-const passPercentage = ((checksPasssed / (checksPasssed + checksFailed)) * 100).toFixed(1);
+const passPercentage = ((checksPassed / (checksPassed + checksFailed)) * 100).toFixed(1);
 log(`\nPass Rate: ${passPercentage}%`, passPercentage === '100.0' ? 'green' : 'yellow');
 
 if (checksFailed === 0) {
