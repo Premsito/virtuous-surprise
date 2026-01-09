@@ -17,6 +17,8 @@ module.exports = {
             return handleSetLC(message, args);
         } else if (command === 'setinvites') {
             return handleSetInvites(message, args);
+        } else if (command === 'giveitem') {
+            return handleGiveItem(message, args);
         }
     }
 };
@@ -87,6 +89,50 @@ async function handleSetInvites(message, args) {
             user: targetUser,
             count: count
         }))
+        .setTimestamp();
+
+    return message.reply({ embeds: [embed] });
+}
+
+async function handleGiveItem(message, args) {
+    const targetUser = message.mentions.users.first();
+    if (!targetUser) {
+        return message.reply('❌ Vous devez mentionner un utilisateur! Usage: `!giveitem @user <type> <quantity>`');
+    }
+
+    const itemType = args[1]?.toLowerCase();
+    const validItems = ['jackpot', 'multiplier_x2', 'multiplier_x3'];
+    
+    if (!itemType || !validItems.includes(itemType)) {
+        return message.reply(`❌ Type d'item invalide! Utilisez: ${validItems.join(', ')}`);
+    }
+
+    const quantity = parseInt(args[2]);
+    if (isNaN(quantity) || quantity < 1) {
+        return message.reply('❌ Quantité invalide! Utilisez un nombre positif.');
+    }
+
+    const targetId = targetUser.id;
+    
+    // Ensure user exists
+    let user = await db.getUser(targetId);
+    if (!user) {
+        user = await db.createUser(targetId, targetUser.username);
+    }
+
+    // Add item to inventory
+    await db.addInventoryItem(targetId, itemType, quantity);
+
+    const itemNames = {
+        'jackpot': 'Jackpot 🎁',
+        'multiplier_x2': 'Multiplieur x2 🎫',
+        'multiplier_x3': 'Multiplieur x3 🎫'
+    };
+
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.success)
+        .setTitle('✅ Item Donné')
+        .setDescription(`**${itemNames[itemType]}** x${quantity} a été donné à ${targetUser}`)
         .setTimestamp();
 
     return message.reply({ embeds: [embed] });

@@ -257,7 +257,7 @@
       },
       "lc": {
         "title": "{currency_symbol} LC (Virtual Coins)",
-        "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}lc @user` - Voir le solde d'un utilisateur\n`{prefix}don @user [montant]` - Transférer des LC\n`{prefix}cadeau` - Recevoir 25 LC quotidiennement"
+        "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}lc @user` - Voir le solde d'un utilisateur\n`{prefix}don @user [montant]` - Transférer des LC\n`{prefix}cadeau` - Recevoir 25 LC quotidiennement\n`{prefix}sac` - Gérer votre inventaire d'items bonus"
       },
       "invites": {
         "title": "📊 Invitations",
@@ -281,7 +281,7 @@
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",
-        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations"
+        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}giveitem @user [type] [quantité]` - Donner un item bonus"
       }
     },
     "footer": "Préfixe: {prefix}"

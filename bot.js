@@ -430,6 +430,9 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'setinvites') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setinvites');
+        } else if (commandName === 'giveitem') {
+            const command = client.commands.get('moderation');
+            await command.execute(message, args, 'giveitem');
         } else if (commandName === 'topinvites') {
             const invitesCommand = require('./commands/invites');
             await invitesCommand.handleTopInvites(message, args);
