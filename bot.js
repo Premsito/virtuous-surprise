@@ -720,7 +720,7 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     // Handle inventory button interactions
-    const inventoryButtons = ['use_jackpot', 'use_multiplier_x2', 'use_multiplier_x3'];
+    const inventoryButtons = ['use_tresor', 'use_multiplier_x2', 'use_multiplier_x3'];
     if (inventoryButtons.includes(interaction.customId)) {
         const sacCommand = require('./commands/sac');
         await sacCommand.handleButtonInteraction(interaction);
