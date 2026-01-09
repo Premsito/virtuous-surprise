@@ -125,10 +125,13 @@ async function handleJackpotOpen(interaction, userId, username) {
     // Remove one jackpot from inventory
     await db.removeInventoryItem(userId, 'jackpot', 1);
 
-    // Determine random LC reward (50, 100, 250, or 1000)
-    const rewards = [50, 100, 250, 1000];
-    const weights = [50, 30, 15, 5]; // Probabilities: 50%, 30%, 15%, 5%
+    // Determine random LC reward (25, 50, or 100)
+    const rewards = [25, 50, 100];
+    const weights = [50, 35, 15]; // Probabilities: 50%, 35%, 15%
     const reward = weightedRandom(rewards, weights);
+    
+    // Log the jackpot result for debugging
+    console.log(`[Jackpot] User ${username} (${userId}) opened a Jackpot and won ${reward} LC`);
 
     // Add LC to user balance
     await db.updateBalance(userId, reward);
