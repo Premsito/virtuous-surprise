@@ -218,6 +218,23 @@ client.once('clientReady', async () => {
                                 // Check for level up
                                 if (newLevel > oldLevel) {
                                     await db.updateLevel(userId, newLevel);
+                                    // Give trésor reward for level up
+                                    await db.addInventoryItem(userId, 'tresor', 1);
+                                    
+                                    // Send notification to dedicated level up channel
+                                    const levelUpChannelId = config.channels.levelUpNotification;
+                                    try {
+                                        const levelUpChannel = await client.channels.fetch(levelUpChannelId);
+                                        if (levelUpChannel) {
+                                            await levelUpChannel.send(
+                                                `🎉 **Bravo <@${userId}>** 🎉\n` +
+                                                `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
+                                                `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
+                                            );
+                                        }
+                                    } catch (channelError) {
+                                        console.error('Error sending level up notification to channel:', channelError.message);
+                                    }
                                 }
                             }
                         }
@@ -511,6 +528,23 @@ client.on('messageReactionAdd', async (reaction, user) => {
             // Check for level up
             if (newLevel > oldLevel) {
                 await db.updateLevel(authorId, newLevel);
+                // Give trésor reward for level up
+                await db.addInventoryItem(authorId, 'tresor', 1);
+                
+                // Send notification to dedicated level up channel
+                const levelUpChannelId = config.channels.levelUpNotification;
+                try {
+                    const levelUpChannel = await client.channels.fetch(levelUpChannelId);
+                    if (levelUpChannel) {
+                        await levelUpChannel.send(
+                            `🎉 **Bravo <@${authorId}>** 🎉\n` +
+                            `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
+                            `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
+                        );
+                    }
+                } catch (channelError) {
+                    console.error('Error sending level up notification to channel:', channelError.message);
+                }
             }
         }
     } catch (error) {
@@ -561,9 +595,28 @@ client.on('messageCreate', async (message) => {
             // Check for level up
             if (newLevel > oldLevel) {
                 await db.updateLevel(userId, newLevel);
+                
+                // Give trésor reward for level up
+                await db.addInventoryItem(userId, 'tresor', 1);
+                
                 // Notify user about level up
                 try {
-                    await message.reply(`🎉 Félicitations ! Tu es passé au niveau **${newLevel}** !`);
+                    // Send notification to dedicated level up channel
+                    const levelUpChannelId = config.channels.levelUpNotification;
+                    try {
+                        const levelUpChannel = await client.channels.fetch(levelUpChannelId);
+                        if (levelUpChannel) {
+                            await levelUpChannel.send(
+                                `🎉 **Bravo <@${userId}>** 🎉\n` +
+                                `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
+                                `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
+                            );
+                        }
+                    } catch (channelError) {
+                        console.error('Error sending level up notification to channel:', channelError.message);
+                        // Fallback to reply
+                        await message.reply(`🎉 Félicitations ! Tu es passé au niveau **${newLevel}** ! Tu as reçu un **Trésor 🗝️** !`);
+                    }
                 } catch (error) {
                     console.error('Error sending level up notification:', error.message);
                 }
@@ -665,7 +718,7 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
     // Handle inventory button interactions
-    const inventoryButtons = ['use_jackpot', 'use_multiplier_x2', 'use_multiplier_x3'];
+    const inventoryButtons = ['use_tresor', 'use_multiplier_x2', 'use_multiplier_x3'];
     if (inventoryButtons.includes(interaction.customId)) {
         const sacCommand = require('./commands/sac');
         await sacCommand.handleButtonInteraction(interaction);

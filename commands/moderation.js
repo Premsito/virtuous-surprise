@@ -105,7 +105,7 @@ async function handleGiveItem(message, args) {
     const itemType = ITEM_TYPE_MAP[itemInput];
     
     if (!itemType) {
-        return message.reply(`❌ Type d'item invalide! Utilisez: Jackpot, Multiplieur_x2, Multiplieur_x3 (ou x2, x3)`);
+        return message.reply(`❌ Type d'item invalide! Utilisez: Trésor, Multiplieur_x2, Multiplieur_x3 (ou x2, x3)`);
     }
 
     const quantity = parseInt(args[2]);

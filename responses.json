@@ -281,7 +281,7 @@
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",
-        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}givebonus @user [type] [quantité]` - Donner un item bonus (Jackpot, x2, x3)\n`{prefix}giveitem @user [type] [quantité]` - Alias de givebonus"
+        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}givebonus @user [type] [quantité]` - Donner un item bonus (Trésor, x2, x3)\n`{prefix}giveitem @user [type] [quantité]` - Alias de givebonus"
       }
     },
     "footer": "Préfixe: {prefix}"
@@ -621,10 +621,10 @@
   "inventory": {
     "title": "🎒 Votre Sac",
     "empty": "Votre sac est vide. Jouez et gagnez des items bonus !",
-    "jackpot": {
-      "name": "Jackpot",
-      "emoji": "🎁",
-      "description": "Ouvre un jackpot pour gagner des LC aléatoires"
+    "tresor": {
+      "name": "Trésor",
+      "emoji": "🗝️",
+      "description": "Ouvre un trésor pour gagner des LC aléatoires"
     },
     "multiplier_x2": {
       "name": "Multiplieur x2",
@@ -638,7 +638,7 @@
     },
     "noItem": "❌ Vous n'avez pas cet item dans votre sac !",
     "alreadyActive": "❌ Vous avez déjà un multiplieur actif !",
-    "jackpotOpened": "🎉 Félicitations ! Vous avez gagné **{amount} LC** 💰",
+    "tresorOpened": "🎉 Félicitations ! Vous avez gagné **{amount} LC** 💰",
     "multiplierActivated": "✨ Multiplieur x{multiplier} activé ! Vos {games} prochaine(s) partie(s) donneront x{multiplier} LC."
   }
 }
