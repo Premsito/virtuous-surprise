@@ -390,6 +390,96 @@ const db = {
         );
     },
 
+    // XP and Level operations
+    async addXP(userId, xpAmount) {
+        const result = await pool.query(
+            'UPDATE users SET xp = xp + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [xpAmount, userId]
+        );
+        return result.rows[0];
+    },
+
+    async updateLevel(userId, level) {
+        const result = await pool.query(
+            'UPDATE users SET level = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [level, userId]
+        );
+        return result.rows[0];
+    },
+
+    async updateLastMessageXPTime(userId, timestamp) {
+        const result = await pool.query(
+            'UPDATE users SET last_message_xp_time = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            [timestamp, userId]
+        );
+        return result.rows[0];
+    },
+
+    async getTopLevels(limit = 10) {
+        const result = await pool.query(
+            'SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1',
+            [limit]
+        );
+        return result.rows;
+    },
+
+    // Voice XP tracking
+    async createVoiceXPSession(userId, sessionStart) {
+        const result = await pool.query(
+            'INSERT INTO voice_xp_tracking (user_id, session_start, last_xp_grant, total_minutes) VALUES ($1, $2, $2, 0) RETURNING *',
+            [userId, sessionStart]
+        );
+        return result.rows[0];
+    },
+
+    async getActiveVoiceXPSession(userId) {
+        const result = await pool.query(
+            'SELECT * FROM voice_xp_tracking WHERE user_id = $1 ORDER BY session_start DESC LIMIT 1',
+            [userId]
+        );
+        return result.rows[0];
+    },
+
+    async updateVoiceXPSession(sessionId, lastXPGrant, totalMinutes) {
+        const result = await pool.query(
+            'UPDATE voice_xp_tracking SET last_xp_grant = $1, total_minutes = $2 WHERE id = $3 RETURNING *',
+            [lastXPGrant, totalMinutes, sessionId]
+        );
+        return result.rows[0];
+    },
+
+    async deleteVoiceXPSession(sessionId) {
+        await pool.query(
+            'DELETE FROM voice_xp_tracking WHERE id = $1',
+            [sessionId]
+        );
+    },
+
+    // Message reaction XP tracking
+    async getMessageReactionXP(messageId) {
+        const result = await pool.query(
+            'SELECT * FROM message_reaction_xp WHERE message_id = $1',
+            [messageId]
+        );
+        return result.rows[0];
+    },
+
+    async createMessageReactionXP(messageId, userId, xpEarned) {
+        const result = await pool.query(
+            'INSERT INTO message_reaction_xp (message_id, user_id, xp_earned) VALUES ($1, $2, $3) ON CONFLICT (message_id) DO UPDATE SET xp_earned = message_reaction_xp.xp_earned + $3 RETURNING *',
+            [messageId, userId, xpEarned]
+        );
+        return result.rows[0];
+    },
+
+    async updateMessageReactionXP(messageId, xpEarned) {
+        const result = await pool.query(
+            'UPDATE message_reaction_xp SET xp_earned = xp_earned + $1 WHERE message_id = $2 RETURNING *',
+            [xpEarned, messageId]
+        );
+        return result.rows[0];
+    },
+
     // Initialize database
     async initialize() {
         let retryCount = 0;
