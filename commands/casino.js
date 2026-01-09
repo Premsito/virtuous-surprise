@@ -3,6 +3,7 @@ const { db } = require('../database/db');
 const config = require('../config.json');
 const responses = require('../responses.json');
 const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
+const multiplierHelper = require('../utils/multiplierHelper');
 
 // Active games storage
 const activeRoues = new Map();
@@ -109,17 +110,31 @@ async function handleRoue(message, args) {
     }
     
     // Calculate winnings
+    let baseWinnings = 0;
     if (result === color) {
         if (color === 'vert') {
-            winnings = betAmount * config.games.roue.greenMultiplier;
+            baseWinnings = betAmount * config.games.roue.greenMultiplier;
         } else {
-            winnings = betAmount * config.games.roue.colorMultiplier;
+            baseWinnings = betAmount * config.games.roue.colorMultiplier;
         }
-        await db.updateBalance(playerId, winnings);
+    }
+    
+    // Apply multiplier if active and player won
+    let finalWinnings = baseWinnings;
+    let multiplierUsed = false;
+    let multiplierValue = 1;
+    
+    if (baseWinnings > 0) {
+        const multiplierResult = await multiplierHelper.applyMultiplier(playerId, baseWinnings);
+        finalWinnings = multiplierResult.finalWinnings;
+        multiplierUsed = multiplierResult.multiplierUsed;
+        multiplierValue = multiplierResult.multiplierValue;
+        
+        await db.updateBalance(playerId, finalWinnings);
     }
     
     // Record game
-    await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', winnings);
+    await db.recordGame('roue', playerId, null, betAmount, result === color ? 'win' : 'loss', finalWinnings);
     
     // Step 3: Display the result
     let resultMessage;
@@ -131,8 +146,12 @@ async function handleRoue(message, args) {
             colorEmoji: getColorEmoji(result),
             color: formatColor(result),
             player: player.toString(),
-            winnings: winnings
+            winnings: finalWinnings
         });
+        
+        if (multiplierUsed) {
+            resultMessage += `\n\n${multiplierHelper.getMultiplierAppliedMessage(baseWinnings, finalWinnings, multiplierValue)}`;
+        }
     } else {
         // Loss message
         resultTitle = '❌ Roulette - **Perdu !**';
@@ -214,17 +233,27 @@ async function handleBlackjack(message, args) {
             return message.reply({ embeds: [embed] });
         } else {
             // Player blackjack - win 2.5x
-            const winnings = Math.floor(betAmount * config.games.blackjack.blackjackMultiplier);
-            await db.updateBalance(playerId, winnings);
-            await db.recordGame('blackjack', playerId, null, betAmount, 'win', winnings);
+            const baseWinnings = Math.floor(betAmount * config.games.blackjack.blackjackMultiplier);
+            
+            // Apply multiplier if active
+            const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(playerId, baseWinnings);
+            
+            await db.updateBalance(playerId, finalWinnings);
+            await db.recordGame('blackjack', playerId, null, betAmount, 'win', finalWinnings);
+            
+            let description = getResponse('casino.blackjack.blackjack.description', {
+                winnings: finalWinnings,
+                playerHand: formatHand(playerHand)
+            });
+            
+            if (multiplierUsed) {
+                description += `\n\n${multiplierHelper.getMultiplierAppliedMessage(baseWinnings, finalWinnings, multiplierValue)}`;
+            }
             
             const embed = new EmbedBuilder()
                 .setColor(config.colors.success)
                 .setTitle('🏆 Blackjack - **BLACKJACK !**')
-                .setDescription(getResponse('casino.blackjack.blackjack.description', {
-                    winnings: winnings,
-                    playerHand: formatHand(playerHand)
-                }))
+                .setDescription(description)
                 .setTimestamp();
             
             return message.reply({ embeds: [embed] });
@@ -422,29 +451,44 @@ async function handleBlackjackStand(message, playerId) {
     }
     
     // Determine winner
-    let result, winnings = 0;
+    let result;
+    let baseWinnings = 0;
+    let finalWinnings = 0;
+    let multiplierUsed = false;
+    let multiplierValue = 1;
+    
     if (dealerScore > 21) {
         // Dealer bust - player wins
         result = 'win';
-        winnings = game.betAmount * config.games.blackjack.winMultiplier;
+        baseWinnings = game.betAmount * config.games.blackjack.winMultiplier;
     } else if (playerScore > dealerScore) {
         // Player wins
         result = 'win';
-        winnings = game.betAmount * config.games.blackjack.winMultiplier;
+        baseWinnings = game.betAmount * config.games.blackjack.winMultiplier;
     } else if (playerScore < dealerScore) {
         // Dealer wins
         result = 'loss';
     } else {
         // Push
         result = 'push';
-        winnings = game.betAmount;
+        baseWinnings = game.betAmount;
     }
     
-    if (winnings > 0) {
-        await db.updateBalance(playerId, winnings);
+    // Apply multiplier if player won (but not on push)
+    if (result === 'win' && baseWinnings > 0) {
+        const multiplierResult = await multiplierHelper.applyMultiplier(playerId, baseWinnings);
+        finalWinnings = multiplierResult.finalWinnings;
+        multiplierUsed = multiplierResult.multiplierUsed;
+        multiplierValue = multiplierResult.multiplierValue;
+    } else {
+        finalWinnings = baseWinnings;
     }
     
-    await db.recordGame('blackjack', playerId, null, game.betAmount, result, winnings);
+    if (finalWinnings > 0) {
+        await db.updateBalance(playerId, finalWinnings);
+    }
+    
+    await db.recordGame('blackjack', playerId, null, game.betAmount, result, finalWinnings);
     activeBlackjacks.delete(playerId);
     
     // Get random variant for win/loss messages
@@ -455,7 +499,7 @@ async function handleBlackjackStand(message, playerId) {
         const variants = responses.casino.blackjack.result[result].variants;
         const variantTemplate = getRandomVariant(variants);
         const variant = replacePlaceholders(variantTemplate, {
-            winnings: winnings,
+            winnings: finalWinnings,
             dealerScore: dealerScore
         });
         description = getResponse(`casino.blackjack.result.${result}.description`, {
@@ -463,6 +507,11 @@ async function handleBlackjackStand(message, playerId) {
             dealerHand: formatHand(game.dealerHand),
             variant: variant
         });
+        
+        // Add multiplier message if used
+        if (multiplierUsed && result === 'win') {
+            description += `\n\n${multiplierHelper.getMultiplierAppliedMessage(baseWinnings, finalWinnings, multiplierValue)}`;
+        }
         
         // Enhanced titles with emojis and bold text
         if (result === 'win') {
@@ -545,12 +594,22 @@ async function handleMachine(message, args) {
     
     const winnings = multiplier > 0 ? Math.floor(betAmount * multiplier) : 0;
     
+    // Apply bonus multiplier if active and player won
+    let finalWinnings = winnings;
+    let multiplierUsed = false;
+    let multiplierValue = 1;
+    
     if (winnings > 0) {
-        await db.updateBalance(playerId, winnings);
+        const multiplierResult = await multiplierHelper.applyMultiplier(playerId, winnings);
+        finalWinnings = multiplierResult.finalWinnings;
+        multiplierUsed = multiplierResult.multiplierUsed;
+        multiplierValue = multiplierResult.multiplierValue;
+        
+        await db.updateBalance(playerId, finalWinnings);
     }
     
     // Record game
-    await db.recordGame('machine', playerId, null, betAmount, winnings > 0 ? 'win' : 'loss', winnings);
+    await db.recordGame('machine', playerId, null, betAmount, finalWinnings > 0 ? 'win' : 'loss', finalWinnings);
     
     // Enhanced title based on result
     let machineTitle;
@@ -562,17 +621,23 @@ async function handleMachine(message, args) {
         machineTitle = '❌ Machine à Sous - **Perdu !**';
     }
     
+    let description = getResponse(`casino.machine.result.${winType}`, {
+        reel1: reel1,
+        reel2: reel2,
+        reel3: reel3,
+        bet: betAmount,
+        winnings: finalWinnings,
+        multiplier: multiplier
+    });
+    
+    if (multiplierUsed) {
+        description += `\n\n${multiplierHelper.getMultiplierAppliedMessage(winnings, finalWinnings, multiplierValue)}`;
+    }
+    
     const embed = new EmbedBuilder()
-        .setColor(winnings > 0 ? config.colors.success : config.colors.error)
+        .setColor(finalWinnings > 0 ? config.colors.success : config.colors.error)
         .setTitle(machineTitle)
-        .setDescription(getResponse(`casino.machine.result.${winType}`, {
-            reel1: reel1,
-            reel2: reel2,
-            reel3: reel3,
-            bet: betAmount,
-            winnings: winnings,
-            multiplier: multiplier
-        }))
+        .setDescription(description)
         .setTimestamp();
     
     return message.reply({ embeds: [embed] });

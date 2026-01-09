@@ -257,7 +257,7 @@
       },
       "lc": {
         "title": "{currency_symbol} LC (Virtual Coins)",
-        "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}lc @user` - Voir le solde d'un utilisateur\n`{prefix}don @user [montant]` - Transférer des LC\n`{prefix}cadeau` - Recevoir 25 LC quotidiennement"
+        "commands": "`{prefix}lc` - Voir votre solde\n`{prefix}lc @user` - Voir le solde d'un utilisateur\n`{prefix}don @user [montant]` - Transférer des LC\n`{prefix}cadeau` - Recevoir 25 LC quotidiennement\n`{prefix}sac` - Gérer votre inventaire d'items bonus"
       },
       "invites": {
         "title": "📊 Invitations",
@@ -281,7 +281,7 @@
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",
-        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations"
+        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}giveitem @user [type] [quantité]` - Donner un item bonus"
       }
     },
     "footer": "Préfixe: {prefix}"
@@ -617,5 +617,28 @@
       "ready": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Un ou plusieurs joueurs n'ont pas\n║ cliqué sur \"Prêt\" à temps.\n╚══════════════════════════════════════╝",
       "both": "╔══════════════════════════════════════╗\n║ ⏱️  **Temps écoulé**\n║ \n║ Aucun joueur n'a répondu à temps!\n╚══════════════════════════════════════╝"
     }
+  },
+  "inventory": {
+    "title": "🎒 Votre Sac",
+    "empty": "Votre sac est vide. Jouez et gagnez des items bonus !",
+    "jackpot": {
+      "name": "Jackpot",
+      "emoji": "🎁",
+      "description": "Ouvre un jackpot pour gagner des LC aléatoires"
+    },
+    "multiplier_x2": {
+      "name": "Multiplieur x2",
+      "emoji": "🎫",
+      "description": "Active un bonus x2 LC pour vos 2 prochaines parties"
+    },
+    "multiplier_x3": {
+      "name": "Multiplieur x3",
+      "emoji": "🎫",
+      "description": "Active un bonus x3 LC pour vos 2 prochaines parties"
+    },
+    "noItem": "❌ Vous n'avez pas cet item dans votre sac !",
+    "alreadyActive": "❌ Vous avez déjà un multiplieur actif !",
+    "jackpotOpened": "🎉 Félicitations ! Vous avez gagné **{amount} LC** 💰",
+    "multiplierActivated": "✨ Multiplieur x{multiplier} activé ! Vos {games} prochaine(s) partie(s) donneront x{multiplier} LC."
   }
 }

@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
+const multiplierHelper = require('../utils/multiplierHelper');
 
 // Active games storage
 const activeDuels = new Map();
@@ -175,23 +176,43 @@ async function handleDuel(message, args) {
         const winnerUser = winner === challengerId ? challenger : opponentMention;
         const loserUser = winner === challengerId ? opponentMention : challenger;
         
+        // Calculate base winnings
+        const baseWinnings = betAmount;
+        
+        // Apply multiplier if active
+        const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(winner, baseWinnings);
+        
+        // Check for active multiplier on winner (after applying)
+        const remainingMultiplier = await multiplierHelper.getPlayerMultiplier(winner);
+        let multiplierNotification = '';
+        if (remainingMultiplier.hasMultiplier) {
+            multiplierNotification = `\n\n${multiplierHelper.getMultiplierNotification(remainingMultiplier.multiplier, remainingMultiplier.gamesRemaining)}`;
+        }
+        
         // Transfer LC
-        await db.updateBalance(winner, betAmount);
+        await db.updateBalance(winner, finalWinnings);
         await db.updateBalance(loser, -betAmount);
         
-        // Record game
-        await db.recordGame('duel', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);
-        await db.recordGame('duel', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? betAmount : 0);
+        // Record game (both players record finalWinnings if they won)
+        await db.recordGame('duel', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? finalWinnings : 0);
+        await db.recordGame('duel', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? finalWinnings : 0);
+        
+        // Build result description with multiplier info
+        let resultDescription = getResponse('games.duel.result.description', {
+            winner: winnerUser,
+            totalWinnings: betAmount * 2,
+            loser: loserUser,
+            bet: betAmount
+        });
+        
+        if (multiplierUsed) {
+            resultDescription += `\n\n${multiplierHelper.getMultiplierAppliedMessage(baseWinnings, finalWinnings, multiplierValue)}`;
+        }
         
         const resultEmbed = new EmbedBuilder()
             .setColor(config.colors.success)
             .setTitle(`🏆 Duel - **Victoire de ${winnerUser.username} !**`)
-            .setDescription(getResponse('games.duel.result.description', {
-                winner: winnerUser,
-                totalWinnings: betAmount * 2,
-                loser: loserUser,
-                bet: betAmount
-            }))
+            .setDescription(resultDescription + multiplierNotification)
             .setTimestamp();
         
         await message.channel.send({ embeds: [resultEmbed] });
@@ -299,10 +320,13 @@ async function executeRoulette(guildId) {
     const winner = playersArray[Math.floor(Math.random() * playersArray.length)];
     
     const totalPot = playersArray.reduce((sum, p) => sum + p.bet, 0);
-    const winnings = Math.floor(totalPot * config.games.roulette.winMultiplier);
+    const baseWinnings = Math.floor(totalPot * config.games.roulette.winMultiplier);
+    
+    // Apply multiplier if winner has one active
+    const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(winner.user.id, baseWinnings);
     
     // Award winnings
-    await db.updateBalance(winner.user.id, winnings);
+    await db.updateBalance(winner.user.id, finalWinnings);
     
     // Record game for all players
     for (const [playerId, playerData] of roulette.players) {
@@ -313,19 +337,26 @@ async function executeRoulette(guildId) {
             null,
             playerData.bet,
             isWinner ? 'win' : 'loss',
-            isWinner ? winnings : 0
+            isWinner ? finalWinnings : 0
         );
+    }
+    
+    // Build result description
+    let resultDescription = getResponse('games.roulette.result.description', {
+        winner: winner.user,
+        winnings: finalWinnings,
+        totalPot: totalPot,
+        playerCount: playersArray.length
+    });
+    
+    if (multiplierUsed) {
+        resultDescription += `\n\n${multiplierHelper.getMultiplierAppliedMessage(baseWinnings, finalWinnings, multiplierValue)}`;
     }
     
     const resultEmbed = new EmbedBuilder()
         .setColor(config.colors.success)
         .setTitle(getResponse('games.roulette.result.title'))
-        .setDescription(getResponse('games.roulette.result.description', {
-            winner: winner.user,
-            winnings: winnings,
-            totalPot: totalPot,
-            playerCount: playersArray.length
-        }))
+        .setDescription(resultDescription)
         .setTimestamp();
     
     await roulette.channel.send({ embeds: [resultEmbed] });

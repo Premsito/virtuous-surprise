@@ -325,6 +325,71 @@ const db = {
         return result.rows[0];
     },
 
+    // Inventory operations
+    async getInventory(userId) {
+        const result = await pool.query(
+            'SELECT item_type, quantity FROM user_inventory WHERE user_id = $1 AND quantity > 0 ORDER BY item_type',
+            [userId]
+        );
+        return result.rows;
+    },
+
+    async getInventoryItem(userId, itemType) {
+        const result = await pool.query(
+            'SELECT * FROM user_inventory WHERE user_id = $1 AND item_type = $2',
+            [userId, itemType]
+        );
+        return result.rows[0];
+    },
+
+    async addInventoryItem(userId, itemType, quantity = 1) {
+        const result = await pool.query(
+            'INSERT INTO user_inventory (user_id, item_type, quantity) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_type) DO UPDATE SET quantity = user_inventory.quantity + $3, updated_at = CURRENT_TIMESTAMP RETURNING *',
+            [userId, itemType, quantity]
+        );
+        return result.rows[0];
+    },
+
+    async removeInventoryItem(userId, itemType, quantity = 1) {
+        const result = await pool.query(
+            'UPDATE user_inventory SET quantity = GREATEST(quantity - $1, 0), updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND item_type = $3 RETURNING *',
+            [quantity, userId, itemType]
+        );
+        return result.rows[0];
+    },
+
+    // Active multiplier operations
+    async getActiveMultiplier(userId) {
+        const result = await pool.query(
+            'SELECT * FROM active_multipliers WHERE user_id = $1 AND games_remaining > 0 ORDER BY activated_at DESC LIMIT 1',
+            [userId]
+        );
+        return result.rows[0];
+    },
+
+    async activateMultiplier(userId, multiplierType, multiplierValue) {
+        const result = await pool.query(
+            'INSERT INTO active_multipliers (user_id, multiplier_type, multiplier_value, games_remaining) VALUES ($1, $2, $3, 2) RETURNING *',
+            [userId, multiplierType, multiplierValue]
+        );
+        return result.rows[0];
+    },
+
+    async decrementMultiplierGames(userId) {
+        const result = await pool.query(
+            'UPDATE active_multipliers SET games_remaining = games_remaining - 1 WHERE user_id = $1 AND games_remaining > 0 RETURNING *',
+            [userId]
+        );
+        return result.rows[0];
+    },
+
+    async deleteExpiredMultipliers(userId) {
+        await pool.query(
+            'DELETE FROM active_multipliers WHERE user_id = $1 AND games_remaining <= 0',
+            [userId]
+        );
+    },
+
     // Initialize database
     async initialize() {
         let retryCount = 0;
