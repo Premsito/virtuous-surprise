@@ -1,12 +1,12 @@
 // Shared inventory item definitions
 module.exports = {
     ITEMS: {
-        jackpot: {
-            name: 'Jackpot',
-            emoji: '🎁',
-            description: 'Ouvre un jackpot pour gagner des LC aléatoires (25, 50 ou 100 LC)',
-            buttonId: 'use_jackpot',
-            buttonLabel: 'Ouvrir Jackpot 🎁'
+        tresor: {
+            name: 'Trésor',
+            emoji: '🗝️',
+            description: 'Ouvre un trésor pour gagner des LC aléatoires (25, 50 ou 100 LC)',
+            buttonId: 'use_tresor',
+            buttonLabel: 'Ouvrir Trésor 🗝️'
         },
         multiplier_x2: {
             name: 'Multiplieur x2',
@@ -26,7 +26,8 @@ module.exports = {
 
     // Map user-friendly names to internal item types
     ITEM_TYPE_MAP: {
-        'jackpot': 'jackpot',
+        'tresor': 'tresor',
+        'trésor': 'tresor',
         'multiplier_x2': 'multiplier_x2',
         'multiplieur_x2': 'multiplier_x2',
         'multiplieurx2': 'multiplier_x2',
@@ -39,7 +40,7 @@ module.exports = {
 
     // Display names for success messages
     ITEM_DISPLAY_NAMES: {
-        'jackpot': 'Jackpot 🎁',
+        'tresor': 'Trésor 🗝️',
         'multiplier_x2': 'Multiplieur x2 🎫',
         'multiplier_x3': 'Multiplieur x3 🎫'
     }

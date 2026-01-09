@@ -94,8 +94,8 @@ module.exports = {
         const buttonId = interaction.customId;
 
         try {
-            if (buttonId === 'use_jackpot') {
-                await handleJackpotOpen(interaction, userId, username);
+            if (buttonId === 'use_tresor') {
+                await handleTresorOpen(interaction, userId, username);
             } else if (buttonId === 'use_multiplier_x2') {
                 await handleMultiplierActivation(interaction, userId, username, 'multiplier_x2', 2);
             } else if (buttonId === 'use_multiplier_x3') {
@@ -111,40 +111,52 @@ module.exports = {
     }
 };
 
-async function handleJackpotOpen(interaction, userId, username) {
-    // Check if user has jackpot item
-    const jackpotItem = await db.getInventoryItem(userId, 'jackpot');
+async function handleTresorOpen(interaction, userId, username) {
+    // Check if user has tresor item
+    const tresorItem = await db.getInventoryItem(userId, 'tresor');
     
-    if (!jackpotItem || jackpotItem.quantity <= 0) {
+    if (!tresorItem || tresorItem.quantity <= 0) {
         return interaction.reply({
-            content: '❌ Vous n\'avez pas de Jackpot dans votre sac !',
+            content: '❌ Vous n\'avez pas de Trésor dans votre sac !',
             ephemeral: true
         });
     }
 
-    // Remove one jackpot from inventory
-    await db.removeInventoryItem(userId, 'jackpot', 1);
+    // Remove one tresor from inventory
+    await db.removeInventoryItem(userId, 'tresor', 1);
+
+    // Show first animation: lock picking
+    const lockPickingEmbed = new EmbedBuilder()
+        .setColor(config.colors.warning)
+        .setTitle('🗝️ Crochetage de la serrure...')
+        .setDescription('✨ Le trésor s\'ouvre lentement...')
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [lockPickingEmbed] });
+
+    // Wait for animation effect
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Determine random LC reward (25, 50, or 100)
     const rewards = [25, 50, 100];
     const weights = [50, 35, 15]; // Probabilities: 50%, 35%, 15%
     const reward = weightedRandom(rewards, weights);
     
-    // Log the jackpot result for debugging
-    console.log(`[Jackpot] User ${username} (${userId}) opened a Jackpot and won ${reward} LC`);
+    // Log the tresor result for debugging
+    console.log(`[Trésor] User ${username} (${userId}) opened a Trésor and won ${reward} LC`);
 
     // Add LC to user balance
     await db.updateBalance(userId, reward);
-    await db.recordTransaction(null, userId, reward, 'jackpot_reward', 'Jackpot ouvert');
+    await db.recordTransaction(null, userId, reward, 'tresor_reward', 'Trésor ouvert');
 
-    // Send result
-    const embed = new EmbedBuilder()
+    // Show second animation: treasure opened
+    const openedEmbed = new EmbedBuilder()
         .setColor(config.colors.gold)
-        .setTitle('🎁 Jackpot Ouvert !')
-        .setDescription(`🎉 Félicitations ${username} !\n\nVous avez gagné **${reward} LC** 💰`)
+        .setTitle('💎 Coffre ouvert !')
+        .setDescription(`🎉 Félicitations ${username} !\n\n✨ Vous avez gagné **${reward} LC** 💰`)
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [openedEmbed] });
 
     // Update the original message to reflect the new inventory
     await updateInventoryDisplay(interaction, userId, username);
