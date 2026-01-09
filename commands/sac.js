@@ -22,7 +22,7 @@ const ITEMS = {
     multiplier_x3: {
         name: 'Multiplieur x3',
         emoji: '🎫',
-        description: 'Active un bonus x3 LC pour vos 3 prochaines parties',
+        description: 'Active un bonus x3 LC pour vos 2 prochaines parties',
         buttonId: 'use_multiplier_x3',
         buttonLabel: 'Activer x3 🎫'
     }

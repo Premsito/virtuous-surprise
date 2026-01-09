@@ -176,27 +176,26 @@ async function handleDuel(message, args) {
         const winnerUser = winner === challengerId ? challenger : opponentMention;
         const loserUser = winner === challengerId ? opponentMention : challenger;
         
-        // Check for active multiplier on winner
-        const multiplierInfo = await multiplierHelper.getPlayerMultiplier(winner);
-        let multiplierNotification = '';
-        if (multiplierInfo.hasMultiplier) {
-            multiplierNotification = `\n\n${multiplierHelper.getMultiplierNotification(multiplierInfo.multiplier, multiplierInfo.gamesRemaining)}`;
-        }
-        
         // Calculate base winnings
         const baseWinnings = betAmount;
         
         // Apply multiplier if active
         const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(winner, baseWinnings);
         
-        // Transfer LC (base winnings + multiplier bonus if applicable)
-        const totalWinnings = baseWinnings + (finalWinnings - baseWinnings); // Winner gets original bet back + winnings with multiplier
-        await db.updateBalance(winner, totalWinnings);
+        // Check for active multiplier on winner (after applying)
+        const remainingMultiplier = await multiplierHelper.getPlayerMultiplier(winner);
+        let multiplierNotification = '';
+        if (remainingMultiplier.hasMultiplier) {
+            multiplierNotification = `\n\n${multiplierHelper.getMultiplierNotification(remainingMultiplier.multiplier, remainingMultiplier.gamesRemaining)}`;
+        }
+        
+        // Transfer LC
+        await db.updateBalance(winner, finalWinnings);
         await db.updateBalance(loser, -betAmount);
         
-        // Record game
+        // Record game (both players record finalWinnings if they won)
         await db.recordGame('duel', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? finalWinnings : 0);
-        await db.recordGame('duel', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? betAmount : 0);
+        await db.recordGame('duel', opponentId, challengerId, betAmount, winner === opponentId ? 'win' : 'loss', winner === opponentId ? finalWinnings : 0);
         
         // Build result description with multiplier info
         let resultDescription = getResponse('games.duel.result.description', {
