@@ -452,7 +452,7 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     const actionRow = new ActionRowBuilder()
         .addComponents(rechargerButton, tirerButton, bouclierButton);
     
-    // Send in channel with user mention
+    // Send in channel with user mention (public interaction like pfc)
     try {
         const user = await message.client.users.fetch(playerId);
         const embed = new EmbedBuilder()
@@ -461,18 +461,11 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
             .setDescription(getResponse('007.action.description', { bullets: playerData.bullets }))
             .setFooter({ text: getResponse('007.action.footer') });
         
-        // Try to send DM first
-        try {
-            await user.send({ embeds: [embed], components: [actionRow] });
-        } catch (dmError) {
-            // If DM fails, send in channel with ephemeral-like behavior
-            console.error(`Could not send DM to ${playerId}, buttons will be in channel`);
-            await message.channel.send({ 
-                content: `<@${playerId}>`, 
-                embeds: [embed], 
-                components: [actionRow] 
-            });
-        }
+        await message.channel.send({ 
+            content: `<@${playerId}>`, 
+            embeds: [embed], 
+            components: [actionRow] 
+        });
     } catch (error) {
         console.error(`Error sending action buttons to ${playerId}:`, error);
     }
