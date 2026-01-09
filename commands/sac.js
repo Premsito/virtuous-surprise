@@ -56,10 +56,9 @@ module.exports = {
 
         // Display active multiplier if any
         if (activeMultiplier) {
-            const multiplierEmoji = activeMultiplier.multiplier_value === 2 ? '🎫' : '🎫';
             embed.addFields({
                 name: '⚡ Bonus Actif',
-                value: `${multiplierEmoji} **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+                value: `🎫 **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
                 inline: false
             });
         }
@@ -226,10 +225,9 @@ async function updateInventoryDisplay(interaction, userId, username) {
 
         // Display active multiplier if any
         if (activeMultiplier) {
-            const multiplierEmoji = '🎫';
             embed.addFields({
                 name: '⚡ Bonus Actif',
-                value: `${multiplierEmoji} **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+                value: `🎫 **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
                 inline: false
             });
         }
