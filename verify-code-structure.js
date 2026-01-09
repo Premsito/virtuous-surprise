@@ -218,8 +218,10 @@ check('PERSISTENT_STORAGE_DOCUMENTATION.md exists', () =>
     fileExists('PERSISTENT_STORAGE_DOCUMENTATION.md'));
 check('IMPLEMENTATION_STATUS.md exists', () => 
     fileExists('IMPLEMENTATION_STATUS.md'));
-check('README.md mentions database', () => 
-    fileContains('README.md', 'PostgreSQL') || fileContains('README.md', 'database'));
+check('README.md mentions PostgreSQL database', () => 
+    fileContains('README.md', 'PostgreSQL'));
+check('README.md mentions DATABASE_URL', () => 
+    fileContains('README.md', 'DATABASE_URL'));
 
 // Summary
 section('Verification Summary');

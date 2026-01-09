@@ -5,9 +5,18 @@
  * It tests all aspects of data persistence including XP, LC, and inventory.
  * 
  * Run with: node verify-persistence.js
+ * 
+ * Note: Requires DATABASE_URL environment variable to be set.
  */
 
-require('dotenv').config();
+// Load environment variables if .env file exists
+try {
+    require('dotenv').config();
+} catch (err) {
+    // .env file not found or dotenv not installed - environment variables may be set directly
+    console.log('ℹ️  Running without .env file (environment variables should be set directly)');
+}
+
 const { db } = require('./database/db');
 
 // Test user IDs (use safe test values)
@@ -191,16 +200,14 @@ async function verifyPersistence() {
         console.log('✅ Inventory items persist correctly');
         console.log('✅ Active multipliers persist correctly');
         console.log('✅ Transaction history persists correctly');
-        console.log('\n🎉 The persistent database storage system is working correctly!');
-        console.log('   All user data will persist across bot restarts.\n');
         
         // Clean up test data
-        console.log('🧹 Cleaning up test data...');
+        console.log('\n🧹 Cleaning up test data...');
         await db.pool.query('DELETE FROM active_multipliers WHERE user_id = $1', [TEST_USER_ID]);
         await db.pool.query('DELETE FROM user_inventory WHERE user_id = $1', [TEST_USER_ID]);
         await db.pool.query('DELETE FROM transactions WHERE from_user_id = $1 OR to_user_id = $1', [TEST_USER_ID]);
         await db.pool.query('DELETE FROM users WHERE user_id = $1', [TEST_USER_ID]);
-        console.log('✅ Test data cleaned up\n');
+        console.log('✅ Test data cleaned up');
         
     } catch (error) {
         console.error('\n❌ Verification failed:', error);
@@ -211,6 +218,10 @@ async function verifyPersistence() {
         // Close database connection
         await db.close();
         console.log('✅ Database connection closed');
+        
+        // Log success message after cleanup
+        console.log('\n🎉 The persistent database storage system is working correctly!');
+        console.log('   All user data will persist across bot restarts.\n');
         process.exit(0);
     }
 }

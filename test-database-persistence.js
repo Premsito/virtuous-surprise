@@ -4,7 +4,17 @@
  * Tests all database helper functions to ensure data persistence works correctly.
  * 
  * Run with: node test-database-persistence.js
+ * 
+ * Note: Requires DATABASE_URL environment variable to be set.
  */
+
+// Load environment variables if .env file exists
+try {
+    require('dotenv').config();
+} catch (err) {
+    // .env file not found or dotenv not installed - environment variables may be set directly
+    console.log('ℹ️  Running without .env file (environment variables should be set directly)');
+}
 
 const { db } = require('./database/db');
 
