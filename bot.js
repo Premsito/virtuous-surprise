@@ -222,7 +222,7 @@ client.once('clientReady', async () => {
                                     await db.addInventoryItem(userId, 'tresor', 1);
                                     
                                     // Send notification to dedicated level up channel
-                                    const levelUpChannelId = '1459283080576766044';
+                                    const levelUpChannelId = config.channels.levelUpNotification;
                                     try {
                                         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                                         if (levelUpChannel) {
@@ -534,7 +534,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
                 await db.addInventoryItem(authorId, 'tresor', 1);
                 
                 // Send notification to dedicated level up channel
-                const levelUpChannelId = '1459283080576766044';
+                const levelUpChannelId = config.channels.levelUpNotification;
                 try {
                     const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                     if (levelUpChannel) {
@@ -604,12 +604,12 @@ client.on('messageCreate', async (message) => {
                 // Notify user about level up
                 try {
                     // Send notification to dedicated level up channel
-                    const levelUpChannelId = '1459283080576766044';
+                    const levelUpChannelId = config.channels.levelUpNotification;
                     try {
                         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                         if (levelUpChannel) {
                             await levelUpChannel.send(
-                                `🎉 **Bravo ${message.author}** 🎉\n` +
+                                `🎉 **Bravo <@${userId}>** 🎉\n` +
                                 `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
                                 `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
                             );
