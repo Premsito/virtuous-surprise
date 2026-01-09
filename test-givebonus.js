@@ -10,6 +10,8 @@ const testCases = [
     { input: 'x3', expected: 'multiplier_x3' },
     { input: 'multiplieur_x2', expected: 'multiplier_x2' },
     { input: 'multiplieur_x3', expected: 'multiplier_x3' },
+    { input: 'multiplieurx2', expected: 'multiplier_x2' },
+    { input: 'multiplieurx3', expected: 'multiplier_x3' },
     { input: 'invalid', expected: undefined }
 ];
 

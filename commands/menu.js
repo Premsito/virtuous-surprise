@@ -1,7 +1,8 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { getResponse } = require('../utils/responseHelper');
 const config = require('../config.json');
 const { db, pool } = require('../database/db');
+const { ITEMS } = require('../utils/inventoryItems');
 
 // Helper function to create main menu options
 function createMainMenuOptions() {
@@ -412,9 +413,6 @@ async function handleInventaire(interaction, userId) {
     const activeMultiplier = await db.getActiveMultiplier(userId);
 
     // Build embed
-    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-    const { ITEMS } = require('../utils/inventoryItems');
-    
     const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
         .setTitle(`🎒 Inventaire de ${username}`)
@@ -431,7 +429,7 @@ async function handleInventaire(interaction, userId) {
 
     // Build inventory display
     if (inventory.length === 0) {
-        embed.setDescription('Votre inventaire est vide. Jouez et gagnez des items bonus !\n\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.');
+        embed.setDescription('Votre sac est vide. Jouez et gagnez des items bonus !\n\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.');
         
         await interaction.followUp({ 
             embeds: [embed],
