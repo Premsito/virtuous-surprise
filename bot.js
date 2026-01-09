@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord
 const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
+const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG } = require('./utils/xpHelper');
 
 // Log npm configuration for debugging deployment issues
 console.log('🔍 NPM Configuration Debug:');
@@ -21,7 +22,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildInvites,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessageReactions
     ]
 });
 
@@ -43,6 +45,7 @@ const quizduoCommand = require('./commands/quizduo');
 const c21Command = require('./commands/c21');
 const game007Command = require('./commands/007');
 const sacCommand = require('./commands/sac');
+const niveauCommand = require('./commands/niveau');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -60,6 +63,7 @@ client.commands.set(quizduoCommand.name, quizduoCommand);
 client.commands.set(c21Command.name, c21Command);
 client.commands.set(game007Command.name, game007Command);
 client.commands.set(sacCommand.name, sacCommand);
+client.commands.set(niveauCommand.name, niveauCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -70,6 +74,9 @@ const MESSAGE_COUNT_BATCH_SIZE = 10; // Update DB every 10 messages
 
 // Voice session tracking to calculate time spent in voice channels
 const voiceSessions = new Map(); // Maps userId to join timestamp
+
+// Voice XP tracking - Maps userId to XP session info
+const voiceXPSessions = new Map(); // Maps userId to { sessionId, lastXPGrant, totalMinutes }
 
 // Error throttling to prevent log flooding
 const errorThrottleMap = new Map();
@@ -151,6 +158,82 @@ client.once('clientReady', async () => {
         
         // Start the lottery scheduler
         scheduleLotteryCheck();
+        
+        // Start voice XP grant checker (every 2 minutes)
+        setInterval(async () => {
+            try {
+                // Process each active voice XP session
+                const sessionPromises = Array.from(voiceXPSessions.entries()).map(async ([userId, xpSession]) => {
+                    try {
+                        const now = Date.now();
+                        const lastGrant = new Date(xpSession.lastXPGrant).getTime();
+                        const timeSinceLastGrant = now - lastGrant;
+                        
+                        // Check if 2 minutes have passed
+                        if (timeSinceLastGrant >= XP_CONFIG.VOICE_XP_INTERVAL_MS) {
+                            // Find the user in voice channels using cached guild data
+                            let userInVoice = null;
+                            let channelMemberCount = 0;
+                            
+                            for (const guild of client.guilds.cache.values()) {
+                                // Use cache instead of fetching
+                                const member = guild.members.cache.get(userId);
+                                if (member && member.voice.channelId) {
+                                    userInVoice = member;
+                                    channelMemberCount = member.voice.channel.members.filter(m => !m.user.bot).size;
+                                    break;
+                                }
+                            }
+                            
+                            if (userInVoice && channelMemberCount >= XP_CONFIG.VOICE_MIN_USERS) {
+                                // Calculate XP based on user count
+                                const xpGained = getVoiceXP(channelMemberCount);
+                                
+                                // Update total minutes
+                                const minutesElapsed = Math.floor(timeSinceLastGrant / 60000);
+                                const newTotalMinutes = xpSession.totalMinutes + minutesElapsed;
+                                
+                                // Grant XP
+                                let user = await db.getUser(userId);
+                                if (!user) {
+                                    user = await db.createUser(userId, userInVoice.user.username);
+                                }
+                                
+                                const oldLevel = getLevelFromXP(user.xp || 0);
+                                const updatedUser = await db.addXP(userId, xpGained);
+                                const newLevel = getLevelFromXP(updatedUser.xp);
+                                
+                                // Check for hourly bonus (60 minutes)
+                                if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
+                                    await db.addXP(userId, XP_CONFIG.VOICE_HOUR_BONUS);
+                                    console.log(`Granted hourly voice bonus to ${userId}: ${XP_CONFIG.VOICE_HOUR_BONUS} XP`);
+                                }
+                                
+                                // Update session tracking
+                                const nowDate = new Date();
+                                await db.updateVoiceXPSession(xpSession.sessionId, nowDate, newTotalMinutes);
+                                xpSession.lastXPGrant = nowDate;
+                                xpSession.totalMinutes = newTotalMinutes;
+                                
+                                // Check for level up
+                                if (newLevel > oldLevel) {
+                                    await db.updateLevel(userId, newLevel);
+                                }
+                            }
+                        }
+                    } catch (sessionError) {
+                        console.error(`Error processing voice XP for user ${userId}:`, sessionError.message);
+                    }
+                });
+                
+                // Wait for all sessions to be processed
+                await Promise.allSettled(sessionPromises);
+            } catch (error) {
+                if (shouldLogError('voice_xp_grant')) {
+                    console.error('Error granting voice XP (throttled):', error.message);
+                }
+            }
+        }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {
@@ -318,6 +401,15 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         if (!oldState.channelId && newState.channelId) {
             // Store join timestamp
             voiceSessions.set(userId, Date.now());
+            
+            // Start XP tracking session
+            const now = new Date();
+            const session = await db.createVoiceXPSession(userId, now);
+            voiceXPSessions.set(userId, {
+                sessionId: session.id,
+                lastXPGrant: now,
+                totalMinutes: 0
+            });
         }
         // User left a voice channel or switched channels
         else if (oldState.channelId && !newState.channelId) {
@@ -341,6 +433,13 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
                 // Remove from tracking
                 voiceSessions.delete(userId);
             }
+            
+            // Clean up XP tracking session
+            const xpSession = voiceXPSessions.get(userId);
+            if (xpSession) {
+                await db.deleteVoiceXPSession(xpSession.sessionId);
+                voiceXPSessions.delete(userId);
+            }
         }
         // User switched channels (moved from one voice channel to another)
         else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
@@ -351,6 +450,72 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         // Throttle error logging to prevent log flooding
         if (shouldLogError('voice_tracking')) {
             console.error('Error tracking voice time (throttled - shown once per minute):', error.message);
+        }
+    }
+});
+
+// Reaction add event (XP tracking)
+client.on('messageReactionAdd', async (reaction, user) => {
+    try {
+        // Ignore bot reactions
+        if (user.bot) return;
+        
+        // Fetch the message if it's partial
+        if (reaction.partial) {
+            try {
+                await reaction.fetch();
+            } catch (error) {
+                console.error('Error fetching reaction:', error);
+                return;
+            }
+        }
+        
+        // Get the message author
+        const messageAuthor = reaction.message.author;
+        if (!messageAuthor || messageAuthor.bot) return;
+        
+        const messageId = reaction.message.id;
+        const authorId = messageAuthor.id;
+        
+        // Get or create message reaction XP tracking
+        let messageReactionData = await db.getMessageReactionXP(messageId);
+        const currentXP = messageReactionData ? messageReactionData.xp_earned : 0;
+        
+        // Check if we can still grant XP (max 10 XP per message)
+        if (currentXP >= XP_CONFIG.REACTION_MAX_PER_MESSAGE) {
+            return; // Already at max XP for this message
+        }
+        
+        // Calculate XP to grant
+        const xpToGrant = getReactionXP(1, currentXP);
+        
+        if (xpToGrant > 0) {
+            // Ensure user exists
+            let authorUser = await db.getUser(authorId);
+            if (!authorUser) {
+                authorUser = await db.createUser(authorId, messageAuthor.username);
+            }
+            
+            // Grant XP to message author
+            const oldLevel = getLevelFromXP(authorUser.xp || 0);
+            const updatedUser = await db.addXP(authorId, xpToGrant);
+            const newLevel = getLevelFromXP(updatedUser.xp);
+            
+            // Update message reaction XP tracking
+            if (messageReactionData) {
+                await db.updateMessageReactionXP(messageId, xpToGrant);
+            } else {
+                await db.createMessageReactionXP(messageId, authorId, xpToGrant);
+            }
+            
+            // Check for level up
+            if (newLevel > oldLevel) {
+                await db.updateLevel(authorId, newLevel);
+            }
+        }
+    } catch (error) {
+        if (shouldLogError('reaction_xp')) {
+            console.error('Error granting reaction XP (throttled):', error.message);
         }
     }
 });
@@ -380,6 +545,29 @@ client.on('messageCreate', async (message) => {
             const count = messageCountCache.get(userId);
             await db.incrementMessageCount(userId, count);
             messageCountCache.delete(userId);
+        }
+
+        // XP System: Grant XP for message activity (with anti-spam)
+        if (canGrantMessageXP(user.last_message_xp_time)) {
+            const xpGained = getMessageXP();
+            const oldLevel = getLevelFromXP(user.xp || 0);
+            
+            // Grant XP
+            const updatedUser = await db.addXP(userId, xpGained);
+            await db.updateLastMessageXPTime(userId, new Date());
+            
+            const newLevel = getLevelFromXP(updatedUser.xp);
+            
+            // Check for level up
+            if (newLevel > oldLevel) {
+                await db.updateLevel(userId, newLevel);
+                // Notify user about level up
+                try {
+                    await message.reply(`🎉 Félicitations ! Tu es passé au niveau **${newLevel}** !`);
+                } catch (error) {
+                    console.error('Error sending level up notification:', error.message);
+                }
+            }
         }
     } catch (error) {
         // Throttle error logging to prevent log flooding
@@ -459,6 +647,9 @@ client.on('messageCreate', async (message) => {
             await command.execute(message, args);
         } else if (commandName === 'sac') {
             const command = client.commands.get('sac');
+            await command.execute(message, args);
+        } else if (commandName === 'niveau') {
+            const command = client.commands.get('niveau');
             await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
