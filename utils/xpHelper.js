@@ -143,7 +143,7 @@ function canGrantMessageXP(lastMessageXPTime) {
  */
 function getReactionXP(reactionCount, currentXP = 0) {
     const potentialXP = reactionCount * XP_CONFIG.REACTION_XP;
-    const maxAllowed = XP_CONFIG.REACTION_MAX_PER_MESSAGE - currentXP;
+    const maxAllowed = Math.max(0, XP_CONFIG.REACTION_MAX_PER_MESSAGE - currentXP);
     return Math.min(potentialXP, maxAllowed);
 }
 

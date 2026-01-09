@@ -162,63 +162,72 @@ client.once('clientReady', async () => {
         // Start voice XP grant checker (every 2 minutes)
         setInterval(async () => {
             try {
-                for (const [userId, xpSession] of voiceXPSessions.entries()) {
-                    const now = Date.now();
-                    const lastGrant = new Date(xpSession.lastXPGrant).getTime();
-                    const timeSinceLastGrant = now - lastGrant;
-                    
-                    // Check if 2 minutes have passed
-                    if (timeSinceLastGrant >= XP_CONFIG.VOICE_XP_INTERVAL_MS) {
-                        // Find the user in voice channels
-                        let userInVoice = null;
-                        let channelMemberCount = 0;
+                // Process each active voice XP session
+                const sessionPromises = Array.from(voiceXPSessions.entries()).map(async ([userId, xpSession]) => {
+                    try {
+                        const now = Date.now();
+                        const lastGrant = new Date(xpSession.lastXPGrant).getTime();
+                        const timeSinceLastGrant = now - lastGrant;
                         
-                        for (const guild of client.guilds.cache.values()) {
-                            const member = await guild.members.fetch(userId).catch(() => null);
-                            if (member && member.voice.channelId) {
-                                userInVoice = member;
-                                channelMemberCount = member.voice.channel.members.filter(m => !m.user.bot).size;
-                                break;
+                        // Check if 2 minutes have passed
+                        if (timeSinceLastGrant >= XP_CONFIG.VOICE_XP_INTERVAL_MS) {
+                            // Find the user in voice channels using cached guild data
+                            let userInVoice = null;
+                            let channelMemberCount = 0;
+                            
+                            for (const guild of client.guilds.cache.values()) {
+                                // Use cache instead of fetching
+                                const member = guild.members.cache.get(userId);
+                                if (member && member.voice.channelId) {
+                                    userInVoice = member;
+                                    channelMemberCount = member.voice.channel.members.filter(m => !m.user.bot).size;
+                                    break;
+                                }
+                            }
+                            
+                            if (userInVoice && channelMemberCount >= XP_CONFIG.VOICE_MIN_USERS) {
+                                // Calculate XP based on user count
+                                const xpGained = getVoiceXP(channelMemberCount);
+                                
+                                // Update total minutes
+                                const minutesElapsed = Math.floor(timeSinceLastGrant / 60000);
+                                const newTotalMinutes = xpSession.totalMinutes + minutesElapsed;
+                                
+                                // Grant XP
+                                let user = await db.getUser(userId);
+                                if (!user) {
+                                    user = await db.createUser(userId, userInVoice.user.username);
+                                }
+                                
+                                const oldLevel = getLevelFromXP(user.xp || 0);
+                                const updatedUser = await db.addXP(userId, xpGained);
+                                const newLevel = getLevelFromXP(updatedUser.xp);
+                                
+                                // Check for hourly bonus (60 minutes)
+                                if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
+                                    await db.addXP(userId, XP_CONFIG.VOICE_HOUR_BONUS);
+                                    console.log(`Granted hourly voice bonus to ${userId}: ${XP_CONFIG.VOICE_HOUR_BONUS} XP`);
+                                }
+                                
+                                // Update session tracking
+                                const nowDate = new Date();
+                                await db.updateVoiceXPSession(xpSession.sessionId, nowDate, newTotalMinutes);
+                                xpSession.lastXPGrant = nowDate;
+                                xpSession.totalMinutes = newTotalMinutes;
+                                
+                                // Check for level up
+                                if (newLevel > oldLevel) {
+                                    await db.updateLevel(userId, newLevel);
+                                }
                             }
                         }
-                        
-                        if (userInVoice && channelMemberCount >= XP_CONFIG.VOICE_MIN_USERS) {
-                            // Calculate XP based on user count
-                            const xpGained = getVoiceXP(channelMemberCount);
-                            
-                            // Update total minutes
-                            const minutesElapsed = Math.floor(timeSinceLastGrant / 60000);
-                            const newTotalMinutes = xpSession.totalMinutes + minutesElapsed;
-                            
-                            // Grant XP
-                            let user = await db.getUser(userId);
-                            if (!user) {
-                                user = await db.createUser(userId, userInVoice.user.username);
-                            }
-                            
-                            const oldLevel = getLevelFromXP(user.xp || 0);
-                            const updatedUser = await db.addXP(userId, xpGained);
-                            const newLevel = getLevelFromXP(updatedUser.xp);
-                            
-                            // Check for hourly bonus (60 minutes)
-                            if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
-                                await db.addXP(userId, XP_CONFIG.VOICE_HOUR_BONUS);
-                                console.log(`Granted hourly voice bonus to ${userId}: ${XP_CONFIG.VOICE_HOUR_BONUS} XP`);
-                            }
-                            
-                            // Update session tracking
-                            const nowDate = new Date();
-                            await db.updateVoiceXPSession(xpSession.sessionId, nowDate, newTotalMinutes);
-                            xpSession.lastXPGrant = nowDate;
-                            xpSession.totalMinutes = newTotalMinutes;
-                            
-                            // Check for level up
-                            if (newLevel > oldLevel) {
-                                await db.updateLevel(userId, newLevel);
-                            }
-                        }
+                    } catch (sessionError) {
+                        console.error(`Error processing voice XP for user ${userId}:`, sessionError.message);
                     }
-                }
+                });
+                
+                // Wait for all sessions to be processed
+                await Promise.allSettled(sessionPromises);
             } catch (error) {
                 if (shouldLogError('voice_xp_grant')) {
                     console.error('Error granting voice XP (throttled):', error.message);
@@ -556,7 +565,7 @@ client.on('messageCreate', async (message) => {
                 try {
                     await message.reply(`🎉 Félicitations ! Tu es passé au niveau **${newLevel}** !`);
                 } catch (error) {
-                    // Ignore errors when sending level up message
+                    console.error('Error sending level up notification:', error.message);
                 }
             }
         }

@@ -44,7 +44,7 @@ async function grantGameXP(userId, username, result, message = null) {
                     try {
                         await message.channel.send(`🎉 <@${userId}> est passé au niveau **${newLevel}** !`);
                     } catch (error) {
-                        // Ignore errors when sending level up message
+                        console.error('Error sending level up notification:', error.message);
                     }
                 }
             }
