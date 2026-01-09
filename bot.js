@@ -42,6 +42,7 @@ const quizCommand = require('./commands/quiz');
 const quizduoCommand = require('./commands/quizduo');
 const c21Command = require('./commands/c21');
 const game007Command = require('./commands/007');
+const sacCommand = require('./commands/sac');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -58,6 +59,7 @@ client.commands.set(quizCommand.name, quizCommand);
 client.commands.set(quizduoCommand.name, quizduoCommand);
 client.commands.set(c21Command.name, c21Command);
 client.commands.set(game007Command.name, game007Command);
+client.commands.set(sacCommand.name, sacCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -452,12 +454,27 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === '007') {
             const command = client.commands.get('007');
             await command.execute(message, args);
+        } else if (commandName === 'sac') {
+            const command = client.commands.get('sac');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
     } catch (error) {
         console.error('Error executing command:', error);
         message.reply(getResponse('errors.commandExecutionError')).catch(console.error);
+    }
+});
+
+// Button interaction handler for inventory items
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isButton()) return;
+
+    // Handle inventory button interactions
+    const inventoryButtons = ['use_jackpot', 'use_multiplier_x2', 'use_multiplier_x3'];
+    if (inventoryButtons.includes(interaction.customId)) {
+        const sacCommand = require('./commands/sac');
+        await sacCommand.handleButtonInteraction(interaction);
     }
 });
 

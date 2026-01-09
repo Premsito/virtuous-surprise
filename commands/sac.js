@@ -1,0 +1,302 @@
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { db } = require('../database/db');
+const config = require('../config.json');
+const { getResponse } = require('../utils/responseHelper');
+
+// Item definitions
+const ITEMS = {
+    jackpot: {
+        name: 'Jackpot',
+        emoji: '🎁',
+        description: 'Ouvre un jackpot pour gagner des LC aléatoires (50, 100, 250 ou 1000 LC)',
+        buttonId: 'use_jackpot',
+        buttonLabel: 'Ouvrir Jackpot 🎁'
+    },
+    multiplier_x2: {
+        name: 'Multiplieur x2',
+        emoji: '🎫',
+        description: 'Active un bonus x2 LC pour vos 2 prochaines parties',
+        buttonId: 'use_multiplier_x2',
+        buttonLabel: 'Activer x2 🎫'
+    },
+    multiplier_x3: {
+        name: 'Multiplieur x3',
+        emoji: '🎫',
+        description: 'Active un bonus x3 LC pour vos 3 prochaines parties',
+        buttonId: 'use_multiplier_x3',
+        buttonLabel: 'Activer x3 🎫'
+    }
+};
+
+module.exports = {
+    name: 'sac',
+    description: 'Display and manage your bonus items inventory',
+
+    async execute(message, args) {
+        const userId = message.author.id;
+        const username = message.author.username;
+
+        // Ensure user exists
+        let user = await db.getUser(userId);
+        if (!user) {
+            user = await db.createUser(userId, username);
+        }
+
+        // Get inventory
+        const inventory = await db.getInventory(userId);
+
+        // Check for active multiplier
+        const activeMultiplier = await db.getActiveMultiplier(userId);
+
+        // Build embed
+        const embed = new EmbedBuilder()
+            .setColor(config.colors.primary)
+            .setTitle(`🎒 Sac de ${username}`)
+            .setTimestamp();
+
+        // Display active multiplier if any
+        if (activeMultiplier) {
+            const multiplierEmoji = activeMultiplier.multiplier_value === 2 ? '🎫' : '🎫';
+            embed.addFields({
+                name: '⚡ Bonus Actif',
+                value: `${multiplierEmoji} **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+                inline: false
+            });
+        }
+
+        // Build inventory display
+        if (inventory.length === 0) {
+            embed.setDescription('Votre sac est vide. Jouez et gagnez des items bonus !');
+            return message.reply({ embeds: [embed] });
+        }
+
+        // Create buttons for items with quantity > 0
+        const buttons = [];
+        let description = '**📦 Vos items disponibles:**\n\n';
+
+        for (const item of inventory) {
+            const itemDef = ITEMS[item.item_type];
+            if (!itemDef) continue;
+
+            description += `${itemDef.emoji} **${itemDef.name}** x${item.quantity}\n`;
+            description += `└ *${itemDef.description}*\n\n`;
+
+            // Add button for this item
+            const button = new ButtonBuilder()
+                .setCustomId(itemDef.buttonId)
+                .setLabel(`${itemDef.buttonLabel} (${item.quantity})`)
+                .setStyle(ButtonStyle.Primary);
+
+            buttons.push(button);
+        }
+
+        embed.setDescription(description);
+
+        // Create action rows (max 5 buttons per row)
+        const actionRows = [];
+        for (let i = 0; i < buttons.length; i += 5) {
+            const row = new ActionRowBuilder()
+                .addComponents(buttons.slice(i, i + 5));
+            actionRows.push(row);
+        }
+
+        await message.reply({ 
+            embeds: [embed],
+            components: actionRows
+        });
+    },
+
+    async handleButtonInteraction(interaction) {
+        const userId = interaction.user.id;
+        const username = interaction.user.username;
+
+        // Ensure user exists
+        let user = await db.getUser(userId);
+        if (!user) {
+            user = await db.createUser(userId, username);
+        }
+
+        const buttonId = interaction.customId;
+
+        try {
+            if (buttonId === 'use_jackpot') {
+                await handleJackpotOpen(interaction, userId, username);
+            } else if (buttonId === 'use_multiplier_x2') {
+                await handleMultiplierActivation(interaction, userId, username, 'multiplier_x2', 2);
+            } else if (buttonId === 'use_multiplier_x3') {
+                await handleMultiplierActivation(interaction, userId, username, 'multiplier_x3', 3);
+            }
+        } catch (error) {
+            console.error('Error handling button interaction:', error);
+            await interaction.reply({
+                content: getResponse('errors.commandExecutionError'),
+                ephemeral: true
+            }).catch(console.error);
+        }
+    }
+};
+
+async function handleJackpotOpen(interaction, userId, username) {
+    // Check if user has jackpot item
+    const jackpotItem = await db.getInventoryItem(userId, 'jackpot');
+    
+    if (!jackpotItem || jackpotItem.quantity <= 0) {
+        return interaction.reply({
+            content: '❌ Vous n\'avez pas de Jackpot dans votre sac !',
+            ephemeral: true
+        });
+    }
+
+    // Remove one jackpot from inventory
+    await db.removeInventoryItem(userId, 'jackpot', 1);
+
+    // Determine random LC reward (50, 100, 250, or 1000)
+    const rewards = [50, 100, 250, 1000];
+    const weights = [50, 30, 15, 5]; // Probabilities: 50%, 30%, 15%, 5%
+    const reward = weightedRandom(rewards, weights);
+
+    // Add LC to user balance
+    await db.updateBalance(userId, reward);
+    await db.recordTransaction(null, userId, reward, 'jackpot_reward', 'Jackpot ouvert');
+
+    // Send result
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.gold)
+        .setTitle('🎁 Jackpot Ouvert !')
+        .setDescription(`🎉 Félicitations ${username} !\n\nVous avez gagné **${reward} LC** 💰`)
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+
+    // Update the original message to reflect the new inventory
+    await updateInventoryDisplay(interaction, userId, username);
+}
+
+async function handleMultiplierActivation(interaction, userId, username, multiplierType, multiplierValue) {
+    // Check if user already has an active multiplier
+    const activeMultiplier = await db.getActiveMultiplier(userId);
+    
+    if (activeMultiplier) {
+        return interaction.reply({
+            content: `❌ Vous avez déjà un multiplieur x${activeMultiplier.multiplier_value} actif avec ${activeMultiplier.games_remaining} partie(s) restante(s) !`,
+            ephemeral: true
+        });
+    }
+
+    // Check if user has the multiplier item
+    const multiplierItem = await db.getInventoryItem(userId, multiplierType);
+    
+    if (!multiplierItem || multiplierItem.quantity <= 0) {
+        return interaction.reply({
+            content: `❌ Vous n'avez pas de Multiplieur x${multiplierValue} dans votre sac !`,
+            ephemeral: true
+        });
+    }
+
+    // Remove one multiplier from inventory
+    await db.removeInventoryItem(userId, multiplierType, 1);
+
+    // Activate multiplier
+    await db.activateMultiplier(userId, multiplierType, multiplierValue);
+
+    // Send result
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.success)
+        .setTitle('🎫 Multiplieur Activé !')
+        .setDescription(`✨ Multiplieur x${multiplierValue} activé !\n\nVos **2 prochaines parties** donneront **x${multiplierValue} LC** 🎮`)
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+
+    // Update the original message to reflect the new inventory
+    await updateInventoryDisplay(interaction, userId, username);
+}
+
+async function updateInventoryDisplay(interaction, userId, username) {
+    try {
+        // Get updated inventory
+        const inventory = await db.getInventory(userId);
+        const activeMultiplier = await db.getActiveMultiplier(userId);
+
+        // Build updated embed
+        const embed = new EmbedBuilder()
+            .setColor(config.colors.primary)
+            .setTitle(`🎒 Sac de ${username}`)
+            .setTimestamp();
+
+        // Display active multiplier if any
+        if (activeMultiplier) {
+            const multiplierEmoji = '🎫';
+            embed.addFields({
+                name: '⚡ Bonus Actif',
+                value: `${multiplierEmoji} **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+                inline: false
+            });
+        }
+
+        // Build inventory display
+        if (inventory.length === 0) {
+            embed.setDescription('Votre sac est vide. Jouez et gagnez des items bonus !');
+            
+            // Update original message
+            await interaction.message.edit({ 
+                embeds: [embed],
+                components: []
+            });
+            return;
+        }
+
+        // Create buttons for items with quantity > 0
+        const buttons = [];
+        let description = '**📦 Vos items disponibles:**\n\n';
+
+        for (const item of inventory) {
+            const itemDef = ITEMS[item.item_type];
+            if (!itemDef) continue;
+
+            description += `${itemDef.emoji} **${itemDef.name}** x${item.quantity}\n`;
+            description += `└ *${itemDef.description}*\n\n`;
+
+            // Add button for this item
+            const button = new ButtonBuilder()
+                .setCustomId(itemDef.buttonId)
+                .setLabel(`${itemDef.buttonLabel} (${item.quantity})`)
+                .setStyle(ButtonStyle.Primary);
+
+            buttons.push(button);
+        }
+
+        embed.setDescription(description);
+
+        // Create action rows (max 5 buttons per row)
+        const actionRows = [];
+        for (let i = 0; i < buttons.length; i += 5) {
+            const row = new ActionRowBuilder()
+                .addComponents(buttons.slice(i, i + 5));
+            actionRows.push(row);
+        }
+
+        // Update original message
+        await interaction.message.edit({ 
+            embeds: [embed],
+            components: actionRows
+        });
+    } catch (error) {
+        console.error('Error updating inventory display:', error);
+    }
+}
+
+// Weighted random selection helper
+function weightedRandom(items, weights) {
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    let random = Math.random() * totalWeight;
+    
+    for (let i = 0; i < items.length; i++) {
+        random -= weights[i];
+        if (random <= 0) {
+            return items[i];
+        }
+    }
+    
+    return items[items.length - 1];
+}
