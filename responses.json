@@ -281,7 +281,7 @@
       },
       "moderation": {
         "title": "🛡️ Modération (Admin uniquement)",
-        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}giveitem @user [type] [quantité]` - Donner un item bonus"
+        "commands": "`{prefix}setlc @user [montant]` - Définir le solde LC\n`{prefix}setinvites @user [nombre]` - Définir les invitations\n`{prefix}givebonus @user [type] [quantité]` - Donner un item bonus (Jackpot, x2, x3)\n`{prefix}giveitem @user [type] [quantité]` - Alias de givebonus"
       }
     },
     "footer": "Préfixe: {prefix}"

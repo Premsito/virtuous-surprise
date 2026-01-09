@@ -19,6 +19,12 @@ function createMainMenuOptions() {
             emoji: '🎰'
         },
         {
+            label: 'Inventaire',
+            description: 'Gérez vos bonus et items',
+            value: 'inventaire',
+            emoji: '🎒'
+        },
+        {
             label: 'LC',
             description: 'Gérez votre monnaie virtuelle',
             value: 'lc',
@@ -125,6 +131,9 @@ async function handleMainMenuInteraction(interaction, userId) {
             break;
         case 'casino':
             await handleCasino(interaction, userId);
+            break;
+        case 'inventaire':
+            await handleInventaire(interaction, userId);
             break;
         case 'lc':
             await handleLC(interaction, userId);
@@ -377,6 +386,119 @@ async function handleCasinoInteraction(interaction, userId) {
         
         await interaction.followUp({ embeds: [infoEmbed], ephemeral: true });
     }
+}
+
+async function handleInventaire(interaction, userId) {
+    // Delete the original dropdown message
+    await interaction.deferUpdate();
+    try {
+        await interaction.message.delete();
+    } catch (error) {
+        console.error('Failed to delete menu message:', error);
+    }
+    
+    const username = interaction.user.username;
+    
+    // Ensure user exists
+    let user = await db.getUser(userId);
+    if (!user) {
+        user = await db.createUser(userId, username);
+    }
+
+    // Get inventory
+    const inventory = await db.getInventory(userId);
+
+    // Check for active multiplier
+    const activeMultiplier = await db.getActiveMultiplier(userId);
+
+    // Build embed
+    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    const embed = new EmbedBuilder()
+        .setColor(config.colors.primary)
+        .setTitle(`🎒 Inventaire de ${username}`)
+        .setTimestamp();
+
+    // Display active multiplier if any
+    if (activeMultiplier) {
+        embed.addFields({
+            name: '⚡ Bonus Actif',
+            value: `🎫 **Multiplieur x${activeMultiplier.multiplier_value}** - ${activeMultiplier.games_remaining} partie(s) restante(s)`,
+            inline: false
+        });
+    }
+
+    // Build inventory display
+    if (inventory.length === 0) {
+        embed.setDescription('Votre inventaire est vide. Jouez et gagnez des items bonus !\n\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.');
+        
+        await interaction.followUp({ 
+            embeds: [embed],
+            ephemeral: true
+        });
+        return;
+    }
+
+    // Item definitions (same as sac.js)
+    const ITEMS = {
+        jackpot: {
+            name: 'Jackpot',
+            emoji: '🎁',
+            description: 'Ouvre un jackpot pour gagner des LC aléatoires (50, 100, 250 ou 1000 LC)',
+            buttonId: 'use_jackpot',
+            buttonLabel: 'Ouvrir Jackpot 🎁'
+        },
+        multiplier_x2: {
+            name: 'Multiplieur x2',
+            emoji: '🎫',
+            description: 'Active un bonus x2 LC pour vos 2 prochaines parties',
+            buttonId: 'use_multiplier_x2',
+            buttonLabel: 'Activer x2 🎫'
+        },
+        multiplier_x3: {
+            name: 'Multiplieur x3',
+            emoji: '🎫',
+            description: 'Active un bonus x3 LC pour vos 2 prochaines parties',
+            buttonId: 'use_multiplier_x3',
+            buttonLabel: 'Activer x3 🎫'
+        }
+    };
+
+    // Create buttons for items with quantity > 0
+    const buttons = [];
+    let description = '**📦 Vos items disponibles:**\n\n';
+
+    for (const item of inventory) {
+        const itemDef = ITEMS[item.item_type];
+        if (!itemDef) continue;
+
+        description += `${itemDef.emoji} **${itemDef.name}** x${item.quantity}\n`;
+        description += `└ *${itemDef.description}*\n\n`;
+
+        // Add button for this item
+        const button = new ButtonBuilder()
+            .setCustomId(itemDef.buttonId)
+            .setLabel(`${itemDef.buttonLabel} (${item.quantity})`)
+            .setStyle(ButtonStyle.Primary);
+
+        buttons.push(button);
+    }
+
+    description += '\n💡 Tapez `!sac` pour accéder rapidement à votre inventaire.';
+    embed.setDescription(description);
+
+    // Create action rows (max 5 buttons per row)
+    const actionRows = [];
+    for (let i = 0; i < buttons.length; i += 5) {
+        const row = new ActionRowBuilder()
+            .addComponents(buttons.slice(i, i + 5));
+        actionRows.push(row);
+    }
+
+    await interaction.followUp({ 
+        embeds: [embed],
+        components: actionRows,
+        ephemeral: true
+    });
 }
 
 async function handleLC(interaction, userId) {

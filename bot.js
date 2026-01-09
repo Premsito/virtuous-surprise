@@ -430,7 +430,7 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'setinvites') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'setinvites');
-        } else if (commandName === 'giveitem') {
+        } else if (commandName === 'giveitem' || commandName === 'givebonus') {
             const command = client.commands.get('moderation');
             await command.execute(message, args, 'giveitem');
         } else if (commandName === 'topinvites') {

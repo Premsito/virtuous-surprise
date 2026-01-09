@@ -97,14 +97,28 @@ async function handleSetInvites(message, args) {
 async function handleGiveItem(message, args) {
     const targetUser = message.mentions.users.first();
     if (!targetUser) {
-        return message.reply('❌ Vous devez mentionner un utilisateur! Usage: `!giveitem @user <type> <quantity>`');
+        return message.reply('❌ Vous devez mentionner un utilisateur! Usage: `!givebonus @user <type> <quantity>`');
     }
 
-    const itemType = args[1]?.toLowerCase();
-    const validItems = ['jackpot', 'multiplier_x2', 'multiplier_x3'];
+    const itemInput = args[1]?.toLowerCase();
     
-    if (!itemType || !validItems.includes(itemType)) {
-        return message.reply(`❌ Type d'item invalide! Utilisez: ${validItems.join(', ')}`);
+    // Map user-friendly names to internal item types
+    const itemTypeMap = {
+        'jackpot': 'jackpot',
+        'multiplier_x2': 'multiplier_x2',
+        'multiplieur_x2': 'multiplier_x2',
+        'multiplieurx2': 'multiplier_x2',
+        'x2': 'multiplier_x2',
+        'multiplier_x3': 'multiplier_x3',
+        'multiplieur_x3': 'multiplier_x3',
+        'multiplieurx3': 'multiplier_x3',
+        'x3': 'multiplier_x3'
+    };
+    
+    const itemType = itemTypeMap[itemInput];
+    
+    if (!itemType) {
+        return message.reply(`❌ Type d'item invalide! Utilisez: Jackpot, Multiplieur_x2, Multiplieur_x3 (ou x2, x3)`);
     }
 
     const quantity = parseInt(args[2]);
@@ -131,7 +145,7 @@ async function handleGiveItem(message, args) {
 
     const embed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle('✅ Item Donné')
+        .setTitle('✅ Bonus Donné')
         .setDescription(`**${itemNames[itemType]}** x${quantity} a été donné à ${targetUser}`)
         .setTimestamp();
 
