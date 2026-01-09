@@ -226,10 +226,8 @@ client.once('clientReady', async () => {
                                     try {
                                         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                                         if (levelUpChannel) {
-                                            const member = await client.guilds.cache.first()?.members.fetch(userId).catch(() => null);
-                                            const userMention = member ? `<@${userId}>` : userId;
                                             await levelUpChannel.send(
-                                                `🎉 **Bravo ${userMention}** 🎉\n` +
+                                                `🎉 **Bravo <@${userId}>** 🎉\n` +
                                                 `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
                                                 `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
                                             );
