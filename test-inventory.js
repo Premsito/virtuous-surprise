@@ -13,7 +13,7 @@ async function testInventorySystem() {
         
         // Test 1: Add items to inventory
         console.log('📦 Test 1: Adding items to inventory...');
-        await db.addInventoryItem(testUserId, 'jackpot', 5);
+        await db.addInventoryItem(testUserId, 'tresor', 5);
         await db.addInventoryItem(testUserId, 'multiplier_x2', 3);
         await db.addInventoryItem(testUserId, 'multiplier_x3', 2);
         console.log('✅ Items added\n');
@@ -26,15 +26,15 @@ async function testInventorySystem() {
         
         // Test 3: Get specific item
         console.log('📦 Test 3: Getting specific item...');
-        const jackpotItem = await db.getInventoryItem(testUserId, 'jackpot');
-        console.log('Jackpot item:', JSON.stringify(jackpotItem, null, 2));
+        const tresorItem = await db.getInventoryItem(testUserId, 'tresor');
+        console.log('Trésor item:', JSON.stringify(tresorItem, null, 2));
         console.log('✅ Item retrieved\n');
         
         // Test 4: Remove item
         console.log('📦 Test 4: Removing item...');
-        await db.removeInventoryItem(testUserId, 'jackpot', 1);
-        const updatedJackpot = await db.getInventoryItem(testUserId, 'jackpot');
-        console.log('Updated jackpot quantity:', updatedJackpot.quantity);
+        await db.removeInventoryItem(testUserId, 'tresor', 1);
+        const updatedTresor = await db.getInventoryItem(testUserId, 'tresor');
+        console.log('Updated trésor quantity:', updatedTresor.quantity);
         console.log('✅ Item removed\n');
         
         // Test 5: Activate multiplier

@@ -5,7 +5,8 @@ console.log('🧪 Testing !givebonus command logic...\n');
 const { ITEM_TYPE_MAP } = require('./utils/inventoryItems');
 
 const testCases = [
-    { input: 'jackpot', expected: 'jackpot' },
+    { input: 'tresor', expected: 'tresor' },
+    { input: 'trésor', expected: 'tresor' },
     { input: 'x2', expected: 'multiplier_x2' },
     { input: 'x3', expected: 'multiplier_x3' },
     { input: 'multiplieur_x2', expected: 'multiplier_x2' },
