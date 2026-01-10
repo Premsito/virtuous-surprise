@@ -125,7 +125,7 @@ async function handleInteractiveMenu(message) {
 // Send or update the configuration menu
 async function sendConfigMenu(message, config, menuMessage = null) {
     const embed = new EmbedBuilder()
-        .setColor(config.colors?.primary || '#5865F2')
+        .setColor('#5865F2')
         .setTitle(getResponse('giveaway.menu.title'))
         .setDescription(getResponse('giveaway.menu.description'))
         .addFields(
@@ -366,7 +366,7 @@ async function launchGiveaway(channel, config, creatorId) {
 
         // Create embed
         const embed = new EmbedBuilder()
-            .setColor(config.colors?.gold || '#FFD700')
+            .setColor('#FFD700')
             .setTitle('🎉 GIVEAWAY 🎁')
             .setDescription(
                 `🌟 **Récompense** : ${config.reward} x${config.quantity}\n` +
