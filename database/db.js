@@ -7,6 +7,9 @@ const DB_INIT_MAX_RETRIES = 3;
 const DB_INIT_RETRY_BASE_DELAY_MS = 1000;
 const DB_INIT_RETRY_MAX_DELAY_MS = 5000;
 
+// PostgreSQL error codes
+const UNIQUE_VIOLATION_ERROR = '23505';
+
 // Create PostgreSQL connection pool with improved configuration
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -151,7 +154,7 @@ const db = {
             return true;
         } catch (error) {
             // If primary key violation, invite already exists
-            if (error.code === '23505') {
+            if (error.code === UNIQUE_VIOLATION_ERROR) {
                 console.log(`[DB] Duplicate key violation: invite already exists ${inviterId} -> ${invitedId}`);
                 return false;
             }
@@ -478,6 +481,97 @@ const db = {
             [xpEarned, messageId]
         );
         return result.rows[0];
+    },
+
+    // Giveaway operations
+    async createGiveaway(title, reward, duration, winnersCount, quantity, channelId, createdBy) {
+        const MS_PER_MINUTE = 60000;
+        const endTime = new Date(Date.now() + duration * MS_PER_MINUTE);
+        const result = await pool.query(
+            'INSERT INTO giveaways (title, reward, duration, winners_count, quantity, channel_id, end_time, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [title, reward, duration, winnersCount, quantity, channelId, endTime, createdBy]
+        );
+        return result.rows[0];
+    },
+
+    async updateGiveawayMessage(giveawayId, messageId) {
+        const result = await pool.query(
+            'UPDATE giveaways SET message_id = $1 WHERE id = $2 RETURNING *',
+            [messageId, giveawayId]
+        );
+        return result.rows[0];
+    },
+
+    async getGiveaway(giveawayId) {
+        const result = await pool.query(
+            'SELECT * FROM giveaways WHERE id = $1',
+            [giveawayId]
+        );
+        return result.rows[0];
+    },
+
+    async getGiveawayByTitle(title, createdBy) {
+        const result = await pool.query(
+            'SELECT * FROM giveaways WHERE title = $1 AND created_by = $2 AND status = $3 ORDER BY created_at DESC LIMIT 1',
+            [title, createdBy, 'active']
+        );
+        return result.rows[0];
+    },
+
+    async getActiveGiveaways() {
+        const result = await pool.query(
+            'SELECT * FROM giveaways WHERE status = $1 AND end_time > NOW()',
+            ['active']
+        );
+        return result.rows;
+    },
+
+    async endGiveaway(giveawayId) {
+        const result = await pool.query(
+            'UPDATE giveaways SET status = $1 WHERE id = $2 RETURNING *',
+            ['ended', giveawayId]
+        );
+        return result.rows[0];
+    },
+
+    async joinGiveaway(giveawayId, userId) {
+        try {
+            const result = await pool.query(
+                'INSERT INTO giveaway_participants (giveaway_id, user_id) VALUES ($1, $2) RETURNING *',
+                [giveawayId, userId]
+            );
+            return result.rows[0];
+        } catch (error) {
+            // If unique constraint violation, user already joined
+            if (error.code === UNIQUE_VIOLATION_ERROR) {
+                return null;
+            }
+            throw error;
+        }
+    },
+
+    async getGiveawayParticipants(giveawayId) {
+        const result = await pool.query(
+            'SELECT user_id FROM giveaway_participants WHERE giveaway_id = $1',
+            [giveawayId]
+        );
+        return result.rows;
+    },
+
+    async getGiveawayParticipantCount(giveawayId) {
+        const result = await pool.query(
+            'SELECT COUNT(*) as count FROM giveaway_participants WHERE giveaway_id = $1',
+            [giveawayId]
+        );
+        return parseInt(result.rows[0].count);
+    },
+
+    async hasJoinedGiveaway(giveawayId, userId) {
+        const result = await pool.query(
+            'SELECT EXISTS(SELECT 1 FROM giveaway_participants WHERE giveaway_id = $1 AND user_id = $2)',
+            [giveawayId, userId]
+        );
+        return result.rows[0].exists;
     },
 
     // Initialize database
