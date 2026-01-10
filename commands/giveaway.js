@@ -6,6 +6,7 @@ const { isAdmin } = require('../utils/adminHelper');
 
 // Constants
 const MS_PER_MINUTE = 60000; // Milliseconds in one minute
+const COLLECTOR_TIMEOUT_MS = 60000; // Message collector timeout (60 seconds)
 
 // Store active giveaway timers
 const giveawayTimers = new Map();
@@ -118,8 +119,10 @@ async function handleInteractiveMenu(message) {
     // Create and send the menu
     const menuMessage = await sendConfigMenu(message, config);
     
-    // Delete the command message
-    await message.delete().catch(() => {});
+    // Delete the command message (fire-and-forget, errors expected if message already deleted)
+    await message.delete().catch(() => {
+        // Ignore deletion errors - message may already be deleted
+    });
 }
 
 // Send or update the configuration menu
@@ -228,13 +231,25 @@ async function handleMenuButtonInteraction(interaction) {
     // Handle cancel
     if (action === 'cancel') {
         activeMenus.delete(userId);
-        await interaction.message.delete().catch(() => {});
-        return interaction.reply({ 
+        await interaction.message.delete().catch(() => {
+            // Ignore deletion errors - message may already be deleted
+        });
+        
+        const reply = await interaction.reply({ 
             content: getResponse('giveaway.menu.cancelled'), 
             ephemeral: true 
-        }).then(reply => {
-            setTimeout(() => reply.delete().catch(() => {}), 3000);
         });
+        
+        // Auto-delete confirmation after 3 seconds
+        setTimeout(async () => {
+            try {
+                await reply.delete();
+            } catch (error) {
+                // Ignore deletion errors - message may already be deleted
+            }
+        }, 3000);
+        
+        return;
     }
 
     // Handle launch
@@ -252,7 +267,9 @@ async function handleMenuButtonInteraction(interaction) {
         });
 
         // Delete the menu
-        await interaction.message.delete().catch(() => {});
+        await interaction.message.delete().catch(() => {
+            // Ignore deletion errors - message may already be deleted
+        });
 
         // Launch the giveaway
         await launchGiveaway(interaction.channel, config, userId);
@@ -270,13 +287,19 @@ async function handleMenuButtonInteraction(interaction) {
 
     // Create message collector to get user input
     const filter = m => m.author.id === userId;
-    const collector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
+    const collector = interaction.channel.createMessageCollector({ 
+        filter, 
+        max: 1, 
+        time: COLLECTOR_TIMEOUT_MS 
+    });
 
     collector.on('collect', async (m) => {
         const value = m.content.trim();
         
-        // Delete user's input message
-        await m.delete().catch(() => {});
+        // Delete user's input message (fire-and-forget, errors expected if message already deleted)
+        await m.delete().catch(() => {
+            // Ignore deletion errors - message may already be deleted
+        });
 
         // Validate and store the value
         let isValid = true;
@@ -291,12 +314,19 @@ async function handleMenuButtonInteraction(interaction) {
                 const duration = parseInt(value);
                 if (isNaN(duration) || duration <= 0) {
                     isValid = false;
-                    await interaction.followUp({ 
+                    const reply = await interaction.followUp({ 
                         content: getResponse('giveaway.create.invalidDuration'), 
                         ephemeral: true 
-                    }).then(reply => {
-                        setTimeout(() => reply.delete().catch(() => {}), 5000);
                     });
+                    
+                    // Auto-delete error after 5 seconds
+                    setTimeout(async () => {
+                        try {
+                            await reply.delete();
+                        } catch (error) {
+                            // Ignore deletion errors
+                        }
+                    }, 5000);
                 } else {
                     config.duration = duration;
                 }
@@ -305,12 +335,19 @@ async function handleMenuButtonInteraction(interaction) {
                 const winners = parseInt(value);
                 if (isNaN(winners) || winners <= 0) {
                     isValid = false;
-                    await interaction.followUp({ 
+                    const reply = await interaction.followUp({ 
                         content: getResponse('giveaway.create.invalidWinners'), 
                         ephemeral: true 
-                    }).then(reply => {
-                        setTimeout(() => reply.delete().catch(() => {}), 5000);
                     });
+                    
+                    // Auto-delete error after 5 seconds
+                    setTimeout(async () => {
+                        try {
+                            await reply.delete();
+                        } catch (error) {
+                            // Ignore deletion errors
+                        }
+                    }, 5000);
                 } else {
                     config.winners = winners;
                 }
@@ -319,12 +356,19 @@ async function handleMenuButtonInteraction(interaction) {
                 const quantity = parseInt(value);
                 if (isNaN(quantity) || quantity <= 0) {
                     isValid = false;
-                    await interaction.followUp({ 
+                    const reply = await interaction.followUp({ 
                         content: getResponse('giveaway.create.invalidQuantity'), 
                         ephemeral: true 
-                    }).then(reply => {
-                        setTimeout(() => reply.delete().catch(() => {}), 5000);
                     });
+                    
+                    // Auto-delete error after 5 seconds
+                    setTimeout(async () => {
+                        try {
+                            await reply.delete();
+                        } catch (error) {
+                            // Ignore deletion errors
+                        }
+                    }, 5000);
                 } else {
                     config.quantity = quantity;
                 }
@@ -337,15 +381,27 @@ async function handleMenuButtonInteraction(interaction) {
         }
     });
 
-    collector.on('end', (collected, reason) => {
+    collector.on('end', async (collected, reason) => {
         if (reason === 'time') {
             activeMenus.delete(userId);
-            interaction.followUp({ 
-                content: getResponse('giveaway.menu.timeout'), 
-                ephemeral: true 
-            }).then(reply => {
-                setTimeout(() => reply.delete().catch(() => {}), 5000);
-            }).catch(() => {});
+            
+            try {
+                const reply = await interaction.followUp({ 
+                    content: getResponse('giveaway.menu.timeout'), 
+                    ephemeral: true 
+                });
+                
+                // Auto-delete timeout message after 5 seconds
+                setTimeout(async () => {
+                    try {
+                        await reply.delete();
+                    } catch (error) {
+                        // Ignore deletion errors
+                    }
+                }, 5000);
+            } catch (error) {
+                // Ignore errors if interaction has expired
+            }
         }
     });
 }
