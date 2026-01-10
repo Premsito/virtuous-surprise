@@ -644,6 +644,11 @@
   "giveaway": {
     "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway` pour le menu interactif, `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`, `!giveaway terminer [titre]` ou `!giveaway winner [titre] @mention`",
     "permissionDenied": "❌ Vous n'avez pas la permission d'utiliser cette commande.",
+    "singleResponse": {
+      "prompt": "🎁 **Configuration du Giveaway**\n\nVeuillez répondre avec tous les paramètres dans le format suivant :\n```\n[Titre] | [Objet de la récompense] | [Durée en minutes] | [Nombre de gagnants] | [Quantité offerte]\n```\n**Exemple :**\n```\nNitro Premium | Nitro 🎁 | 10 | 1 | 1\n```",
+      "invalidFormat": "❌ Format invalide. Veuillez utiliser le format :\n```\n[Titre] | [Récompense] | [Durée] | [Gagnants] | [Quantité]\n```\n**Exemple :** `Nitro Premium | Nitro 🎁 | 10 | 1 | 1`",
+      "timeout": "⏱️ Délai d'attente expiré. Configuration annulée."
+    },
     "menu": {
       "title": "🎁 Configuration du Giveaway",
       "description": "Cliquez sur les boutons ci-dessous pour configurer votre giveaway :",
