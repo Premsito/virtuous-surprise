@@ -452,7 +452,7 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     const actionRow = new ActionRowBuilder()
         .addComponents(rechargerButton, tirerButton, bouclierButton);
     
-    // Send as DM to keep interactions private
+    // Try to send as DM to keep interactions private
     try {
         const user = await message.client.users.fetch(playerId);
         const embed = new EmbedBuilder()
@@ -471,7 +471,17 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     } catch (error) {
         console.error(`Error sending action buttons to ${playerId}:`, error);
         // Fallback: send in channel if DM fails
-        await message.channel.send(`❌ <@${playerId}>, je n'ai pas pu vous envoyer un message privé. Veuillez activer les DMs et réessayer le jeu.`);
+        const embed = new EmbedBuilder()
+            .setColor(config.colors.warning)
+            .setTitle(getResponse('007.action.title'))
+            .setDescription(getResponse('007.action.description', { bullets: playerData.bullets }))
+            .setFooter({ text: getResponse('007.action.footer') });
+        
+        await message.channel.send({ 
+            content: `⚠️ <@${playerId}>, je n'ai pas pu vous envoyer un DM. Voici vos options:`, 
+            embeds: [embed], 
+            components: [actionRow] 
+        });
     }
 }
 
@@ -487,6 +497,16 @@ async function waitForActions(message, actionChoices, challengerId, opponentId, 
         };
         
         let resolved = false;
+        let timeoutId = null;
+        
+        // Cleanup function to remove listener and clear timeout
+        const cleanup = () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            message.client.removeListener('interactionCreate', handleInteraction);
+        };
         
         // Handler function for interactions
         const handleInteraction = async (i) => {
@@ -528,7 +548,7 @@ async function waitForActions(message, actionChoices, challengerId, opponentId, 
             // Check if both players have chosen
             if (actionChoices.size === 2 && !resolved) {
                 resolved = true;
-                message.client.removeListener('interactionCreate', handleInteraction);
+                cleanup();
                 resolve();
             }
         };
@@ -537,10 +557,10 @@ async function waitForActions(message, actionChoices, challengerId, opponentId, 
         message.client.on('interactionCreate', handleInteraction);
         
         // Set timeout
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
             if (!resolved) {
                 resolved = true;
-                message.client.removeListener('interactionCreate', handleInteraction);
+                cleanup();
                 reject(new Error('timeout'));
             }
         }, 10000);
