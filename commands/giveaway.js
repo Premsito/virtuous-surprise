@@ -11,9 +11,6 @@ const COLLECTOR_TIMEOUT_MS = 60000; // Message collector timeout (60 seconds)
 // Store active giveaway timers
 const giveawayTimers = new Map();
 
-// Store active menu configurations (userId -> config object)
-const activeMenus = new Map();
-
 module.exports = {
     name: 'giveaway',
     description: 'Giveaway system - create and manage giveaways',
@@ -42,13 +39,8 @@ module.exports = {
         }
     },
 
-    // Handle button interaction for participation and menu
+    // Handle button interaction for participation
     async handleButtonInteraction(interaction) {
-        // Handle menu configuration buttons
-        if (interaction.customId.startsWith('giveaway_menu_')) {
-            return handleMenuButtonInteraction(interaction);
-        }
-        
         // Handle participation button
         if (interaction.customId.startsWith('giveaway_join_')) {
             const giveawayId = parseInt(interaction.customId.replace('giveaway_join_', ''));
@@ -99,308 +91,144 @@ module.exports = {
     }
 };
 
-// Interactive menu handler
+// Interactive menu handler - now handles single-response format
 async function handleInteractiveMenu(message) {
     // Check if user is admin
     if (!isAdmin(message.author.id)) {
         return message.reply(getResponse('giveaway.permissionDenied'));
     }
 
-    // Initialize configuration for this user
-    const config = {
-        title: null,
-        reward: null,
-        duration: null,
-        winners: null,
-        quantity: null
-    };
-    activeMenus.set(message.author.id, config);
-
-    // Create and send the menu
-    const menuMessage = await sendConfigMenu(message, config);
+    // Send prompt for single-response format
+    const promptMessage = await message.reply(getResponse('giveaway.singleResponse.prompt'));
     
     // Delete the command message (fire-and-forget, errors expected if message already deleted)
     await message.delete().catch(() => {
         // Ignore deletion errors - message may already be deleted
     });
-}
-
-// Send or update the configuration menu
-async function sendConfigMenu(message, config, menuMessage = null) {
-    const embed = new EmbedBuilder()
-        .setColor('#5865F2')
-        .setTitle(getResponse('giveaway.menu.title'))
-        .setDescription(getResponse('giveaway.menu.description'))
-        .addFields(
-            {
-                name: 'Titre',
-                value: config.title || getResponse('giveaway.menu.notSet'),
-                inline: true
-            },
-            {
-                name: 'Récompense',
-                value: config.reward || getResponse('giveaway.menu.notSet'),
-                inline: true
-            },
-            {
-                name: 'Durée',
-                value: config.duration ? `${config.duration} minute${config.duration > 1 ? 's' : ''}` : getResponse('giveaway.menu.notSet'),
-                inline: true
-            },
-            {
-                name: 'Gagnants',
-                value: config.winners ? `${config.winners}` : getResponse('giveaway.menu.notSet'),
-                inline: true
-            },
-            {
-                name: 'Quantité',
-                value: config.quantity ? `${config.quantity}` : getResponse('giveaway.menu.notSet'),
-                inline: true
-            }
-        )
-        .setFooter({ text: 'Configurez tous les paramètres puis cliquez sur Lancer' });
-
-    // Create buttons
-    const row1 = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_title')
-                .setLabel('📝 Titre')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_reward')
-                .setLabel('🌟 Récompense')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_duration')
-                .setLabel('⏲️ Durée')
-                .setStyle(ButtonStyle.Primary)
-        );
-
-    const row2 = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_winners')
-                .setLabel('🏆 Gagnants')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_quantity')
-                .setLabel('🎁 Quantité')
-                .setStyle(ButtonStyle.Primary)
-        );
-
-    const row3 = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_launch')
-                .setLabel('🚀 Lancer')
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(!isConfigComplete(config)),
-            new ButtonBuilder()
-                .setCustomId('giveaway_menu_cancel')
-                .setLabel('❌ Annuler')
-                .setStyle(ButtonStyle.Danger)
-        );
-
-    if (menuMessage) {
-        return await menuMessage.edit({ embeds: [embed], components: [row1, row2, row3] });
-    } else {
-        return await message.channel.send({ embeds: [embed], components: [row1, row2, row3] });
-    }
-}
-
-// Check if configuration is complete
-function isConfigComplete(config) {
-    return config.title && config.reward && config.duration && config.winners && config.quantity;
-}
-
-// Handle menu button interactions
-async function handleMenuButtonInteraction(interaction) {
-    const userId = interaction.user.id;
-    const config = activeMenus.get(userId);
-
-    if (!config) {
-        return interaction.reply({ 
-            content: getResponse('giveaway.menu.cancelled'), 
-            ephemeral: true 
-        });
-    }
-
-    const action = interaction.customId.replace('giveaway_menu_', '');
-
-    // Handle cancel
-    if (action === 'cancel') {
-        activeMenus.delete(userId);
-        await interaction.message.delete().catch(() => {
-            // Ignore deletion errors - message may already be deleted
-        });
-        
-        const reply = await interaction.reply({ 
-            content: getResponse('giveaway.menu.cancelled'), 
-            ephemeral: true 
-        });
-        
-        // Auto-delete confirmation after 3 seconds
-        setTimeout(async () => {
-            try {
-                await reply.delete();
-            } catch (error) {
-                // Ignore deletion errors - message may already be deleted
-            }
-        }, 3000);
-        
-        return;
-    }
-
-    // Handle launch
-    if (action === 'launch') {
-        if (!isConfigComplete(config)) {
-            return interaction.reply({ 
-                content: getResponse('giveaway.menu.incomplete'), 
-                ephemeral: true 
-            });
-        }
-
-        await interaction.reply({ 
-            content: getResponse('giveaway.menu.launching'), 
-            ephemeral: true 
-        });
-
-        // Delete the menu
-        await interaction.message.delete().catch(() => {
-            // Ignore deletion errors - message may already be deleted
-        });
-
-        // Launch the giveaway
-        await launchGiveaway(interaction.channel, config, userId);
-
-        // Clean up
-        activeMenus.delete(userId);
-        return;
-    }
-
-    // Handle field configuration
-    await interaction.reply({ 
-        content: getResponse(`giveaway.menu.prompt.${action}`), 
-        ephemeral: true 
-    });
 
     // Create message collector to get user input
-    const filter = m => m.author.id === userId;
-    const collector = interaction.channel.createMessageCollector({ 
+    const filter = m => m.author.id === message.author.id;
+    const collector = message.channel.createMessageCollector({ 
         filter, 
         max: 1, 
         time: COLLECTOR_TIMEOUT_MS 
     });
 
     collector.on('collect', async (m) => {
-        const value = m.content.trim();
+        const input = m.content.trim();
         
         // Delete user's input message (fire-and-forget, errors expected if message already deleted)
         await m.delete().catch(() => {
             // Ignore deletion errors - message may already be deleted
         });
 
-        // Validate and store the value
-        let isValid = true;
-        switch (action) {
-            case 'title':
-                config.title = value;
-                break;
-            case 'reward':
-                config.reward = value;
-                break;
-            case 'duration':
-                const duration = parseInt(value);
-                if (isNaN(duration) || duration <= 0) {
-                    isValid = false;
-                    const reply = await interaction.followUp({ 
-                        content: getResponse('giveaway.create.invalidDuration'), 
-                        ephemeral: true 
-                    });
-                    
-                    // Auto-delete error after 5 seconds
-                    setTimeout(async () => {
-                        try {
-                            await reply.delete();
-                        } catch (error) {
-                            // Ignore deletion errors
-                        }
-                    }, 5000);
-                } else {
-                    config.duration = duration;
+        // Delete the prompt message
+        await promptMessage.delete().catch(() => {
+            // Ignore deletion errors - message may already be deleted
+        });
+
+        // Parse the input format: [Titre] | [Récompense] | [Durée] | [Gagnants] | [Quantité]
+        const parts = input.split('|').map(p => p.trim());
+        
+        if (parts.length !== 5) {
+            const errorReply = await message.channel.send(getResponse('giveaway.singleResponse.invalidFormat'));
+            // Auto-delete error after 5 seconds
+            setTimeout(async () => {
+                try {
+                    await errorReply.delete();
+                } catch (error) {
+                    // Ignore deletion errors
                 }
-                break;
-            case 'winners':
-                const winners = parseInt(value);
-                if (isNaN(winners) || winners <= 0) {
-                    isValid = false;
-                    const reply = await interaction.followUp({ 
-                        content: getResponse('giveaway.create.invalidWinners'), 
-                        ephemeral: true 
-                    });
-                    
-                    // Auto-delete error after 5 seconds
-                    setTimeout(async () => {
-                        try {
-                            await reply.delete();
-                        } catch (error) {
-                            // Ignore deletion errors
-                        }
-                    }, 5000);
-                } else {
-                    config.winners = winners;
-                }
-                break;
-            case 'quantity':
-                const quantity = parseInt(value);
-                if (isNaN(quantity) || quantity <= 0) {
-                    isValid = false;
-                    const reply = await interaction.followUp({ 
-                        content: getResponse('giveaway.create.invalidQuantity'), 
-                        ephemeral: true 
-                    });
-                    
-                    // Auto-delete error after 5 seconds
-                    setTimeout(async () => {
-                        try {
-                            await reply.delete();
-                        } catch (error) {
-                            // Ignore deletion errors
-                        }
-                    }, 5000);
-                } else {
-                    config.quantity = quantity;
-                }
-                break;
+            }, 5000);
+            return;
         }
 
-        // Update the menu if value is valid
-        if (isValid) {
-            await sendConfigMenu(interaction, config, interaction.message);
+        const [title, reward, durationStr, winnersStr, quantityStr] = parts;
+
+        // Validate all fields
+        if (!title || !reward) {
+            const errorReply = await message.channel.send(getResponse('giveaway.singleResponse.invalidFormat'));
+            setTimeout(async () => {
+                try {
+                    await errorReply.delete();
+                } catch (error) {
+                    // Ignore deletion errors
+                }
+            }, 5000);
+            return;
         }
+
+        const duration = parseInt(durationStr);
+        if (isNaN(duration) || duration <= 0) {
+            const errorReply = await message.channel.send(getResponse('giveaway.create.invalidDuration'));
+            setTimeout(async () => {
+                try {
+                    await errorReply.delete();
+                } catch (error) {
+                    // Ignore deletion errors
+                }
+            }, 5000);
+            return;
+        }
+
+        const winners = parseInt(winnersStr);
+        if (isNaN(winners) || winners <= 0) {
+            const errorReply = await message.channel.send(getResponse('giveaway.create.invalidWinners'));
+            setTimeout(async () => {
+                try {
+                    await errorReply.delete();
+                } catch (error) {
+                    // Ignore deletion errors
+                }
+            }, 5000);
+            return;
+        }
+
+        const quantity = parseInt(quantityStr);
+        if (isNaN(quantity) || quantity <= 0) {
+            const errorReply = await message.channel.send(getResponse('giveaway.create.invalidQuantity'));
+            setTimeout(async () => {
+                try {
+                    await errorReply.delete();
+                } catch (error) {
+                    // Ignore deletion errors
+                }
+            }, 5000);
+            return;
+        }
+
+        // All validations passed, launch the giveaway
+        const config = {
+            title,
+            reward,
+            duration,
+            winners,
+            quantity
+        };
+
+        await launchGiveaway(message.channel, config, message.author.id);
     });
 
     collector.on('end', async (collected, reason) => {
         if (reason === 'time') {
-            activeMenus.delete(userId);
-            
             try {
-                const reply = await interaction.followUp({ 
-                    content: getResponse('giveaway.menu.timeout'), 
-                    ephemeral: true 
+                // Delete the prompt message if it still exists
+                await promptMessage.delete().catch(() => {
+                    // Ignore deletion errors
                 });
+                
+                const timeoutReply = await message.channel.send(getResponse('giveaway.singleResponse.timeout'));
                 
                 // Auto-delete timeout message after 5 seconds
                 setTimeout(async () => {
                     try {
-                        await reply.delete();
+                        await timeoutReply.delete();
                     } catch (error) {
                         // Ignore deletion errors
                     }
                 }, 5000);
             } catch (error) {
-                // Ignore errors if interaction has expired
+                // Ignore errors if message has expired
             }
         }
     });
