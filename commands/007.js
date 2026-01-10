@@ -355,7 +355,7 @@ async function playRound(message, gameState, challengerId, opponentId, betAmount
     
     // Wait for both players to make their choices (10 second timeout)
     try {
-        await waitForActions(message.channel, actionChoices, challengerId, opponentId, challengerData, opponentData);
+        await waitForActions(message, actionChoices, challengerId, opponentId, challengerData, opponentData);
         
         // Process round results
         const result = processRoundActions(gameState, challengerId, opponentId);
@@ -452,7 +452,7 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
     const actionRow = new ActionRowBuilder()
         .addComponents(rechargerButton, tirerButton, bouclierButton);
     
-    // Send in channel with user mention (public interaction like pfc)
+    // Send as DM to keep interactions private
     try {
         const user = await message.client.users.fetch(playerId);
         const embed = new EmbedBuilder()
@@ -461,20 +461,24 @@ async function sendActionButtons(message, playerId, playerData, actionChoices) {
             .setDescription(getResponse('007.action.description', { bullets: playerData.bullets }))
             .setFooter({ text: getResponse('007.action.footer') });
         
-        await message.channel.send({ 
-            content: `<@${playerId}>`, 
+        await user.send({ 
             embeds: [embed], 
             components: [actionRow] 
         });
+        
+        // Notify in channel that DM was sent (without revealing actions)
+        await message.channel.send(`📩 <@${playerId}>, vérifiez vos messages privés pour choisir votre action!`);
     } catch (error) {
         console.error(`Error sending action buttons to ${playerId}:`, error);
+        // Fallback: send in channel if DM fails
+        await message.channel.send(`❌ <@${playerId}>, je n'ai pas pu vous envoyer un message privé. Veuillez activer les DMs et réessayer le jeu.`);
     }
 }
 
 /**
  * Wait for both players to choose their actions
  */
-async function waitForActions(channel, actionChoices, challengerId, opponentId, challengerData, opponentData) {
+async function waitForActions(message, actionChoices, challengerId, opponentId, challengerData, opponentData) {
     return new Promise((resolve, reject) => {
         const filter = i => {
             return (i.user.id === challengerId || i.user.id === opponentId) && 
@@ -482,10 +486,11 @@ async function waitForActions(channel, actionChoices, challengerId, opponentId, 
                    (i.customId.includes('_recharger_') || i.customId.includes('_tirer_') || i.customId.includes('_bouclier_'));
         };
         
-        // Use a collector
-        const collector = channel.createMessageComponentCollector({ filter, time: 10000 });
-        
-        collector.on('collect', async (i) => {
+        // Use client-level interaction collector to capture DM interactions
+        const collector = message.client.on('interactionCreate', async (i) => {
+            if (!i.isButton()) return;
+            if (!filter(i)) return;
+            
             // Check if this button is for this user
             if (!i.customId.endsWith(i.user.id)) {
                 await i.reply({ content: getResponse('007.wrongPlayer'), ephemeral: true });
@@ -512,20 +517,27 @@ async function waitForActions(channel, actionChoices, challengerId, opponentId, 
             actionChoices.set(i.user.id, action);
             playerData.action = action;
             
-            await i.reply({ content: getResponse('007.choiceMade'), ephemeral: true });
+            // Notify player in DM
+            await i.reply({ content: getResponse('007.choiceMade') });
+            
+            // Notify in channel that player has chosen
+            await message.channel.send(`✅ <@${i.user.id}> a fait son choix!`);
             
             // Check if both players have chosen
             if (actionChoices.size === 2) {
-                collector.stop('both_chosen');
+                // Clean up listener
+                message.client.removeListener('interactionCreate', collector);
+                resolve();
             }
         });
         
-        collector.on('end', (collected, reason) => {
-            if (reason === 'both_chosen') {
-                resolve();
-            } else {
+        // Set timeout
+        setTimeout(() => {
+            message.client.removeListener('interactionCreate', collector);
+            if (actionChoices.size < 2) {
                 reject(new Error('timeout'));
             }
+        }, 10000);
         });
     });
 }
