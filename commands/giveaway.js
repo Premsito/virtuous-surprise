@@ -199,11 +199,11 @@ async function handleInteractiveMenu(message) {
 
         // All validations passed, launch the giveaway
         const config = {
-            title: title,
-            reward: reward,
-            duration: duration,
-            winners: winners,
-            quantity: quantity
+            title,
+            reward,
+            duration,
+            winners,
+            quantity
         };
 
         await launchGiveaway(message.channel, config, message.author.id);
