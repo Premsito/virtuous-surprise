@@ -706,6 +706,9 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'niveau') {
             const command = client.commands.get('niveau');
             await command.execute(message, args);
+        } else if (commandName === 'giveaway') {
+            const command = client.commands.get('giveaway');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
@@ -726,8 +729,8 @@ client.on('interactionCreate', async (interaction) => {
         await sacCommand.handleButtonInteraction(interaction);
     }
 
-    // Handle giveaway button interactions
-    if (interaction.customId.startsWith('giveaway_join_')) {
+    // Handle giveaway button interactions (both participation and menu)
+    if (interaction.customId.startsWith('giveaway_join_') || interaction.customId.startsWith('giveaway_menu_')) {
         await giveawayCommand.handleButtonInteraction(interaction);
     }
 });

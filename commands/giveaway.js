@@ -10,6 +10,9 @@ const MS_PER_MINUTE = 60000; // Milliseconds in one minute
 // Store active giveaway timers
 const giveawayTimers = new Map();
 
+// Store active menu configurations (userId -> config object)
+const activeMenus = new Map();
+
 module.exports = {
     name: 'giveaway',
     description: 'Giveaway system - create and manage giveaways',
@@ -17,8 +20,9 @@ module.exports = {
     async execute(message, args) {
         const subcommand = args[0]?.toLowerCase();
         
+        // If no subcommand, open interactive menu
         if (!subcommand) {
-            return message.reply(getResponse('giveaway.invalidCommand'));
+            return handleInteractiveMenu(message);
         }
         
         switch (subcommand) {
@@ -37,8 +41,14 @@ module.exports = {
         }
     },
 
-    // Handle button interaction for participation
+    // Handle button interaction for participation and menu
     async handleButtonInteraction(interaction) {
+        // Handle menu configuration buttons
+        if (interaction.customId.startsWith('giveaway_menu_')) {
+            return handleMenuButtonInteraction(interaction);
+        }
+        
+        // Handle participation button
         if (interaction.customId.startsWith('giveaway_join_')) {
             const giveawayId = parseInt(interaction.customId.replace('giveaway_join_', ''));
             
@@ -87,6 +97,313 @@ module.exports = {
         }
     }
 };
+
+// Interactive menu handler
+async function handleInteractiveMenu(message) {
+    // Check if user is admin
+    if (!isAdmin(message.author.id)) {
+        return message.reply(getResponse('giveaway.permissionDenied'));
+    }
+
+    // Initialize configuration for this user
+    const config = {
+        title: null,
+        reward: null,
+        duration: null,
+        winners: null,
+        quantity: null
+    };
+    activeMenus.set(message.author.id, config);
+
+    // Create and send the menu
+    const menuMessage = await sendConfigMenu(message, config);
+    
+    // Delete the command message
+    await message.delete().catch(() => {});
+}
+
+// Send or update the configuration menu
+async function sendConfigMenu(message, config, menuMessage = null) {
+    const embed = new EmbedBuilder()
+        .setColor(config.colors?.primary || '#5865F2')
+        .setTitle(getResponse('giveaway.menu.title'))
+        .setDescription(getResponse('giveaway.menu.description'))
+        .addFields(
+            {
+                name: 'Titre',
+                value: config.title || getResponse('giveaway.menu.notSet'),
+                inline: true
+            },
+            {
+                name: 'Récompense',
+                value: config.reward || getResponse('giveaway.menu.notSet'),
+                inline: true
+            },
+            {
+                name: 'Durée',
+                value: config.duration ? `${config.duration} minute${config.duration > 1 ? 's' : ''}` : getResponse('giveaway.menu.notSet'),
+                inline: true
+            },
+            {
+                name: 'Gagnants',
+                value: config.winners ? `${config.winners}` : getResponse('giveaway.menu.notSet'),
+                inline: true
+            },
+            {
+                name: 'Quantité',
+                value: config.quantity ? `${config.quantity}` : getResponse('giveaway.menu.notSet'),
+                inline: true
+            }
+        )
+        .setFooter({ text: 'Configurez tous les paramètres puis cliquez sur Lancer' });
+
+    // Create buttons
+    const row1 = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_title')
+                .setLabel('📝 Titre')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_reward')
+                .setLabel('🌟 Récompense')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_duration')
+                .setLabel('⏲️ Durée')
+                .setStyle(ButtonStyle.Primary)
+        );
+
+    const row2 = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_winners')
+                .setLabel('🏆 Gagnants')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_quantity')
+                .setLabel('🎁 Quantité')
+                .setStyle(ButtonStyle.Primary)
+        );
+
+    const row3 = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_launch')
+                .setLabel('🚀 Lancer')
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(!isConfigComplete(config)),
+            new ButtonBuilder()
+                .setCustomId('giveaway_menu_cancel')
+                .setLabel('❌ Annuler')
+                .setStyle(ButtonStyle.Danger)
+        );
+
+    if (menuMessage) {
+        return await menuMessage.edit({ embeds: [embed], components: [row1, row2, row3] });
+    } else {
+        return await message.channel.send({ embeds: [embed], components: [row1, row2, row3] });
+    }
+}
+
+// Check if configuration is complete
+function isConfigComplete(config) {
+    return config.title && config.reward && config.duration && config.winners && config.quantity;
+}
+
+// Handle menu button interactions
+async function handleMenuButtonInteraction(interaction) {
+    const userId = interaction.user.id;
+    const config = activeMenus.get(userId);
+
+    if (!config) {
+        return interaction.reply({ 
+            content: getResponse('giveaway.menu.cancelled'), 
+            ephemeral: true 
+        });
+    }
+
+    const action = interaction.customId.replace('giveaway_menu_', '');
+
+    // Handle cancel
+    if (action === 'cancel') {
+        activeMenus.delete(userId);
+        await interaction.message.delete().catch(() => {});
+        return interaction.reply({ 
+            content: getResponse('giveaway.menu.cancelled'), 
+            ephemeral: true 
+        }).then(reply => {
+            setTimeout(() => reply.delete().catch(() => {}), 3000);
+        });
+    }
+
+    // Handle launch
+    if (action === 'launch') {
+        if (!isConfigComplete(config)) {
+            return interaction.reply({ 
+                content: getResponse('giveaway.menu.incomplete'), 
+                ephemeral: true 
+            });
+        }
+
+        await interaction.reply({ 
+            content: getResponse('giveaway.menu.launching'), 
+            ephemeral: true 
+        });
+
+        // Delete the menu
+        await interaction.message.delete().catch(() => {});
+
+        // Launch the giveaway
+        await launchGiveaway(interaction.channel, config, userId);
+
+        // Clean up
+        activeMenus.delete(userId);
+        return;
+    }
+
+    // Handle field configuration
+    await interaction.reply({ 
+        content: getResponse(`giveaway.menu.prompt.${action}`), 
+        ephemeral: true 
+    });
+
+    // Create message collector to get user input
+    const filter = m => m.author.id === userId;
+    const collector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
+
+    collector.on('collect', async (m) => {
+        const value = m.content.trim();
+        
+        // Delete user's input message
+        await m.delete().catch(() => {});
+
+        // Validate and store the value
+        let isValid = true;
+        switch (action) {
+            case 'title':
+                config.title = value;
+                break;
+            case 'reward':
+                config.reward = value;
+                break;
+            case 'duration':
+                const duration = parseInt(value);
+                if (isNaN(duration) || duration <= 0) {
+                    isValid = false;
+                    await interaction.followUp({ 
+                        content: getResponse('giveaway.create.invalidDuration'), 
+                        ephemeral: true 
+                    }).then(reply => {
+                        setTimeout(() => reply.delete().catch(() => {}), 5000);
+                    });
+                } else {
+                    config.duration = duration;
+                }
+                break;
+            case 'winners':
+                const winners = parseInt(value);
+                if (isNaN(winners) || winners <= 0) {
+                    isValid = false;
+                    await interaction.followUp({ 
+                        content: getResponse('giveaway.create.invalidWinners'), 
+                        ephemeral: true 
+                    }).then(reply => {
+                        setTimeout(() => reply.delete().catch(() => {}), 5000);
+                    });
+                } else {
+                    config.winners = winners;
+                }
+                break;
+            case 'quantity':
+                const quantity = parseInt(value);
+                if (isNaN(quantity) || quantity <= 0) {
+                    isValid = false;
+                    await interaction.followUp({ 
+                        content: getResponse('giveaway.create.invalidQuantity'), 
+                        ephemeral: true 
+                    }).then(reply => {
+                        setTimeout(() => reply.delete().catch(() => {}), 5000);
+                    });
+                } else {
+                    config.quantity = quantity;
+                }
+                break;
+        }
+
+        // Update the menu if value is valid
+        if (isValid) {
+            await sendConfigMenu(interaction, config, interaction.message);
+        }
+    });
+
+    collector.on('end', (collected, reason) => {
+        if (reason === 'time') {
+            activeMenus.delete(userId);
+            interaction.followUp({ 
+                content: getResponse('giveaway.menu.timeout'), 
+                ephemeral: true 
+            }).then(reply => {
+                setTimeout(() => reply.delete().catch(() => {}), 5000);
+            }).catch(() => {});
+        }
+    });
+}
+
+// Launch the configured giveaway
+async function launchGiveaway(channel, config, creatorId) {
+    try {
+        // Create giveaway in database
+        const giveaway = await db.createGiveaway(
+            config.title,
+            config.reward,
+            config.duration,
+            config.winners,
+            config.quantity,
+            channel.id,
+            creatorId
+        );
+
+        // Create embed
+        const embed = new EmbedBuilder()
+            .setColor(config.colors?.gold || '#FFD700')
+            .setTitle('🎉 GIVEAWAY 🎁')
+            .setDescription(
+                `🌟 **Récompense** : ${config.reward} x${config.quantity}\n` +
+                `🏆 **Nombre de gagnants** : ${config.winners}\n` +
+                `👥 **Participants** : 0\n\n` +
+                `⏲️ **Fin dans** : ${config.duration} minute${config.duration > 1 ? 's' : ''}\n` +
+                `📢 Cliquez sur Participer pour tenter votre chance !`
+            )
+            .setTimestamp(new Date(giveaway.end_time))
+            .setFooter({ text: `Se termine le` });
+
+        // Create participate button
+        const button = new ButtonBuilder()
+            .setCustomId(`giveaway_join_${giveaway.id}`)
+            .setLabel('🎯 Participer')
+            .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder()
+            .addComponents(button);
+
+        // Send the giveaway message
+        const giveawayMessage = await channel.send({ 
+            embeds: [embed], 
+            components: [row] 
+        });
+
+        // Update the giveaway with the message ID
+        await db.updateGiveawayMessage(giveaway.id, giveawayMessage.id);
+
+        // Set up automatic ending timer
+        scheduleGiveawayEnd(giveaway.id, config.duration, channel, giveawayMessage);
+
+    } catch (error) {
+        console.error('Error launching giveaway:', error);
+        await channel.send(getResponse('giveaway.error'));
+    }
+}
 
 async function handleCreate(message, args) {
     // Check if user is admin
