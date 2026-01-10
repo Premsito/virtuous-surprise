@@ -3,14 +3,15 @@ const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
 const { ITEM_TYPE_MAP, ITEM_DISPLAY_NAMES } = require('../utils/inventoryItems');
+const { isAdmin } = require('../utils/adminHelper');
 
 module.exports = {
     name: 'moderation',
     description: 'Moderation commands for admins',
     
     async execute(message, args, command) {
-        // Check if user has administrator permission
-        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        // Check if user is the designated admin
+        if (!isAdmin(message.author.id)) {
             return message.reply(getResponse('moderation.noPermission'));
         }
 

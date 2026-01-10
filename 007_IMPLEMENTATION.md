@@ -31,16 +31,18 @@ This document describes the implementation of the interactive **007 game** for t
 - Always available (button always enabled)
 
 ### Round Flow
-1. Both players receive action buttons (via DM or channel)
-2. Players have **10 seconds** to choose an action
-3. Once both players choose, actions are revealed
-4. Actions are resolved:
+1. Both players receive action buttons **via DM** (Direct Message) to keep choices private
+2. If DMs are disabled, buttons are sent in the channel as fallback
+3. Players have **10 seconds** to choose an action
+4. Once both players choose, a notification appears in the channel (without revealing actions)
+5. Actions are publicly revealed and resolved:
    - If Player A shoots and Player B is reloading (without shield) → Player A wins
    - If Player A shoots and Player B has a shield → Shot is blocked
    - If both players shoot → Both shots are fired
    - If both players reload → Both gain bullets
-5. If no winner, proceed to next round with updated bullet counts
-6. If timeout occurs, the player who didn't respond loses
+6. Round results are **publicly announced** for all users to see
+7. If no winner, proceed to next round with updated bullet counts
+8. If timeout occurs, the player who didn't respond loses
 
 ### Winning Conditions
 - Player shoots opponent who is reloading (without shield)
@@ -74,9 +76,11 @@ const tirerButton = new ButtonBuilder()
 - Validation ensures only the correct player can interact
 
 #### Interaction Collection
-- Uses Discord.js `MessageComponentCollector`
+- Uses client-level event listeners to capture DM interactions
 - 10-second timeout per round
 - Handles both player choices before proceeding
+- Proper cleanup of event listeners to prevent memory leaks
+- Fallback to channel messages if DMs are disabled
 
 #### Game State Tracking
 ```javascript
@@ -210,3 +214,29 @@ The 007 game is fully integrated into the bot:
 3. **Fair Play**: Timeout system prevents stalling
 4. **Visual Feedback**: Disabled buttons clearly show when actions are unavailable
 5. **Competitive**: LC betting adds stakes to each match
+6. **Privacy**: Player choices are sent via DM to prevent chat pollution and strategy leaking
+7. **Transparency**: Round results are publicly announced for spectators
+
+## Privacy Features (Updated)
+
+### Private Action Selection
+- Action buttons are sent via **Direct Message (DM)** to each player
+- Players make their choices in private without revealing strategy to opponent
+- Prevents chat pollution during gameplay
+- Only the player sees their available actions and bullet count
+
+### Fallback Mechanism
+- If a player has DMs disabled, buttons are sent in the channel
+- Warning message alerts the player that DMs could not be sent
+- Game continues normally with fallback to public buttons
+
+### Public Results
+- Round results are always announced publicly in the channel
+- All users can see the actions both players took
+- Victory/defeat messages are visible to everyone
+- Maintains transparency while keeping strategy private during selection
+
+### Notifications
+- Channel receives notification when DM is sent: "📩 @Player, check your private messages to choose your action!"
+- Channel receives notification when player makes choice: "✅ @Player has made their choice!"
+- Actions are only revealed after both players have chosen

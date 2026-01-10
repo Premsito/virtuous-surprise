@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { getResponse, replacePlaceholders } = require('../utils/responseHelper');
+const { isAdmin } = require('../utils/adminHelper');
 
 module.exports = {
     name: 'loto',
@@ -165,8 +166,8 @@ async function handleJackpot(message) {
 }
 
 async function handleSetJackpot(message, args) {
-    // Check if user has administrator permission
-    if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+    // Check if user is the designated admin
+    if (!isAdmin(message.author.id)) {
         return message.reply(getResponse('loto.setjackpot.noPermission'));
     }
     
