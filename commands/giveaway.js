@@ -29,6 +29,9 @@ module.exports = {
             case 'terminer':
             case 'end':
                 return handleEnd(message, args.slice(1));
+            case 'winner':
+            case 'gagnant':
+                return handleWinner(message, args.slice(1));
             default:
                 return message.reply(getResponse('giveaway.invalidCommand'));
         }
@@ -206,6 +209,52 @@ async function handleEnd(message, args) {
     }
 }
 
+async function handleWinner(message, args) {
+    // Check if user is admin
+    if (!isAdmin(message.author.id)) {
+        return message.reply(getResponse('giveaway.permissionDenied'));
+    }
+
+    const title = args[0];
+    if (!title) {
+        return message.reply(getResponse('giveaway.winner.noTitle'));
+    }
+
+    // Check if user is mentioned
+    const mentionedUser = message.mentions.users.first();
+    if (!mentionedUser) {
+        return message.reply(getResponse('giveaway.winner.noMention'));
+    }
+
+    try {
+        // Get active giveaway by title
+        const giveaway = await db.getGiveawayByTitle(title, message.author.id);
+        if (!giveaway) {
+            return message.reply(getResponse('giveaway.winner.notFound', { title }));
+        }
+
+        // Set the manual winner
+        await db.setManualWinner(giveaway.id, mentionedUser.id);
+
+        // Send ephemeral confirmation (as a direct reply that only admin sees)
+        await message.reply({ 
+            content: getResponse('giveaway.winner.success', { 
+                mention: `<@${mentionedUser.id}>`, 
+                title 
+            }),
+            allowedMentions: { users: [] } // Prevent actual mention
+        });
+
+        // Delete the command message
+        await message.delete().catch(() => {});
+
+    } catch (error) {
+        console.error('Error setting manual winner:', error);
+        return message.reply(getResponse('giveaway.error'));
+    }
+}
+
+
 function scheduleGiveawayEnd(giveawayId, durationMinutes, channel, giveawayMessage) {
     // Clear existing timer if any
     if (giveawayTimers.has(giveawayId)) {
@@ -235,9 +284,15 @@ async function endGiveaway(giveawayId, channel, giveawayMessage = null) {
         // Mark giveaway as ended
         await db.endGiveaway(giveawayId);
 
-        // Select winners using Fisher-Yates shuffle for uniform distribution
+        // Select winners
         let winners = [];
-        if (participants.length > 0) {
+        
+        // Check if there's a manual winner set
+        if (giveaway.manual_winner_id) {
+            // Use the manually selected winner
+            winners = [{ user_id: giveaway.manual_winner_id }];
+        } else if (participants.length > 0) {
+            // Select winners using Fisher-Yates shuffle for uniform distribution
             const shuffled = [...participants];
             // Fisher-Yates shuffle algorithm
             for (let i = shuffled.length - 1; i > 0; i--) {

@@ -642,7 +642,7 @@
     "multiplierActivated": "✨ Multiplieur x{multiplier} activé ! Vos {games} prochaine(s) partie(s) donneront x{multiplier} LC."
   },
   "giveaway": {
-    "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]` ou `!giveaway terminer [titre]`",
+    "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`, `!giveaway terminer [titre]` ou `!giveaway winner [titre] @mention`",
     "permissionDenied": "❌ Vous n'avez pas la permission d'utiliser cette commande.",
     "create": {
       "invalidArgs": "❌ Arguments invalides. Utilisez : `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`\nExemple : `!giveaway créer Nitro \"Nitro 🎁\" 10 1 1`",
@@ -653,6 +653,12 @@
     "end": {
       "noTitle": "❌ Veuillez spécifier le titre du giveaway. Utilisez : `!giveaway terminer [titre]`",
       "notFound": "❌ Aucun giveaway actif trouvé avec le titre **{title}**."
+    },
+    "winner": {
+      "noTitle": "❌ Veuillez spécifier le titre du giveaway. Utilisez : `!giveaway winner [titre] @mention`",
+      "noMention": "❌ Veuillez mentionner un utilisateur. Utilisez : `!giveaway winner [titre] @mention`",
+      "notFound": "❌ Aucun giveaway actif trouvé avec le titre **{title}**.",
+      "success": "🏆 Vous avez désigné {mention} comme gagnant pour le concours \"{title}\"."
     },
     "notFound": "❌ Ce giveaway n'existe pas.",
     "alreadyEnded": "❌ Ce giveaway est déjà terminé.",

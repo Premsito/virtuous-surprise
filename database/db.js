@@ -574,6 +574,14 @@ const db = {
         return result.rows[0].exists;
     },
 
+    async setManualWinner(giveawayId, userId) {
+        const result = await pool.query(
+            'UPDATE giveaways SET manual_winner_id = $1 WHERE id = $2 RETURNING *',
+            [userId, giveawayId]
+        );
+        return result.rows[0];
+    },
+
     // Initialize database
     async initialize() {
         let retryCount = 0;
