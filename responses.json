@@ -642,8 +642,29 @@
     "multiplierActivated": "✨ Multiplieur x{multiplier} activé ! Vos {games} prochaine(s) partie(s) donneront x{multiplier} LC."
   },
   "giveaway": {
-    "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`, `!giveaway terminer [titre]` ou `!giveaway winner [titre] @mention`",
+    "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway` pour le menu interactif, `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`, `!giveaway terminer [titre]` ou `!giveaway winner [titre] @mention`",
     "permissionDenied": "❌ Vous n'avez pas la permission d'utiliser cette commande.",
+    "menu": {
+      "title": "🎁 Configuration du Giveaway",
+      "description": "Cliquez sur les boutons ci-dessous pour configurer votre giveaway :",
+      "fieldTitle": "📝 **Titre** : {value}",
+      "fieldReward": "🌟 **Récompense** : {value}",
+      "fieldDuration": "⏲️ **Durée** : {value}",
+      "fieldWinners": "🏆 **Nombre de gagnants** : {value}",
+      "fieldQuantity": "🎁 **Quantité** : {value}",
+      "notSet": "_Non défini_",
+      "prompt": {
+        "title": "📝 Veuillez entrer le **titre** du giveaway :",
+        "reward": "🌟 Veuillez entrer la **récompense** du giveaway :",
+        "duration": "⏲️ Veuillez entrer la **durée** en minutes :",
+        "winners": "🏆 Veuillez entrer le **nombre de gagnants** :",
+        "quantity": "🎁 Veuillez entrer la **quantité** de récompenses :"
+      },
+      "timeout": "⏱️ Délai d'attente expiré. Configuration annulée.",
+      "cancelled": "❌ Configuration annulée.",
+      "launching": "🚀 Lancement du giveaway...",
+      "incomplete": "⚠️ Veuillez configurer tous les paramètres avant de lancer le giveaway."
+    },
     "create": {
       "invalidArgs": "❌ Arguments invalides. Utilisez : `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`\nExemple : `!giveaway créer Nitro \"Nitro 🎁\" 10 1 1`",
       "invalidDuration": "❌ Durée invalide. La durée doit être un nombre positif de minutes.",
