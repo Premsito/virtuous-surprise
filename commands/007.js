@@ -486,8 +486,10 @@ async function waitForActions(message, actionChoices, challengerId, opponentId, 
                    (i.customId.includes('_recharger_') || i.customId.includes('_tirer_') || i.customId.includes('_bouclier_'));
         };
         
-        // Use client-level interaction collector to capture DM interactions
-        const collector = message.client.on('interactionCreate', async (i) => {
+        let resolved = false;
+        
+        // Handler function for interactions
+        const handleInteraction = async (i) => {
             if (!i.isButton()) return;
             if (!filter(i)) return;
             
@@ -524,21 +526,24 @@ async function waitForActions(message, actionChoices, challengerId, opponentId, 
             await message.channel.send(`✅ <@${i.user.id}> a fait son choix!`);
             
             // Check if both players have chosen
-            if (actionChoices.size === 2) {
-                // Clean up listener
-                message.client.removeListener('interactionCreate', collector);
+            if (actionChoices.size === 2 && !resolved) {
+                resolved = true;
+                message.client.removeListener('interactionCreate', handleInteraction);
                 resolve();
             }
-        });
+        };
+        
+        // Listen to interactions at client level
+        message.client.on('interactionCreate', handleInteraction);
         
         // Set timeout
         setTimeout(() => {
-            message.client.removeListener('interactionCreate', collector);
-            if (actionChoices.size < 2) {
+            if (!resolved) {
+                resolved = true;
+                message.client.removeListener('interactionCreate', handleInteraction);
                 reject(new Error('timeout'));
             }
         }, 10000);
-        });
     });
 }
 
