@@ -36,6 +36,14 @@ module.exports = {
         if (interaction.customId.startsWith('giveaway_join_')) {
             const giveawayId = parseInt(interaction.customId.replace('giveaway_join_', ''));
             
+            // Validate giveaway ID
+            if (isNaN(giveawayId)) {
+                return interaction.reply({ 
+                    content: getResponse('giveaway.error'), 
+                    ephemeral: true 
+                });
+            }
+            
             // Get giveaway details
             const giveaway = await db.getGiveaway(giveawayId);
             if (!giveaway) {
@@ -228,10 +236,15 @@ async function endGiveaway(giveawayId, channel, giveawayMessage = null) {
         // Mark giveaway as ended
         await db.endGiveaway(giveawayId);
 
-        // Select winners
+        // Select winners using Fisher-Yates shuffle for uniform distribution
         let winners = [];
         if (participants.length > 0) {
-            const shuffled = [...participants].sort(() => 0.5 - Math.random());
+            const shuffled = [...participants];
+            // Fisher-Yates shuffle algorithm
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
             winners = shuffled.slice(0, Math.min(giveaway.winners_count, participants.length));
         }
 

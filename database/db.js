@@ -7,6 +7,9 @@ const DB_INIT_MAX_RETRIES = 3;
 const DB_INIT_RETRY_BASE_DELAY_MS = 1000;
 const DB_INIT_RETRY_MAX_DELAY_MS = 5000;
 
+// PostgreSQL error codes
+const UNIQUE_VIOLATION_ERROR = '23505';
+
 // Create PostgreSQL connection pool with improved configuration
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -151,7 +154,7 @@ const db = {
             return true;
         } catch (error) {
             // If primary key violation, invite already exists
-            if (error.code === '23505') {
+            if (error.code === UNIQUE_VIOLATION_ERROR) {
                 console.log(`[DB] Duplicate key violation: invite already exists ${inviterId} -> ${invitedId}`);
                 return false;
             }
@@ -539,7 +542,7 @@ const db = {
             return result.rows[0];
         } catch (error) {
             // If unique constraint violation, user already joined
-            if (error.code === '23505') {
+            if (error.code === UNIQUE_VIOLATION_ERROR) {
                 return null;
             }
             throw error;
