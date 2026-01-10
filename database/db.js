@@ -485,7 +485,8 @@ const db = {
 
     // Giveaway operations
     async createGiveaway(title, reward, duration, winnersCount, quantity, channelId, createdBy) {
-        const endTime = new Date(Date.now() + duration * 60 * 1000);
+        const MS_PER_MINUTE = 60000;
+        const endTime = new Date(Date.now() + duration * MS_PER_MINUTE);
         const result = await pool.query(
             'INSERT INTO giveaways (title, reward, duration, winners_count, quantity, channel_id, end_time, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
             [title, reward, duration, winnersCount, quantity, channelId, endTime, createdBy]

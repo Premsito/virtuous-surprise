@@ -4,6 +4,9 @@ const config = require('../config.json');
 const { getResponse } = require('../utils/responseHelper');
 const { isAdmin } = require('../utils/adminHelper');
 
+// Constants
+const MS_PER_MINUTE = 60000; // Milliseconds in one minute
+
 // Store active giveaway timers
 const giveawayTimers = new Map();
 
@@ -53,14 +56,9 @@ module.exports = {
                 });
             }
 
-            if (giveaway.status !== 'active') {
-                return interaction.reply({ 
-                    content: getResponse('giveaway.alreadyEnded'), 
-                    ephemeral: true 
-                });
-            }
-
-            if (new Date() > new Date(giveaway.end_time)) {
+            // Check if giveaway is still active (both status and time check for robustness)
+            // Status check handles manual ending, time check handles expired but not yet ended
+            if (giveaway.status !== 'active' || new Date() > new Date(giveaway.end_time)) {
                 return interaction.reply({ 
                     content: getResponse('giveaway.alreadyEnded'), 
                     ephemeral: true 
@@ -99,7 +97,8 @@ async function handleCreate(message, args) {
     }
 
     const title = args[0];
-    const reward = args[1].replace(/^[\"']|[\"']$/g, ''); // Remove quotes if present
+    // Remove surrounding quotes if present (handles ", ', or `)
+    const reward = args[1].replace(/^[\"'`](.+)[\"'`]$/, '$1');
     const duration = parseInt(args[2]);
     const winnersCount = parseInt(args[3]);
     const quantity = parseInt(args[4]);
@@ -217,7 +216,7 @@ function scheduleGiveawayEnd(giveawayId, durationMinutes, channel, giveawayMessa
     const timer = setTimeout(async () => {
         await endGiveaway(giveawayId, channel, giveawayMessage);
         giveawayTimers.delete(giveawayId);
-    }, durationMinutes * 60 * 1000);
+    }, durationMinutes * MS_PER_MINUTE);
 
     giveawayTimers.set(giveawayId, timer);
 }
@@ -324,7 +323,7 @@ async function endGiveaway(giveawayId, channel, giveawayMessage = null) {
 async function updateGiveawayEmbed(message, giveaway) {
     try {
         const participantCount = await db.getGiveawayParticipantCount(giveaway.id);
-        const timeRemaining = Math.max(0, Math.floor((new Date(giveaway.end_time) - new Date()) / 60000));
+        const timeRemaining = Math.max(0, Math.floor((new Date(giveaway.end_time) - new Date()) / MS_PER_MINUTE));
 
         const embed = new EmbedBuilder()
             .setColor(config.colors.gold)

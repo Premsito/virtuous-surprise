@@ -109,7 +109,6 @@ try {
 // Test 5: Check bot.js integration
 console.log('\nTest 5: Check bot.js integration');
 try {
-    const fs = require('fs');
     const botContent = fs.readFileSync('./bot.js', 'utf-8');
     
     const hasRequire = botContent.includes("require('./commands/giveaway')");

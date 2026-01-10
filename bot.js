@@ -728,7 +728,6 @@ client.on('interactionCreate', async (interaction) => {
 
     // Handle giveaway button interactions
     if (interaction.customId.startsWith('giveaway_join_')) {
-        const giveawayCommand = require('./commands/giveaway');
         await giveawayCommand.handleButtonInteraction(interaction);
     }
 });
