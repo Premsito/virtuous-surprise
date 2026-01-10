@@ -640,5 +640,24 @@
     "alreadyActive": "❌ Vous avez déjà un multiplieur actif !",
     "tresorOpened": "🎉 Félicitations ! Vous avez gagné **{amount} LC** 💰",
     "multiplierActivated": "✨ Multiplieur x{multiplier} activé ! Vos {games} prochaine(s) partie(s) donneront x{multiplier} LC."
+  },
+  "giveaway": {
+    "invalidCommand": "❌ Commande invalide. Utilisez `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]` ou `!giveaway terminer [titre]`",
+    "permissionDenied": "❌ Vous n'avez pas la permission d'utiliser cette commande.",
+    "create": {
+      "invalidArgs": "❌ Arguments invalides. Utilisez : `!giveaway créer [titre] [objet] [durée] [gagnants] [quantité]`\nExemple : `!giveaway créer Nitro \"Nitro 🎁\" 10 1 1`",
+      "invalidDuration": "❌ Durée invalide. La durée doit être un nombre positif de minutes.",
+      "invalidWinners": "❌ Nombre de gagnants invalide. Doit être un nombre positif.",
+      "invalidQuantity": "❌ Quantité invalide. Doit être un nombre positif."
+    },
+    "end": {
+      "noTitle": "❌ Veuillez spécifier le titre du giveaway. Utilisez : `!giveaway terminer [titre]`",
+      "notFound": "❌ Aucun giveaway actif trouvé avec le titre **{title}**."
+    },
+    "notFound": "❌ Ce giveaway n'existe pas.",
+    "alreadyEnded": "❌ Ce giveaway est déjà terminé.",
+    "alreadyJoined": "⚠️ Vous participez déjà à ce giveaway !",
+    "joined": "✅ Vous participez maintenant au giveaway ! Bonne chance ! 🍀",
+    "error": "❌ Une erreur est survenue. Veuillez réessayer."
   }
 }

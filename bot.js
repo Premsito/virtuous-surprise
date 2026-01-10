@@ -46,6 +46,7 @@ const c21Command = require('./commands/c21');
 const game007Command = require('./commands/007');
 const sacCommand = require('./commands/sac');
 const niveauCommand = require('./commands/niveau');
+const giveawayCommand = require('./commands/giveaway');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -64,6 +65,7 @@ client.commands.set(c21Command.name, c21Command);
 client.commands.set(game007Command.name, game007Command);
 client.commands.set(sacCommand.name, sacCommand);
 client.commands.set(niveauCommand.name, niveauCommand);
+client.commands.set(giveawayCommand.name, giveawayCommand);
 
 // Store invites for tracking
 const invites = new Map();
@@ -722,6 +724,12 @@ client.on('interactionCreate', async (interaction) => {
     if (inventoryButtons.includes(interaction.customId)) {
         const sacCommand = require('./commands/sac');
         await sacCommand.handleButtonInteraction(interaction);
+    }
+
+    // Handle giveaway button interactions
+    if (interaction.customId.startsWith('giveaway_join_')) {
+        const giveawayCommand = require('./commands/giveaway');
+        await giveawayCommand.handleButtonInteraction(interaction);
     }
 });
 
