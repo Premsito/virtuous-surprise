@@ -81,7 +81,7 @@ module.exports = {
 
 async function handleCreate(message, args) {
     // Check if user is admin
-    if (!isAdmin(message.member)) {
+    if (!isAdmin(message.author.id)) {
         return message.reply(getResponse('giveaway.permissionDenied'));
     }
 
@@ -171,7 +171,7 @@ async function handleCreate(message, args) {
 
 async function handleEnd(message, args) {
     // Check if user is admin
-    if (!isAdmin(message.member)) {
+    if (!isAdmin(message.author.id)) {
         return message.reply(getResponse('giveaway.permissionDenied'));
     }
 
