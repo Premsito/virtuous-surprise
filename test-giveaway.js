@@ -3,6 +3,9 @@
  * This tests the basic structure and integration of the giveaway command
  */
 
+const fs = require('fs');
+const path = require('path');
+
 console.log('🧪 Testing giveaway command structure...\n');
 
 // Test 1: Load the giveaway command
@@ -79,8 +82,6 @@ try {
 // Test 4: Check migration file
 console.log('\nTest 4: Check migration file');
 try {
-    const fs = require('fs');
-    const path = require('path');
     const migrationPath = path.join(__dirname, 'database', 'migrations', '009_add_giveaway_tables.sql');
     
     if (fs.existsSync(migrationPath)) {

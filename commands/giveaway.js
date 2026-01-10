@@ -99,7 +99,7 @@ async function handleCreate(message, args) {
     }
 
     const title = args[0];
-    const reward = args[1].replace(/^["']|["']$/g, ''); // Remove quotes if present
+    const reward = args[1].replace(/^[\"']|[\"']$/g, ''); // Remove quotes if present
     const duration = parseInt(args[2]);
     const winnersCount = parseInt(args[3]);
     const quantity = parseInt(args[4]);
