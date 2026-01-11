@@ -483,6 +483,30 @@ const db = {
         return result.rows[0];
     },
 
+    // Time-based boost operations
+    async activateBoost(userId, boostType, multiplier, durationSeconds) {
+        const expiresAt = new Date(Date.now() + durationSeconds * 1000);
+        const result = await pool.query(
+            'INSERT INTO active_boosts (user_id, boost_type, multiplier, expires_at) VALUES ($1, $2, $3, $4) RETURNING *',
+            [userId, boostType, multiplier, expiresAt]
+        );
+        return result.rows[0];
+    },
+
+    async getActiveBoost(userId, boostType) {
+        const result = await pool.query(
+            'SELECT * FROM active_boosts WHERE user_id = $1 AND boost_type = $2 AND expires_at > NOW() ORDER BY expires_at DESC LIMIT 1',
+            [userId, boostType]
+        );
+        return result.rows[0];
+    },
+
+    async deleteExpiredBoosts() {
+        await pool.query(
+            'DELETE FROM active_boosts WHERE expires_at <= NOW()'
+        );
+    },
+
     // Giveaway operations
     async createGiveaway(title, reward, duration, winnersCount, quantity, channelId, createdBy) {
         const MS_PER_MINUTE = 60000;

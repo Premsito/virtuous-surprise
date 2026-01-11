@@ -5,6 +5,7 @@ const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
 const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG } = require('./utils/xpHelper');
 const { generateLevelUpCard } = require('./utils/levelUpCard');
+const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
 
 // Log npm configuration for debugging deployment issues
 console.log('🔍 NPM Configuration Debug:');
@@ -157,6 +158,39 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, reward =
     }
 }
 
+/**
+ * Handle level-up rewards and notifications
+ * @param {Client} client - Discord client
+ * @param {string} userId - User ID who leveled up
+ * @param {Object} user - Discord user object
+ * @param {number} newLevel - New level reached
+ * @param {number} totalXP - Total XP
+ */
+async function handleLevelUp(client, userId, user, newLevel, totalXP) {
+    try {
+        // Calculate reward for this level
+        const reward = calculateLevelReward(newLevel);
+        
+        // Apply LC reward if applicable
+        if (reward.lcAmount > 0) {
+            await db.updateBalance(userId, reward.lcAmount);
+            await db.recordTransaction(null, userId, reward.lcAmount, 'level_up', `Niveau ${newLevel} atteint`);
+        }
+        
+        // Apply boost if applicable
+        if (reward.boost) {
+            await db.activateBoost(userId, reward.boost.type, reward.boost.multiplier, reward.boost.duration);
+            console.log(`✅ Activated ${reward.boost.type.toUpperCase()} x${reward.boost.multiplier} boost for ${user.username} (${reward.boost.duration}s)`);
+        }
+        
+        // Send level-up notification with reward description
+        await sendLevelUpCard(client, userId, user, newLevel, totalXP, reward.description);
+        
+    } catch (error) {
+        console.error('Error handling level up:', error.message);
+    }
+}
+
 // Bot ready event
 client.once('clientReady', async () => {
     console.log('🤖 Bot is online!');
@@ -268,11 +302,9 @@ client.once('clientReady', async () => {
                                 // Check for level up
                                 if (newLevel > oldLevel) {
                                     await db.updateLevel(userId, newLevel);
-                                    // Give trésor reward for level up
-                                    await db.addInventoryItem(userId, 'tresor', 1);
                                     
-                                    // Send level-up card notification
-                                    await sendLevelUpCard(client, userId, userInVoice.user, newLevel, updatedUser.xp, 'Trésor 🗝️');
+                                    // Handle level-up rewards
+                                    await handleLevelUp(client, userId, userInVoice.user, newLevel, updatedUser.xp);
                                 }
                             }
                         }
@@ -566,11 +598,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
             // Check for level up
             if (newLevel > oldLevel) {
                 await db.updateLevel(authorId, newLevel);
-                // Give trésor reward for level up
-                await db.addInventoryItem(authorId, 'tresor', 1);
                 
-                // Send level-up card notification
-                await sendLevelUpCard(client, authorId, messageAuthor, newLevel, updatedUser.xp, 'Trésor 🗝️');
+                // Handle level-up rewards
+                await handleLevelUp(client, authorId, messageAuthor, newLevel, updatedUser.xp);
             }
         }
     } catch (error) {
@@ -622,11 +652,8 @@ client.on('messageCreate', async (message) => {
             if (newLevel > oldLevel) {
                 await db.updateLevel(userId, newLevel);
                 
-                // Give trésor reward for level up
-                await db.addInventoryItem(userId, 'tresor', 1);
-                
-                // Send level-up card notification
-                await sendLevelUpCard(client, userId, message.author, newLevel, updatedUser.xp, 'Trésor 🗝️');
+                // Handle level-up rewards
+                await handleLevelUp(client, userId, message.author, newLevel, updatedUser.xp);
             }
         }
     } catch (error) {
