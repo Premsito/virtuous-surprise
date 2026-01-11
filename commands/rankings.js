@@ -18,6 +18,11 @@ module.exports = {
             }
             
             console.log(`   ✅ Permission granted - displaying rankings`);
+            
+            // Debug: Verify channel object being used
+            console.log(`   🔍 Using channel: ${message.channel.name} (${message.channel.id})`);
+            console.log(`   📡 Channel type: ${message.channel.type}`);
+            
             await this.displayRankings(message.channel);
             
             // Delete the command message to keep the channel clean
@@ -41,14 +46,28 @@ module.exports = {
             console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
             
             // Get top users
-            const topLC = await db.getTopLC(10);
-            const topLevels = await db.getTopLevels(10);
+            const lcRanking = await db.getTopLC(10);
+            const levelRanking = await db.getTopLevels(10);
             
-            console.log(`   - Fetched ${topLC.length} LC rankings`);
-            console.log(`   - Fetched ${topLevels.length} level rankings`);
+            console.log(`   - Fetched ${lcRanking.length} LC rankings`);
+            console.log(`   - Fetched ${levelRanking.length} level rankings`);
+            
+            // Debug: Log the actual data fetched
+            if (lcRanking.length > 0) {
+                console.log(`   📊 LC Rankings data (top 3):`, lcRanking.slice(0, 3).map(u => ({ 
+                    username: u.username, 
+                    balance: u.balance 
+                })));
+            }
+            if (levelRanking.length > 0) {
+                console.log(`   ⭐ Level Rankings data (top 3):`, levelRanking.slice(0, 3).map(u => ({ 
+                    username: u.username, 
+                    level: u.level 
+                })));
+            }
             
             // Check if there's any ranking data available
-            if (topLC.length === 0 && topLevels.length === 0) {
+            if (lcRanking.length === 0 && levelRanking.length === 0) {
                 console.log(`   ⚠️ No ranking data available`);
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return;
@@ -58,7 +77,7 @@ module.exports = {
             console.log('💰 Creating LC Podium embed...');
             const lcPodiumEmbed = await this.createPodiumEmbed(
                 channel.client,
-                topLC.slice(0, 3),
+                lcRanking.slice(0, 3),
                 'LC',
                 '💰 Podium LC',
                 config.colors.gold,
@@ -69,7 +88,7 @@ module.exports = {
             console.log('⭐ Creating Levels Podium embed...');
             const levelsPodiumEmbed = await this.createPodiumEmbed(
                 channel.client,
-                topLevels.slice(0, 3),
+                levelRanking.slice(0, 3),
                 'Levels',
                 '⭐ Podium Niveaux',
                 config.colors.primary,
@@ -79,7 +98,7 @@ module.exports = {
             // Create LC Rankings Table Embed
             console.log('📊 Creating LC Rankings table...');
             const lcRankingsEmbed = this.createRankingsTableEmbed(
-                topLC,
+                lcRanking,
                 '📊 Classement LC - Top 10',
                 config.colors.blue,
                 (user) => `${user.balance} LC`
@@ -88,7 +107,7 @@ module.exports = {
             // Create Levels Rankings Table Embed
             console.log('🏆 Creating Levels Rankings table...');
             const levelsRankingsEmbed = this.createRankingsTableEmbed(
-                topLevels,
+                levelRanking,
                 '🏆 Classement Niveaux - Top 10',
                 config.colors.primary,
                 (user) => `Niveau ${user.level}`
@@ -228,6 +247,12 @@ module.exports = {
             }
 
             console.log(`📡 Fetching channel ${rankingsChannelId}...`);
+            
+            // Debug: Verify channel fetch using cache.get as mentioned in problem statement
+            const channelFromCache = client.channels.cache.get(rankingsChannelId);
+            console.log(`   🔍 Fetched channel from cache:`, channelFromCache ? `#${channelFromCache.name} (${channelFromCache.id})` : 'null');
+            
+            // Fetch channel (this will use cache if available, or fetch from API)
             const channel = await client.channels.fetch(rankingsChannelId);
             
             if (!channel) {
@@ -238,6 +263,7 @@ module.exports = {
             }
             
             console.log(`✅ Channel fetched successfully: #${channel.name}`);
+            console.log(`   📋 Channel details: ID=${channel.id}, Type=${channel.type}`);
             
             // Verify bot permissions
             const permissions = channel.permissionsFor(client.user);
