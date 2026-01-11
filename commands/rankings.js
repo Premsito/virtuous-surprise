@@ -275,6 +275,7 @@ module.exports = {
                 const testMessage = await channel.send("Test: Classement affichage fonctionnel.");
                 console.log('   ✅ Test message sent successfully');
                 // Delete the test message after a short delay using a self-contained async function
+                // Note: This is intentionally a floating promise - we don't want to block on cleanup
                 (async () => {
                     try {
                         await new Promise(resolve => setTimeout(resolve, 2000));
