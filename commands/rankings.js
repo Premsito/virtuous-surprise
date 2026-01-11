@@ -180,11 +180,31 @@ module.exports = {
             }
 
             // Delete previous messages in the channel (clean slate)
-            const messages = await channel.messages.fetch({ limit: 100 });
-            await channel.bulkDelete(messages).catch(() => {
-                // If bulk delete fails, delete one by one
-                messages.forEach(msg => msg.delete().catch(() => {}));
-            });
+            // Fetch only recent messages (50 limit to reduce load)
+            const messages = await channel.messages.fetch({ limit: 50 });
+            
+            // Try bulk delete first (works for messages < 14 days old)
+            try {
+                await channel.bulkDelete(messages, true);
+            } catch (bulkDeleteError) {
+                // If bulk delete fails, delete individually with rate limiting
+                console.log('Bulk delete failed, deleting messages individually...');
+                let deleteCount = 0;
+                const maxIndividualDeletes = 20; // Limit individual deletes to prevent rate limits
+                
+                for (const [, msg] of messages) {
+                    if (deleteCount >= maxIndividualDeletes) break;
+                    
+                    try {
+                        await msg.delete();
+                        deleteCount++;
+                        // Small delay to avoid rate limits
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    } catch (deleteError) {
+                        // Silently continue if individual delete fails
+                    }
+                }
+            }
 
             // Display new rankings
             await this.displayRankings(channel);
