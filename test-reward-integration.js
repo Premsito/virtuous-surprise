@@ -3,7 +3,7 @@
  * This test simulates a user leveling up and shows the rewards they would receive
  */
 
-const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
+const { calculateLevelReward, formatRewardEmbed, getMilestoneTreasure } = require('./utils/rewardHelper');
 
 console.log('🎮 Simulating Level-Up Progression\n');
 console.log('══════════════════════════════════════════════════════════════════\n');
@@ -87,9 +87,10 @@ const exampleMilestones = [
 
 exampleMilestones.forEach(example => {
     const reward = calculateLevelReward(example.level);
+    const treasure = getMilestoneTreasure(example.level);
     console.log(`   Level ${example.level}: ${example.description}`);
     console.log(`   ├─ Treasure: ${reward.name}`);
-    console.log(`   ├─ LC Range: ${getMilestoneTreasureRange(example.level)}`);
+    console.log(`   ├─ LC Range: ${treasure.minLC}-${treasure.maxLC} LC`);
     if (reward.boost) {
         console.log(`   └─ Bonus: x${reward.boost.multiplier} ${reward.boost.type.toUpperCase()} Boost for 1 hour`);
     } else {
@@ -97,15 +98,6 @@ exampleMilestones.forEach(example => {
     }
     console.log('');
 });
-
-function getMilestoneTreasureRange(level) {
-    const { getMilestoneTreasure } = require('./utils/rewardHelper');
-    const treasure = getMilestoneTreasure(level);
-    if (treasure) {
-        return `${treasure.minLC}-${treasure.maxLC} LC`;
-    }
-    return 'N/A';
-}
 
 console.log('══════════════════════════════════════════════════════════════════\n');
 console.log('✅ Integration Test Complete!\n');

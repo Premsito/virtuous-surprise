@@ -48,44 +48,28 @@ function getMilestoneTreasure(level) {
                 duration: 3600 // 1 hour in seconds
             }
         };
-    } else if (level === 20) {
+    } else if (level % 5 === 0) {
+        // For levels 15, 20, 25, 30, etc. - legendary treasures
+        const tier = Math.floor(level / 5);
+        
+        // Base values for legendary treasures (levels 15-20)
+        const baseMinLC = 300;
+        const baseMaxLC = 400;
+        
+        // Scale up for levels beyond 20 (tier > 4)
+        const tierDiff = Math.max(0, tier - 4);
+        
         return {
             name: 'Trésor légendaire',
-            minLC: 300,
-            maxLC: 400,
+            minLC: baseMinLC + tierDiff * 50,
+            maxLC: baseMaxLC + tierDiff * 75,
             boost: {
-                type: 'lc',
+                // Alternate between lc and xp boosts: odd tiers get lc, even get xp
+                type: tier % 2 === 1 ? 'lc' : 'xp',
                 multiplier: 2,
-                duration: 3600 // 1 hour in seconds
+                duration: 3600
             }
         };
-    } else if (level % 5 === 0) {
-        // For levels 15, 25, 30, etc. - scale the rewards
-        const tier = Math.floor(level / 5);
-        if (tier === 3) { // Level 15
-            return {
-                name: 'Trésor légendaire',
-                minLC: 300,
-                maxLC: 400,
-                boost: {
-                    type: 'lc',
-                    multiplier: 2,
-                    duration: 3600
-                }
-            };
-        } else if (tier >= 4) { // Level 20+
-            // Scale up for higher levels
-            return {
-                name: 'Trésor légendaire',
-                minLC: 300 + (tier - 4) * 50,
-                maxLC: 400 + (tier - 4) * 75,
-                boost: {
-                    type: tier % 2 === 0 ? 'xp' : 'lc',
-                    multiplier: 2,
-                    duration: 3600
-                }
-            };
-        }
     }
     
     return null;
@@ -125,6 +109,8 @@ function calculateLevelReward(level) {
         };
     } else {
         // Odd levels: Boost (alternating between XP and LC)
+        // Pattern: levels 1,9,17,25... get XP boost, levels 3,7,11,15,19,23... get LC boost
+        // This is achieved by: (level % 4 === 1) gives XP, otherwise LC
         const boostType = (level % 4 === 1) ? 'xp' : 'lc';
         return {
             type: 'boost',

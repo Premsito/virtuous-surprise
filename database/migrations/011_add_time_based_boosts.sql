@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS active_boosts (
     multiplier INTEGER NOT NULL DEFAULT 2, -- typically 2 for x2
     expires_at TIMESTAMP NOT NULL,
     activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Create index for efficient querying
