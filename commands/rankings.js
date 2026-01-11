@@ -3,6 +3,13 @@ const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
 
+// Error message constants
+const ERROR_MESSAGES = {
+    CRITICAL_DISPLAY_ERROR: 'Critical error in ranking display:',
+    USER_ERROR_MESSAGE: 'Une erreur critique est survenue. Contactez un administrateur.',
+    USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
+};
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -111,13 +118,13 @@ module.exports = {
             console.log('✅ All rankings embeds sent successfully');
 
         } catch (error) {
-            console.error('Critical error in ranking display:', error);
+            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
             console.error('   Channel ID:', channel?.id);
             console.error('   Stack:', error.stack);
             
             // Send helpful error message to the channel
             try {
-                await channel.send("Une erreur critique est survenue. Contactez un administrateur.");
+                await channel.send(ERROR_MESSAGES.USER_ERROR_MESSAGE);
             } catch (sendError) {
                 console.error('   Failed to send error message to channel:', sendError.message);
             }
@@ -274,20 +281,12 @@ module.exports = {
             try {
                 const testMessage = await channel.send("Test: Classement affichage fonctionnel.");
                 console.log('   ✅ Test message sent successfully');
-                // Delete the test message after a short delay using a self-contained async function
-                // Note: This is intentionally a floating promise - we don't want to block on cleanup
-                (async () => {
-                    try {
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        await testMessage.delete();
-                        console.log('   🧹 Test message cleaned up');
-                    } catch (deleteError) {
-                        console.log('   ⚠️ Could not delete test message:', deleteError.message);
-                    }
-                })().catch(err => {
-                    // Catch any unexpected errors to prevent unhandled promise rejection
-                    console.log('   ⚠️ Unexpected error during test message cleanup:', err.message);
-                });
+                // Delete the test message after a short delay (simplified pattern)
+                setTimeout(() => { 
+                    testMessage.delete().catch((err) => {
+                        console.log('   ⚠️ Could not delete test message:', err.message);
+                    });
+                }, 2000);
             } catch (testError) {
                 console.error('   ❌ Failed to send test message:', testError.message);
                 throw new Error(`Cannot send messages to channel ${rankingsChannelId}: ${testError.message}`);
@@ -331,7 +330,7 @@ module.exports = {
             
             console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
-            console.error('Critical error in ranking display:', error.message);
+            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error.message);
             console.error('   Channel ID:', config.channels.rankings);
             console.error('   Stack:', error.stack);
             
@@ -346,7 +345,7 @@ module.exports = {
             // Try to send error notification to the channel if possible
             try {
                 if (channel) {
-                    await channel.send("Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.");
+                    await channel.send(ERROR_MESSAGES.USER_UPDATE_ERROR_MESSAGE);
                 }
             } catch (notifyError) {
                 console.error('   Could not send error notification to channel:', notifyError.message);
