@@ -711,9 +711,6 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'niveau') {
             const command = client.commands.get('niveau');
             await command.execute(message, args);
-        } else if (commandName === 'niveaux') {
-            const command = client.commands.get('niveau');
-            await command.executeNiveaux(message, args);
         } else if (commandName === 'giveaway') {
             const command = client.commands.get('giveaway');
             await command.execute(message, args);
