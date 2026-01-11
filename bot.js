@@ -4,6 +4,7 @@ const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
 const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG } = require('./utils/xpHelper');
+const { generateLevelUpCard } = require('./utils/levelUpCardHelper');
 
 // Log npm configuration for debugging deployment issues
 console.log('🔍 NPM Configuration Debug:');
@@ -223,16 +224,22 @@ client.once('clientReady', async () => {
                                     // Give trésor reward for level up
                                     await db.addInventoryItem(userId, 'tresor', 1);
                                     
-                                    // Send notification to dedicated level up channel
+                                    // Send card-based notification to dedicated level up channel
                                     const levelUpChannelId = config.channels.levelUpNotification;
                                     try {
                                         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                                         if (levelUpChannel) {
-                                            await levelUpChannel.send(
-                                                `🎉 **Bravo <@${userId}>** 🎉\n` +
-                                                `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
-                                                `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
-                                            );
+                                            const card = await generateLevelUpCard({
+                                                username: userInVoice.user.username,
+                                                avatarURL: userInVoice.user.displayAvatarURL({ extension: 'png', size: 256 }),
+                                                level: newLevel,
+                                                xp: updatedUser.xp,
+                                                reward: 'Trésor 🗝️'
+                                            });
+                                            await levelUpChannel.send({
+                                                content: `🎉 **Bravo <@${userId}>** 🎉`,
+                                                files: [card]
+                                            });
                                         }
                                     } catch (channelError) {
                                         console.error('Error sending level up notification to channel:', channelError.message);
@@ -533,16 +540,22 @@ client.on('messageReactionAdd', async (reaction, user) => {
                 // Give trésor reward for level up
                 await db.addInventoryItem(authorId, 'tresor', 1);
                 
-                // Send notification to dedicated level up channel
+                // Send card-based notification to dedicated level up channel
                 const levelUpChannelId = config.channels.levelUpNotification;
                 try {
                     const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                     if (levelUpChannel) {
-                        await levelUpChannel.send(
-                            `🎉 **Bravo <@${authorId}>** 🎉\n` +
-                            `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
-                            `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
-                        );
+                        const card = await generateLevelUpCard({
+                            username: messageAuthor.username,
+                            avatarURL: messageAuthor.displayAvatarURL({ extension: 'png', size: 256 }),
+                            level: newLevel,
+                            xp: updatedUser.xp,
+                            reward: 'Trésor 🗝️'
+                        });
+                        await levelUpChannel.send({
+                            content: `🎉 **Bravo <@${authorId}>** 🎉`,
+                            files: [card]
+                        });
                     }
                 } catch (channelError) {
                     console.error('Error sending level up notification to channel:', channelError.message);
@@ -603,16 +616,22 @@ client.on('messageCreate', async (message) => {
                 
                 // Notify user about level up
                 try {
-                    // Send notification to dedicated level up channel
+                    // Send card-based notification to dedicated level up channel
                     const levelUpChannelId = config.channels.levelUpNotification;
                     try {
                         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
                         if (levelUpChannel) {
-                            await levelUpChannel.send(
-                                `🎉 **Bravo <@${userId}>** 🎉\n` +
-                                `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
-                                `💝 Tu reçois un **Trésor 🗝️**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
-                            );
+                            const card = await generateLevelUpCard({
+                                username: message.author.username,
+                                avatarURL: message.author.displayAvatarURL({ extension: 'png', size: 256 }),
+                                level: newLevel,
+                                xp: updatedUser.xp,
+                                reward: 'Trésor 🗝️'
+                            });
+                            await levelUpChannel.send({
+                                content: `🎉 **Bravo <@${userId}>** 🎉`,
+                                files: [card]
+                            });
                         }
                     } catch (channelError) {
                         console.error('Error sending level up notification to channel:', channelError.message);

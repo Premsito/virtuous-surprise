@@ -7,6 +7,8 @@
 
 const { db } = require('../database/db');
 const { getGameXP, getLevelFromXP } = require('./xpHelper');
+const { generateLevelUpCard } = require('./levelUpCardHelper');
+const config = require('../config.json');
 
 /**
  * Grant XP for game participation and check for level up
@@ -38,11 +40,28 @@ async function grantGameXP(userId, username, result, message = null) {
             const leveledUp = newLevel > oldLevel;
             if (leveledUp) {
                 await db.updateLevel(userId, newLevel);
+                // Give trésor reward for level up
+                await db.addInventoryItem(userId, 'tresor', 1);
                 
-                // Send level up notification if message is provided
-                if (message) {
+                // Send card-based level up notification to dedicated channel
+                if (message && message.client) {
                     try {
-                        await message.channel.send(`🎉 <@${userId}> est passé au niveau **${newLevel}** !`);
+                        const levelUpChannelId = config.channels.levelUpNotification;
+                        const levelUpChannel = await message.client.channels.fetch(levelUpChannelId);
+                        if (levelUpChannel) {
+                            const member = await message.guild.members.fetch(userId);
+                            const card = await generateLevelUpCard({
+                                username: member.user.username,
+                                avatarURL: member.user.displayAvatarURL({ extension: 'png', size: 256 }),
+                                level: newLevel,
+                                xp: updatedUser.xp,
+                                reward: 'Trésor 🗝️'
+                            });
+                            await levelUpChannel.send({
+                                content: `🎉 **Bravo <@${userId}>** 🎉`,
+                                files: [card]
+                            });
+                        }
                     } catch (error) {
                         console.error('Error sending level up notification:', error.message);
                     }
