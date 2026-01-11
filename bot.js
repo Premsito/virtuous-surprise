@@ -49,6 +49,7 @@ const game007Command = require('./commands/007');
 const sacCommand = require('./commands/sac');
 const niveauCommand = require('./commands/niveau');
 const giveawayCommand = require('./commands/giveaway');
+const rankingsCommand = require('./commands/rankings');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -68,6 +69,8 @@ client.commands.set(game007Command.name, game007Command);
 client.commands.set(sacCommand.name, sacCommand);
 client.commands.set(niveauCommand.name, niveauCommand);
 client.commands.set(giveawayCommand.name, giveawayCommand);
+client.commands.set(rankingsCommand.name, rankingsCommand);
+
 
 // Store invites for tracking
 const invites = new Map();
@@ -321,6 +324,27 @@ client.once('clientReady', async () => {
                 }
             }
         }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
+        
+        // Start rankings auto-update (every 15 minutes)
+        setInterval(async () => {
+            try {
+                await rankingsCommand.updateRankingsChannel(client);
+            } catch (error) {
+                if (shouldLogError('rankings_update')) {
+                    console.error('Error updating rankings (throttled):', error.message);
+                }
+            }
+        }, 15 * 60 * 1000); // 15 minutes in milliseconds
+        
+        // Initial rankings update
+        setTimeout(async () => {
+            try {
+                await rankingsCommand.updateRankingsChannel(client);
+                console.log('✅ Initial rankings displayed');
+            } catch (error) {
+                console.error('Error displaying initial rankings:', error.message);
+            }
+        }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {
@@ -740,6 +764,9 @@ client.on('messageCreate', async (message) => {
             await command.execute(message, args);
         } else if (commandName === 'giveaway') {
             const command = client.commands.get('giveaway');
+            await command.execute(message, args);
+        } else if (commandName === 'rankings' || commandName === 'classement') {
+            const command = client.commands.get('rankings');
             await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
