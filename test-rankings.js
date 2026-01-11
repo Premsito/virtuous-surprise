@@ -114,4 +114,3 @@ testRankingsStructure()
         console.error('\n💥 Rankings structure test failed:', error);
         process.exit(1);
     });
-
