@@ -28,6 +28,15 @@ A feature-rich Discord bot for managing virtual coins (LC), invite tracking, gam
 - Node.js 16.x or higher
 - PostgreSQL database
 - Discord bot token
+- System dependencies for canvas (see below)
+
+**Canvas Dependencies:**
+For local development, you may need to install system libraries for the `canvas` package:
+- **Ubuntu/Debian**: `sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev`
+- **macOS**: `brew install pkg-config cairo pango libpng jpeg giflib librsvg`
+- **Windows**: See [node-canvas wiki](https://github.com/Automattic/node-canvas/wiki/Installation:-Windows)
+
+Note: Railway and most cloud platforms have these dependencies pre-installed.
 
 ### Environment Variables
 
