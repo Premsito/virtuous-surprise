@@ -8,10 +8,10 @@ This implementation adds a comprehensive ranking system to display the top users
 ### 1. Podium Displays
 - **LC Podium**: Shows the top 3 users by LC balance with medals (🥇, 🥈, 🥉)
 - **Levels Podium**: Shows the top 3 users by level with medals (🥇, 🥈, 🥉)
-- **Profile Pictures**: 
-  - 🥇 1st place: Displayed as the main thumbnail (largest)
-  - 🥈 2nd place: Listed with medal in description
-  - 🥉 3rd place: Listed with medal in description
+- **Profile Pictures (Variable Sizes)**: 
+  - 🥇 1st place: 128px - Displayed as the main thumbnail (top-right)
+  - 🥈 2nd place: 96px - Displayed as the embed image (below description)
+  - 🥉 3rd place: 64px - Displayed as author icon (top-left)
 
 ### 2. Rankings Tables
 - **LC Rankings**: Side-by-side table showing top 10 users by LC balance
@@ -22,10 +22,11 @@ This implementation adds a comprehensive ranking system to display the top users
   - Username and corresponding value (LC or Level)
 
 ### 3. Auto-Refresh Mechanism
-- Rankings automatically update every **15 minutes**
+- Rankings automatically update every **5 minutes**
 - Updates are posted in the configured rankings channel: `#1460012957458235618`
 - Initial rankings are displayed 5 seconds after bot startup
 - Previous messages in the channel are cleared before posting new rankings
+- Comprehensive debug logging for troubleshooting
 
 ## Commands
 
@@ -97,9 +98,17 @@ Modified `bot.js`:
    - Added command handlers for `!rankings` and `!classement`
 
 2. **Auto-Refresh Setup**
-   - Interval set for 15 minutes (900,000 ms)
+   - Interval set for 5 minutes (300,000 ms)
    - Initial update triggered 5 seconds after bot ready
    - Error throttling to prevent log spam
+   - Comprehensive debug logging for troubleshooting
+   
+3. **Enhanced Logging**
+   - Channel verification and permission checks
+   - User avatar fetching logs
+   - Embed creation progress logs
+   - Discord API error details (error codes, HTTP status)
+   - Stack trace logging for debugging
 
 3. **Configuration**
    - Added `rankings` channel ID to `config.json`
@@ -184,9 +193,78 @@ Added to `config.json`:
 2. **Discord API Errors**: 
    - User fetch failures handled gracefully
    - Falls back to stored username if user can't be fetched
+   - Logs error codes and HTTP status for debugging
 3. **Channel Errors**: Logged with channel ID for debugging
 4. **Message Deletion Errors**: Silently caught (permissions issue)
 5. **Error Throttling**: Prevents log spam for recurring errors
+6. **Permission Verification**: 
+   - Checks for ViewChannel, SendMessages, EmbedLinks, ManageMessages
+   - Logs missing permissions with clear error messages
+
+## Debug Logs
+
+The bot now includes comprehensive debug logging for rankings updates:
+
+### Bot Startup Logs
+```
+🎯 Displaying initial rankings...
+✅ Initial rankings displayed successfully
+```
+
+### Scheduled Update Logs
+```
+🔄 Starting scheduled rankings update...
+✅ Scheduled rankings update completed
+```
+
+### Rankings Channel Logs
+```
+🔍 Attempting to update rankings in channel: 1460012957458235618
+📡 Fetching channel 1460012957458235618...
+✅ Channel fetched successfully: #rankings
+✅ Bot has all required permissions (View, Send, Embed, Manage)
+🧹 Cleaning old messages from rankings channel...
+   - Found 12 messages to clean
+   ✅ Bulk deleted 12 messages
+```
+
+### Rankings Display Logs
+```
+📊 Fetching rankings data for channel: 1460012957458235618
+   - Fetched 10 LC rankings
+   - Fetched 10 level rankings
+💰 Creating LC Podium embed...
+   ✓ Fetched user Username1 (🥇) for podium
+   🖼️ Set 1st place avatar: Username1 (128px thumbnail)
+   ✓ Fetched user Username2 (🥈) for podium
+   🖼️ Set 2nd place avatar: Username2 (96px image)
+   ✓ Fetched user Username3 (🥉) for podium
+   🖼️ Set 3rd place avatar: Username3 (64px author icon)
+⭐ Creating Levels Podium embed...
+📊 Creating LC Rankings table...
+🏆 Creating Levels Rankings table...
+📤 Sending LC podium embed...
+📤 Sending Levels podium embed...
+📤 Sending rankings tables (side by side)...
+✅ All rankings embeds sent successfully
+✅ Rankings successfully updated in channel #rankings (1460012957458235618)
+```
+
+### Error Logs
+```
+❌ Error updating rankings channel: <error message>
+   Channel ID: 1460012957458235618
+   Discord API Error Code: 50001
+   HTTP Status: 403
+   Stack: <stack trace>
+```
+
+### Permission Error Example
+```
+❌ Missing required permissions in channel 1460012957458235618:
+   - SendMessages
+   - EmbedLinks
+```
 
 ## Testing
 
@@ -218,7 +296,8 @@ Modify the interval in `bot.js`:
 ```javascript
 setInterval(async () => {
     await rankingsCommand.updateRankingsChannel(client);
-}, 15 * 60 * 1000); // Change this value (in milliseconds)
+}, 5 * 60 * 1000); // Change this value (in milliseconds)
+// Current: 5 minutes (300,000 ms)
 ```
 
 ### Changing Rankings Channel
