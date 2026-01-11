@@ -22,3 +22,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Test output files
+test-level-up-card-*.png
