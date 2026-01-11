@@ -139,6 +139,8 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, reward =
         }
     } catch (error) {
         console.error('Error sending level up card:', error.message);
+        console.error('  Channel ID:', config.channels.levelUpNotification);
+        console.error('  User:', userId);
         // Fallback to text notification
         try {
             const levelUpChannel = await client.channels.fetch(config.channels.levelUpNotification);

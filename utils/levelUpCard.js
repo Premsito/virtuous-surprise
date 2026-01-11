@@ -42,15 +42,15 @@ async function generateLevelUpCard(user, level, totalXP, reward = 'Trésor 🗝�
     ctx.textAlign = 'center';
     ctx.fillText('🎉 FÉLICITATIONS 🎉', width / 2, 70);
     
+    // Avatar positioning constants
+    const avatarSize = 100;
+    const avatarX = 80;
+    const avatarY = 120;
+    
     // Load and draw user avatar (circular)
     try {
-        const avatarURL = user.displayAvatarURL({ extension: 'png', size: 128 });
+        const avatarURL = user.displayAvatarURL({ extension: 'png', size: 256 });
         const avatar = await loadImage(avatarURL);
-        
-        // Draw circular avatar
-        const avatarSize = 100;
-        const avatarX = 80;
-        const avatarY = 120;
         
         ctx.save();
         ctx.beginPath();
@@ -68,10 +68,10 @@ async function generateLevelUpCard(user, level, totalXP, reward = 'Trésor 🗝�
         ctx.stroke();
     } catch (error) {
         console.error('Error loading avatar:', error);
-        // Draw placeholder if avatar fails to load
+        // Draw placeholder if avatar fails to load (using calculated positions)
         ctx.fillStyle = '#7289DA';
         ctx.beginPath();
-        ctx.arc(130, 170, 50, 0, Math.PI * 2);
+        ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         ctx.fill();
     }
     
@@ -100,36 +100,41 @@ async function generateLevelUpCard(user, level, totalXP, reward = 'Trésor 🗝�
     ctx.fillText(`📊 XP: ${progress.currentLevelXP} / ${progress.nextLevelXP}`, textX, textY);
     textY += lineHeight + 10;
     
-    // Progress bar
-    const barX = textX;
-    const barY = textY - 10;
-    const barWidth = 350;
-    const barHeight = 25;
-    const barProgress = progress.currentLevelXP / progress.nextLevelXP;
+    // Progress bar (only if nextLevelXP is valid)
+    if (progress.nextLevelXP > 0) {
+        const barX = textX;
+        const barY = textY - 10;
+        const barWidth = 350;
+        const barHeight = 25;
+        const barProgress = progress.currentLevelXP / progress.nextLevelXP;
     
-    // Progress bar background
-    ctx.fillStyle = '#2C2F33';
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-    
-    // Progress bar fill with gradient
-    const progressGradient = ctx.createLinearGradient(barX, barY, barX + barWidth * barProgress, barY);
-    progressGradient.addColorStop(0, '#57F287');
-    progressGradient.addColorStop(1, '#FFD700');
-    ctx.fillStyle = progressGradient;
-    ctx.fillRect(barX, barY, barWidth * barProgress, barHeight);
-    
-    // Progress bar border
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(barX, barY, barWidth, barHeight);
-    
-    // Progress percentage text
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${progress.progress}%`, barX + barWidth / 2, barY + barHeight / 2 + 6);
-    
-    textY += barHeight + 25;
+        // Progress bar background
+        ctx.fillStyle = '#2C2F33';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Progress bar fill with gradient
+        const progressGradient = ctx.createLinearGradient(barX, barY, barX + barWidth * barProgress, barY);
+        progressGradient.addColorStop(0, '#57F287');
+        progressGradient.addColorStop(1, '#FFD700');
+        ctx.fillStyle = progressGradient;
+        ctx.fillRect(barX, barY, barWidth * barProgress, barHeight);
+        
+        // Progress bar border
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        // Progress percentage text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${progress.progress}%`, barX + barWidth / 2, barY + barHeight / 2 + 6);
+        
+        textY += barHeight + 25;
+    } else {
+        // If at max level, skip progress bar
+        textY += 15;
+    }
     
     // Reward section
     ctx.textAlign = 'center';
