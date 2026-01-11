@@ -43,7 +43,7 @@ Both commands manually trigger a rankings display in the current channel. **This
 - All command executions are logged with user information for audit purposes
 
 **Fallback Behavior:**
-- If no ranking data is available, the command responds with: "Aucune donnée de classement disponible pour le moment."
+- If no ranking data is available, the command responds with: "Aucun classement n'est disponible pour l'instant."
 - The command message is automatically deleted to keep the channel clean (admin commands only)
 
 ### Auto-Refresh Feature

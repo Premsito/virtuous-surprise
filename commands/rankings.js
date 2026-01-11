@@ -50,7 +50,7 @@ module.exports = {
             // Check if there's any ranking data available
             if (topLC.length === 0 && topLevels.length === 0) {
                 console.log(`   ⚠️ No ranking data available`);
-                await channel.send('❌ Aucune donnée de classement disponible pour le moment.');
+                await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return;
             }
 
