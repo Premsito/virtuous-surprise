@@ -30,15 +30,24 @@ This implementation adds a comprehensive ranking system to display the top users
 
 ## Commands
 
-### User Command
+### Admin Command
 ```
 !rankings
 !classement
 ```
-Both commands manually trigger a rankings display in the current channel. The command message is automatically deleted to keep the channel clean.
+Both commands manually trigger a rankings display in the current channel. **This command is restricted to administrators only** for security and spam prevention.
 
-### Admin Note
-The auto-refresh feature posts directly to the configured channel ID in `config.json` under `channels.rankings`.
+**Permission Check:**
+- Only users specified in `utils/adminHelper.js` can execute this command
+- Non-admin users receive an error message: "Cette commande est réservée aux administrateurs."
+- All command executions are logged with user information for audit purposes
+
+**Fallback Behavior:**
+- If no ranking data is available, the command responds with: "Aucune donnée de classement disponible pour le moment."
+- The command message is automatically deleted to keep the channel clean (admin commands only)
+
+### Auto-Refresh Feature
+The auto-refresh feature posts directly to the configured channel ID in `config.json` under `channels.rankings` and does not require manual intervention.
 
 ## Technical Implementation
 
@@ -64,11 +73,15 @@ Located in `commands/rankings.js`:
 
 1. **execute(message, args)**
    - Handles manual command invocation
-   - Deletes the command message for cleanliness
+   - **Checks admin permissions using `isAdmin()` helper**
+   - Logs all command attempts with user information
+   - Returns error message for non-admin users
+   - Deletes the command message for cleanliness (admin only)
 
 2. **displayRankings(channel)**
    - Core function that creates and sends all ranking embeds
    - Fetches top users from database
+   - **Checks for empty data and sends fallback message if needed**
    - Creates 4 embeds: LC Podium, Levels Podium, LC Table, Levels Table
 
 3. **createPodiumEmbed(client, topUsers, type, title, color, valueFormatter)**
@@ -189,15 +202,17 @@ Added to `config.json`:
 
 ## Error Handling
 
-1. **Database Errors**: Caught and logged, prevents bot crashes
-2. **Discord API Errors**: 
+1. **Permission Denied**: Non-admin users attempting to run the command receive a clear error message
+2. **No Data Available**: If both LC and Levels rankings are empty, displays a user-friendly fallback message
+3. **Database Errors**: Caught and logged, prevents bot crashes
+4. **Discord API Errors**: 
    - User fetch failures handled gracefully
    - Falls back to stored username if user can't be fetched
    - Logs error codes and HTTP status for debugging
-3. **Channel Errors**: Logged with channel ID for debugging
-4. **Message Deletion Errors**: Silently caught (permissions issue)
-5. **Error Throttling**: Prevents log spam for recurring errors
-6. **Permission Verification**: 
+5. **Channel Errors**: Logged with channel ID and user information for debugging
+6. **Message Deletion Errors**: Silently caught (permissions issue)
+7. **Error Throttling**: Prevents log spam for recurring errors
+8. **Permission Verification**: 
    - Checks for ViewChannel, SendMessages, EmbedLinks, ManageMessages
    - Logs missing permissions with clear error messages
 
@@ -230,6 +245,8 @@ The bot now includes comprehensive debug logging for rankings updates:
 
 ### Rankings Display Logs
 ```
+📊 Rankings command called by Username (123456789)
+   ✅ Permission granted - displaying rankings
 📊 Fetching rankings data for channel: 1460012957458235618
    - Fetched 10 LC rankings
    - Fetched 10 level rankings
@@ -247,7 +264,22 @@ The bot now includes comprehensive debug logging for rankings updates:
 📤 Sending Levels podium embed...
 📤 Sending rankings tables (side by side)...
 ✅ All rankings embeds sent successfully
+   ✅ Rankings command completed successfully
 ✅ Rankings successfully updated in channel #rankings (1460012957458235618)
+```
+
+### Permission Denied Logs
+```
+📊 Rankings command called by RegularUser (987654321)
+   ❌ Permission denied - user is not an admin
+```
+
+### No Data Available Logs
+```
+📊 Fetching rankings data for channel: 1460012957458235618
+   - Fetched 0 LC rankings
+   - Fetched 0 level rankings
+   ⚠️ No ranking data available
 ```
 
 ### Error Logs
@@ -268,16 +300,26 @@ The bot now includes comprehensive debug logging for rankings updates:
 
 ## Testing
 
-Run the test suite:
+Run the test suites:
 ```bash
+# Test command structure and embed creation
 node test-rankings.js
+
+# Test admin permission checking
+node test-rankings-permissions.js
 ```
 
-This test verifies:
+**Structure Test** verifies:
 - Command structure and required functions
 - Embed creation with mock data
 - Medal assignment logic
 - Description formatting
+
+**Permission Test** verifies:
+- Admin user identification
+- Permission checking in execute function
+- Non-admin user rejection
+- Appropriate error messages
 
 ## Future Enhancements
 
@@ -320,6 +362,7 @@ const topLevels = await db.getTopLevels(20);
 ### New Files:
 - `commands/rankings.js` - Main rankings command implementation
 - `test-rankings.js` - Test suite for rankings functionality
+- `test-rankings-permissions.js` - Test suite for admin permission checking
 - `RANKINGS_IMPLEMENTATION.md` - This documentation
 
 ### Modified Files:
@@ -337,7 +380,10 @@ const topLevels = await db.getTopLevels(20);
 
 ## Security
 
+- **Admin-only command execution** prevents spam and unauthorized use
+- Command execution logged with user information for audit trail
 - No sensitive data exposed in rankings
 - User IDs used internally but not displayed
-- Command deletion prevents message spam
+- Command deletion prevents message spam (admin only)
 - Channel clearing requires proper bot permissions
+- Fallback messages prevent confusion when data is unavailable

@@ -1,18 +1,33 @@
 const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
+const { isAdmin } = require('../utils/adminHelper');
 
 module.exports = {
     name: 'rankings',
-    description: 'Display LC and Level rankings with podiums',
+    description: 'Display LC and Level rankings with podiums (Admin only)',
     
     async execute(message, args) {
         try {
+            console.log(`📊 Rankings command called by ${message.author.username} (${message.author.id})`);
+            
+            // Check if user has admin permissions
+            if (!isAdmin(message.author.id)) {
+                console.log(`   ❌ Permission denied - user is not an admin`);
+                return message.reply('❌ Cette commande est réservée aux administrateurs.');
+            }
+            
+            console.log(`   ✅ Permission granted - displaying rankings`);
             await this.displayRankings(message.channel);
+            
             // Delete the command message to keep the channel clean
             await message.delete().catch(() => {});
+            console.log(`   ✅ Rankings command completed successfully`);
         } catch (error) {
-            console.error('Error displaying rankings:', error);
+            console.error('❌ Error displaying rankings:', error);
+            console.error('   User:', message.author.username);
+            console.error('   Channel:', message.channel.id);
+            console.error('   Stack:', error.stack);
             await message.reply('❌ Une erreur est survenue lors de l\'affichage des classements.');
         }
     },
@@ -31,6 +46,13 @@ module.exports = {
             
             console.log(`   - Fetched ${topLC.length} LC rankings`);
             console.log(`   - Fetched ${topLevels.length} level rankings`);
+            
+            // Check if there's any ranking data available
+            if (topLC.length === 0 && topLevels.length === 0) {
+                console.log(`   ⚠️ No ranking data available`);
+                await channel.send('❌ Aucune donnée de classement disponible pour le moment.');
+                return;
+            }
 
             // Create LC Podium Embed
             console.log('💰 Creating LC Podium embed...');
