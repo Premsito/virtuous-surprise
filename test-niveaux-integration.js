@@ -17,7 +17,7 @@ function createMockMessage(channelId, userId, username) {
         author: { 
             id: userId, 
             username: username,
-            displayAvatarURL: () => 'https://example.com/avatar.png'
+            displayAvatarURL: () => 'https://cdn.discordapp.com/avatars/mock/avatar.png'
         }
     };
 }

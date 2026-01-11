@@ -93,11 +93,8 @@ test('Niveaux description at 50 XP shows correct format', () => {
     assertContains(desc, 'Encore **50 XP** nécessaires', 'Contains XP needed');
 });
 
-// Test niveaux description format at 1215 XP (from the example in requirements)
-// Level calculation: 100 + 200 + 300 + 400 + 500 + 600 + 700 + 800 + 900 + 1000 + 1100 = 6600 (level 12)
-// Actually: 100 (L1) + 200 (L2) + 300 (L3) + 400 (L4) + 500 (L5) + 600 (L6) = 2100 (L7)
-// Let's calculate for level 12: 100+200+300+400+500+600+700+800+900+1000+1100+1200 = 7800
-// For 1215 XP, we get: 100+200+300+400+500 = 1500 (need 1500 for L6), so 1215 is in L5
+// Test niveaux description format at 1215 XP
+// With 1215 XP: User is at Level 5 with 215/500 XP progress
 test('Niveaux description at 1215 XP shows progress', () => {
     const desc = formatNiveauxDescription(1215);
     const progress = getXPProgress(1215);
