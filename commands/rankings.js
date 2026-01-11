@@ -284,7 +284,10 @@ module.exports = {
                     } catch (deleteError) {
                         console.log('   ⚠️ Could not delete test message:', deleteError.message);
                     }
-                })();
+                })().catch(err => {
+                    // Catch any unexpected errors to prevent unhandled promise rejection
+                    console.log('   ⚠️ Unexpected error during test message cleanup:', err.message);
+                });
             } catch (testError) {
                 console.error('   ❌ Failed to send test message:', testError.message);
                 throw new Error(`Cannot send messages to channel ${rankingsChannelId}: ${testError.message}`);
