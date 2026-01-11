@@ -171,6 +171,14 @@ const db = {
         return result.rows;
     },
 
+    async getTopLC(limit = 10) {
+        const result = await pool.query(
+            'SELECT user_id, username, balance FROM users ORDER BY balance DESC LIMIT $1',
+            [limit]
+        );
+        return result.rows;
+    },
+
     // Message and voice tracking
     async incrementMessageCount(userId, count = 1) {
         const result = await pool.query(
