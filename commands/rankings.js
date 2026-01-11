@@ -23,11 +23,17 @@ module.exports = {
      */
     async displayRankings(channel) {
         try {
+            console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
+            
             // Get top users
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
+            
+            console.log(`   - Fetched ${topLC.length} LC rankings`);
+            console.log(`   - Fetched ${topLevels.length} level rankings`);
 
             // Create LC Podium Embed
+            console.log('💰 Creating LC Podium embed...');
             const lcPodiumEmbed = await this.createPodiumEmbed(
                 channel.client,
                 topLC.slice(0, 3),
@@ -38,6 +44,7 @@ module.exports = {
             );
 
             // Create Levels Podium Embed
+            console.log('⭐ Creating Levels Podium embed...');
             const levelsPodiumEmbed = await this.createPodiumEmbed(
                 channel.client,
                 topLevels.slice(0, 3),
@@ -48,6 +55,7 @@ module.exports = {
             );
 
             // Create LC Rankings Table Embed
+            console.log('📊 Creating LC Rankings table...');
             const lcRankingsEmbed = this.createRankingsTableEmbed(
                 topLC,
                 '📊 Classement LC - Top 10',
@@ -56,6 +64,7 @@ module.exports = {
             );
 
             // Create Levels Rankings Table Embed
+            console.log('🏆 Creating Levels Rankings table...');
             const levelsRankingsEmbed = this.createRankingsTableEmbed(
                 topLevels,
                 '🏆 Classement Niveaux - Top 10',
@@ -64,12 +73,21 @@ module.exports = {
             );
 
             // Send the embeds
+            console.log('📤 Sending LC podium embed...');
             await channel.send({ embeds: [lcPodiumEmbed] });
+            
+            console.log('📤 Sending Levels podium embed...');
             await channel.send({ embeds: [levelsPodiumEmbed] });
+            
+            console.log('📤 Sending rankings tables (side by side)...');
             await channel.send({ embeds: [lcRankingsEmbed, levelsRankingsEmbed] });
+            
+            console.log('✅ All rankings embeds sent successfully');
 
         } catch (error) {
-            console.error('Error in displayRankings:', error);
+            console.error('❌ Error in displayRankings:', error);
+            console.error('   Channel ID:', channel?.id);
+            console.error('   Stack:', error.stack);
             throw error;
         }
     },
@@ -94,13 +112,16 @@ module.exports = {
         for (let i = 0; i < Math.min(3, topUsers.length); i++) {
             const user = topUsers[i];
             const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+            // Variable sizes: 🥇 128px, 🥈 96px, 🥉 64px
+            const avatarSize = i === 0 ? 128 : i === 1 ? 96 : 64;
             
             // Fetch user from Discord to get avatar
             let discordUser;
             try {
                 discordUser = await client.users.fetch(user.user_id);
+                console.log(`   ✓ Fetched user ${discordUser.username} (${medal}) for podium`);
             } catch (error) {
-                console.error(`Could not fetch user ${user.user_id}:`, error.message);
+                console.error(`   ⚠️ Could not fetch user ${user.user_id}:`, error.message);
             }
 
             const username = discordUser ? discordUser.username : user.username;
@@ -108,21 +129,35 @@ module.exports = {
 
             // Add to description with appropriate spacing based on position
             if (i === 0) {
-                // First place - larger spacing
+                // First place - larger spacing (128px avatar)
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    // Set the main thumbnail as 1st place user
-                    embed.setThumbnail(discordUser.displayAvatarURL({ size: 256, dynamic: true }));
+                    // Set the main thumbnail as 1st place user (128px)
+                    embed.setThumbnail(discordUser.displayAvatarURL({ size: 128, dynamic: true }));
+                    console.log(`   🖼️ Set 1st place avatar: ${username} (128px)`);
                 }
             } else if (i === 1) {
-                // Second place - medium spacing
+                // Second place - medium spacing (96px avatar)
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
+                if (discordUser) {
+                    // Set image as 2nd place user (96px)
+                    embed.setImage(discordUser.displayAvatarURL({ size: 96, dynamic: true }));
+                    console.log(`   🖼️ Set 2nd place avatar: ${username} (96px)`);
+                }
             } else {
-                // Third place - smaller spacing
+                // Third place - smaller spacing (64px avatar)
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
+                if (discordUser) {
+                    // Add 3rd place user avatar to footer (64px)
+                    embed.setFooter({ 
+                        text: `🥉 ${username}`,
+                        iconURL: discordUser.displayAvatarURL({ size: 64, dynamic: true })
+                    });
+                    console.log(`   🖼️ Set 3rd place avatar: ${username} (64px)`);
+                }
             }
         }
 
@@ -168,27 +203,51 @@ module.exports = {
     async updateRankingsChannel(client) {
         try {
             const rankingsChannelId = config.channels.rankings;
+            console.log(`🔍 Attempting to update rankings in channel: ${rankingsChannelId}`);
+            
             if (!rankingsChannelId) {
-                console.warn('⚠️ Rankings channel not configured');
+                console.error('❌ Rankings channel not configured in config.json');
                 return;
             }
 
+            console.log(`📡 Fetching channel ${rankingsChannelId}...`);
             const channel = await client.channels.fetch(rankingsChannelId);
+            
             if (!channel) {
-                console.error('❌ Could not fetch rankings channel');
+                console.error(`❌ Could not fetch rankings channel: ${rankingsChannelId}`);
+                console.error('   - Verify the channel ID is correct');
+                console.error('   - Ensure the bot has access to this channel');
                 return;
             }
+            
+            console.log(`✅ Channel fetched successfully: #${channel.name}`);
+            
+            // Verify bot permissions
+            const permissions = channel.permissionsFor(client.user);
+            const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks', 'ManageMessages'];
+            const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
+            
+            if (missingPermissions.length > 0) {
+                console.error(`❌ Missing required permissions in channel ${rankingsChannelId}:`);
+                missingPermissions.forEach(perm => console.error(`   - ${perm}`));
+                return;
+            }
+            
+            console.log('✅ Bot has all required permissions (View, Send, Embed, Manage)');
 
             // Delete previous messages in the channel (clean slate)
+            console.log('🧹 Cleaning old messages from rankings channel...');
             // Fetch only recent messages (50 limit to reduce load)
             const messages = await channel.messages.fetch({ limit: 50 });
+            console.log(`   - Found ${messages.size} messages to clean`);
             
             // Try bulk delete first (works for messages < 14 days old)
             try {
-                await channel.bulkDelete(messages, true);
+                const deleted = await channel.bulkDelete(messages, true);
+                console.log(`   ✅ Bulk deleted ${deleted.size} messages`);
             } catch (bulkDeleteError) {
                 // If bulk delete fails, delete individually with rate limiting
-                console.log('Bulk delete failed, deleting messages individually...');
+                console.log('   ⚠️ Bulk delete failed, deleting messages individually...');
                 let deleteCount = 0;
                 const maxIndividualDeletes = 20; // Limit individual deletes to prevent rate limits
                 
@@ -202,16 +261,29 @@ module.exports = {
                         await new Promise(resolve => setTimeout(resolve, 100));
                     } catch (deleteError) {
                         // Silently continue if individual delete fails
+                        console.log(`   ⚠️ Could not delete message ${msg.id}: ${deleteError.message}`);
                     }
                 }
+                console.log(`   ✅ Individually deleted ${deleteCount} messages`);
             }
 
             // Display new rankings
+            console.log('📊 Displaying new rankings...');
             await this.displayRankings(channel);
             
-            console.log(`✅ Rankings updated in channel ${rankingsChannelId}`);
+            console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
-            console.error('Error updating rankings channel:', error);
+            console.error('❌ Error updating rankings channel:', error.message);
+            console.error('   Channel ID:', config.channels.rankings);
+            console.error('   Stack:', error.stack);
+            
+            // Log Discord API errors specifically
+            if (error.code) {
+                console.error(`   Discord API Error Code: ${error.code}`);
+            }
+            if (error.httpStatus) {
+                console.error(`   HTTP Status: ${error.httpStatus}`);
+            }
         }
     }
 };

@@ -325,24 +325,29 @@ client.once('clientReady', async () => {
             }
         }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
         
-        // Start rankings auto-update (every 15 minutes)
+        // Start rankings auto-update (every 5 minutes)
         setInterval(async () => {
             try {
+                console.log('🔄 Starting scheduled rankings update...');
                 await rankingsCommand.updateRankingsChannel(client);
+                console.log('✅ Scheduled rankings update completed');
             } catch (error) {
                 if (shouldLogError('rankings_update')) {
-                    console.error('Error updating rankings (throttled):', error.message);
+                    console.error('❌ Error updating rankings (throttled):', error.message);
+                    console.error('   Stack:', error.stack);
                 }
             }
-        }, 15 * 60 * 1000); // 15 minutes in milliseconds
+        }, 5 * 60 * 1000); // 5 minutes in milliseconds
         
         // Initial rankings update
         setTimeout(async () => {
             try {
+                console.log('🎯 Displaying initial rankings...');
                 await rankingsCommand.updateRankingsChannel(client);
-                console.log('✅ Initial rankings displayed');
+                console.log('✅ Initial rankings displayed successfully');
             } catch (error) {
-                console.error('Error displaying initial rankings:', error.message);
+                console.error('❌ Error displaying initial rankings:', error.message);
+                console.error('   Stack:', error.stack);
             }
         }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
         
