@@ -229,6 +229,7 @@ module.exports = {
      * @param {Client} client - Discord client
      */
     async updateRankingsChannel(client) {
+        let channel = null;
         try {
             const rankingsChannelId = config.channels.rankings;
             console.log(`🔍 Attempting to update rankings in channel: ${rankingsChannelId}`);
@@ -239,7 +240,7 @@ module.exports = {
             }
 
             console.log(`📡 Fetching channel ${rankingsChannelId}...`);
-            const channel = await client.channels.fetch(rankingsChannelId);
+            channel = await client.channels.fetch(rankingsChannelId);
             
             // Detailed channel logging as requested in problem statement
             console.log("Channel fetched:", channel);
@@ -273,15 +274,16 @@ module.exports = {
             try {
                 const testMessage = await channel.send("Test: Classement affichage fonctionnel.");
                 console.log('   ✅ Test message sent successfully');
-                // Delete the test message after a short delay
-                setTimeout(async () => {
+                // Delete the test message after a short delay using a self-contained async function
+                (async () => {
                     try {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                         await testMessage.delete();
                         console.log('   🧹 Test message cleaned up');
                     } catch (deleteError) {
                         console.log('   ⚠️ Could not delete test message:', deleteError.message);
                     }
-                }, 2000);
+                })();
             } catch (testError) {
                 console.error('   ❌ Failed to send test message:', testError.message);
                 throw new Error(`Cannot send messages to channel ${rankingsChannelId}: ${testError.message}`);
@@ -339,7 +341,6 @@ module.exports = {
             
             // Try to send error notification to the channel if possible
             try {
-                const channel = await client.channels.fetch(config.channels.rankings);
                 if (channel) {
                     await channel.send("Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.");
                 }
