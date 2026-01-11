@@ -112,8 +112,6 @@ module.exports = {
         for (let i = 0; i < Math.min(3, topUsers.length); i++) {
             const user = topUsers[i];
             const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
-            // Variable sizes: 🥇 128px, 🥈 96px, 🥉 64px
-            const avatarSize = i === 0 ? 128 : i === 1 ? 96 : 64;
             
             // Fetch user from Discord to get avatar
             let discordUser;
@@ -129,34 +127,31 @@ module.exports = {
 
             // Add to description with appropriate spacing based on position
             if (i === 0) {
-                // First place - larger spacing (128px avatar)
+                // First place - 128px avatar as thumbnail
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    // Set the main thumbnail as 1st place user (128px)
                     embed.setThumbnail(discordUser.displayAvatarURL({ size: 128, dynamic: true }));
-                    console.log(`   🖼️ Set 1st place avatar: ${username} (128px)`);
+                    console.log(`   🖼️ Set 1st place avatar: ${username} (128px thumbnail)`);
                 }
             } else if (i === 1) {
-                // Second place - medium spacing (96px avatar)
+                // Second place - 96px avatar as image
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    // Set image as 2nd place user (96px)
                     embed.setImage(discordUser.displayAvatarURL({ size: 96, dynamic: true }));
-                    console.log(`   🖼️ Set 2nd place avatar: ${username} (96px)`);
+                    console.log(`   🖼️ Set 2nd place avatar: ${username} (96px image)`);
                 }
             } else {
-                // Third place - smaller spacing (64px avatar)
+                // Third place - 64px avatar in author section (alternative to footer)
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    // Add 3rd place user avatar to footer (64px)
-                    embed.setFooter({ 
-                        text: `🥉 ${username}`,
+                    embed.setAuthor({
+                        name: `🥉 ${username}`,
                         iconURL: discordUser.displayAvatarURL({ size: 64, dynamic: true })
                     });
-                    console.log(`   🖼️ Set 3rd place avatar: ${username} (64px)`);
+                    console.log(`   🖼️ Set 3rd place avatar: ${username} (64px author icon)`);
                 }
             }
         }

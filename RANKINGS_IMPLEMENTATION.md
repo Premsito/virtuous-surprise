@@ -9,9 +9,9 @@ This implementation adds a comprehensive ranking system to display the top users
 - **LC Podium**: Shows the top 3 users by LC balance with medals (🥇, 🥈, 🥉)
 - **Levels Podium**: Shows the top 3 users by level with medals (🥇, 🥈, 🥉)
 - **Profile Pictures (Variable Sizes)**: 
-  - 🥇 1st place: 128px - Displayed as the main thumbnail
-  - 🥈 2nd place: 96px - Displayed as the embed image
-  - 🥉 3rd place: 64px - Displayed in the footer with icon
+  - 🥇 1st place: 128px - Displayed as the main thumbnail (top-right)
+  - 🥈 2nd place: 96px - Displayed as the embed image (below description)
+  - 🥉 3rd place: 64px - Displayed as author icon (top-left)
 
 ### 2. Rankings Tables
 - **LC Rankings**: Side-by-side table showing top 10 users by LC balance
@@ -235,11 +235,11 @@ The bot now includes comprehensive debug logging for rankings updates:
    - Fetched 10 level rankings
 💰 Creating LC Podium embed...
    ✓ Fetched user Username1 (🥇) for podium
-   🖼️ Set 1st place avatar: Username1 (128px)
+   🖼️ Set 1st place avatar: Username1 (128px thumbnail)
    ✓ Fetched user Username2 (🥈) for podium
-   🖼️ Set 2nd place avatar: Username2 (96px)
+   🖼️ Set 2nd place avatar: Username2 (96px image)
    ✓ Fetched user Username3 (🥉) for podium
-   🖼️ Set 3rd place avatar: Username3 (64px)
+   🖼️ Set 3rd place avatar: Username3 (64px author icon)
 ⭐ Creating Levels Podium embed...
 📊 Creating LC Rankings table...
 🏆 Creating Levels Rankings table...

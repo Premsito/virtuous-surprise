@@ -44,22 +44,19 @@ if (missingPermissions.length > 0) {
 - ✅ Tables display side-by-side in a single message: `{ embeds: [lcRankingsEmbed, levelsRankingsEmbed] }`
 
 #### Podium for Top 3 with Variable Profile Picture Sizes
-- ✅ **🥇 1st Place**: 128px avatar (displayed as embed thumbnail)
-- ✅ **🥈 2nd Place**: 96px avatar (displayed as embed image)
-- ✅ **🥉 3rd Place**: 64px avatar (displayed in footer with icon)
+- ✅ **🥇 1st Place**: 128px avatar (displayed as embed thumbnail - top-right)
+- ✅ **🥈 2nd Place**: 96px avatar (displayed as embed image - below description)
+- ✅ **🥉 3rd Place**: 64px avatar (displayed as author icon - top-left)
 
 **Implementation:**
 ```javascript
-// Variable sizes: 🥇 128px, 🥈 96px, 🥉 64px
-const avatarSize = i === 0 ? 128 : i === 1 ? 96 : 64;
-
 if (i === 0) {
     embed.setThumbnail(discordUser.displayAvatarURL({ size: 128, dynamic: true }));
 } else if (i === 1) {
     embed.setImage(discordUser.displayAvatarURL({ size: 96, dynamic: true }));
 } else {
-    embed.setFooter({ 
-        text: `🥉 ${username}`,
+    embed.setAuthor({
+        name: `🥉 ${username}`,
         iconURL: discordUser.displayAvatarURL({ size: 64, dynamic: true })
     });
 }

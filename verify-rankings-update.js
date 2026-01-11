@@ -88,26 +88,31 @@ console.log('\n✓ Test 5: Checking for variable avatar sizes in podium...');
 const has128px = rankingsContent.includes('size: 128');
 const has96px = rankingsContent.includes('size: 96');
 const has64px = rankingsContent.includes('size: 64');
-const hasAvatarComment = rankingsContent.includes('Variable sizes: 🥇 128px, 🥈 96px, 🥉 64px');
+const hasThumbnail = rankingsContent.includes('setThumbnail');
+const hasImage = rankingsContent.includes('setImage');
+const hasAuthor = rankingsContent.includes('setAuthor');
 
-if (has128px && has96px && has64px && hasAvatarComment) {
+if (has128px && has96px && has64px && hasThumbnail && hasImage && hasAuthor) {
     console.log('  ✅ PASS: Variable avatar sizes implemented correctly');
-    console.log('     - 🥇 1st place: 128px ✓');
-    console.log('     - 🥈 2nd place: 96px ✓');
-    console.log('     - 🥉 3rd place: 64px ✓');
+    console.log('     - 🥇 1st place: 128px (thumbnail) ✓');
+    console.log('     - 🥈 2nd place: 96px (image) ✓');
+    console.log('     - 🥉 3rd place: 64px (author icon) ✓');
     passed++;
 } else {
     console.log('  ❌ FAIL: Variable avatar sizes not fully implemented');
     if (!has128px) console.log('     - Missing 128px size');
     if (!has96px) console.log('     - Missing 96px size');
     if (!has64px) console.log('     - Missing 64px size');
+    if (!hasThumbnail) console.log('     - Missing setThumbnail');
+    if (!hasImage) console.log('     - Missing setImage');
+    if (!hasAuthor) console.log('     - Missing setAuthor');
     failed++;
 }
 
 // Test 6: Check that tables are sent side-by-side
 console.log('\n✓ Test 6: Checking that rankings tables are sent side-by-side...');
-const sideByeSidePattern = /embeds:\s*\[\s*lcRankingsEmbed\s*,\s*levelsRankingsEmbed\s*\]/;
-if (sideByeSidePattern.test(rankingsContent)) {
+const sideBySidePattern = /embeds:\s*\[\s*lcRankingsEmbed\s*,\s*levelsRankingsEmbed\s*\]/;
+if (sideBySidePattern.test(rankingsContent)) {
     console.log('  ✅ PASS: LC and Levels rankings tables are sent side-by-side in one message');
     passed++;
 } else {
