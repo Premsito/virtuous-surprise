@@ -124,9 +124,9 @@ module.exports = {
             console.error('   Channel ID:', channel?.id);
             console.error('   Stack:', error.stack);
             
-            // Send helpful error message to the channel
+            // Send helpful error message to the channel with error details
             try {
-                await channel.send(ERROR_MESSAGES.USER_ERROR_MESSAGE);
+                await channel.send("⛔ Une erreur critique est survenue : " + error.message);
             } catch (sendError) {
                 console.error('   Failed to send error message to channel:', sendError.message);
             }
@@ -281,7 +281,7 @@ module.exports = {
             // Test basic message sending functionality as requested in problem statement
             console.log('🧪 Testing basic message sending functionality...');
             try {
-                const testMessage = await channel.send("Test: Classement affichage fonctionnel.");
+                const testMessage = await channel.send("Test unitaire : Classement affichage opérationnel.");
                 console.log('   ✅ Test message sent successfully');
                 // Delete the test message after a short delay (simplified pattern)
                 setTimeout(() => { 
@@ -344,10 +344,10 @@ module.exports = {
                 console.error(`   HTTP Status: ${error.httpStatus}`);
             }
             
-            // Try to send error notification to the channel if possible
+            // Try to send error notification to the channel if possible with error details
             try {
                 if (channel) {
-                    await channel.send(ERROR_MESSAGES.USER_UPDATE_ERROR_MESSAGE);
+                    await channel.send("⛔ Une erreur critique est survenue : " + error.message);
                 }
             } catch (notifyError) {
                 console.error('   Could not send error notification to channel:', notifyError.message);
