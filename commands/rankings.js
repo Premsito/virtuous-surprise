@@ -1,8 +1,7 @@
-const { AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
-const { generateRankingsImage } = require('../utils/rankingsImage');
 
 // Error message constants
 const ERROR_MESSAGES = {
@@ -41,6 +40,94 @@ module.exports = {
     },
 
     /**
+     * Create a ranking embed with medals and user info
+     * @param {Array} users - Array of user objects
+     * @param {string} title - Embed title
+     * @param {string} color - Embed color
+     * @param {Function} valueFormatter - Function to format user value
+     * @param {Guild} guild - Discord guild
+     * @returns {EmbedBuilder} - Formatted embed
+     */
+    async createRankingEmbed(users, title, color, valueFormatter, guild) {
+        const embed = new EmbedBuilder()
+            .setTitle(`🏆 ${title}`)
+            .setColor(color)
+            .setTimestamp()
+            .setFooter({ text: 'Mise à jour automatique toutes les 5 minutes' });
+        
+        // Handle empty rankings
+        if (!users || users.length === 0) {
+            embed.setDescription('Aucun classement disponible pour l\'instant.');
+            return embed;
+        }
+        
+        // Build ranking description with proper alignment and formatting
+        let description = '';
+        const medals = ['🥇', '🥈', '🥉'];
+        
+        // Fetch guild members in batch to avoid API rate limits
+        const memberCache = new Map();
+        
+        for (let i = 0; i < users.length && i < 10; i++) {
+            const user = users[i];
+            
+            // Get guild member with caching
+            let guildMember = memberCache.get(user.user_id);
+            if (!guildMember) {
+                try {
+                    guildMember = await guild.members.fetch(user.user_id).catch(() => null);
+                    if (guildMember) {
+                        memberCache.set(user.user_id, guildMember);
+                    }
+                } catch (error) {
+                    // Member fetch failed, will use username fallback
+                }
+            }
+            
+            const displayName = guildMember ? guildMember.displayName : user.username;
+            const value = valueFormatter(user);
+            
+            // Position indicator (medal for top 3, number for rest)
+            const position = i < 3 ? medals[i] : `**${i + 1}.**`;
+            
+            // Add visual emphasis for top 3 using bold and different formatting
+            if (i === 0) {
+                // 1st place: Bold name and value with special formatting
+                description += `${position} **\`${displayName}\`** • **${value}**\n`;
+            } else if (i === 1) {
+                // 2nd place: Bold name with emphasis
+                description += `${position} **${displayName}** • **${value}**\n`;
+            } else if (i === 2) {
+                // 3rd place: Bold name
+                description += `${position} **${displayName}** • ${value}\n`;
+            } else {
+                // 4-10: Regular formatting
+                description += `${position} ${displayName} • ${value}\n`;
+            }
+        }
+        
+        embed.setDescription(description);
+        
+        // Set thumbnail to first place user's avatar
+        if (users.length > 0) {
+            try {
+                const firstUser = users[0];
+                const firstMember = memberCache.get(firstUser.user_id) || 
+                    await guild.members.fetch(firstUser.user_id).catch(() => null);
+                
+                if (firstMember) {
+                    embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
+                }
+            } catch (error) {
+                // Avatar fetch failed, embed will work without thumbnail
+                console.log('   ⚠️ Could not fetch avatar for thumbnail:', error.message);
+            }
+        }
+        
+        return embed;
+    },
+
+    /**
      * Display the rankings in a channel
      * @param {TextChannel} channel - The channel to display rankings in
      */
@@ -75,21 +162,33 @@ module.exports = {
                 return;
             }
 
-            // Generate rankings image
-            console.log('🎨 Generating rankings image...');
-            const imageBuffer = await generateRankingsImage(topLC, topLevels, channel.guild);
+            // Create ranking embeds
+            console.log('🎨 Creating ranking embeds...');
             
-            // Create attachment
-            const attachment = new AttachmentBuilder(imageBuffer, { name: 'classement.png' });
+            const lcEmbed = await this.createRankingEmbed(
+                topLC,
+                '💰 Classement LC - Top 10',
+                config.colors.gold,
+                (user) => `${user.balance} LC`,
+                channel.guild
+            );
             
-            // Send the image with auto-update footer message
-            console.log('📤 Sending rankings image...');
+            const levelEmbed = await this.createRankingEmbed(
+                topLevels,
+                '📊 Classement Niveaux - Top 10',
+                config.colors.primary,
+                (user) => `Niveau ${user.level}`,
+                channel.guild
+            );
+            
+            // Send both embeds together
+            console.log('📤 Sending ranking embeds...');
             await channel.send({ 
-                content: '🏆 **Classements Discord** 🏆\n*Mise à jour automatique toutes les 5 minutes*',
-                files: [attachment] 
+                content: '🏆 **Classements Discord** 🏆',
+                embeds: [lcEmbed, levelEmbed] 
             });
             
-            console.log('✅ Rankings image sent successfully');
+            console.log('✅ Ranking embeds sent successfully');
 
         } catch (error) {
             console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
