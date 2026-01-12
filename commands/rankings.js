@@ -57,9 +57,9 @@ module.exports = {
                 return;
             }
             
-            // Get top users (fetch more to account for filtering)
-            const topLC = await db.getTopLC(50);
-            const topLevels = await db.getTopLevels(50);
+            // Get top 10 users (include all users, no filtering)
+            const topLC = await db.getTopLC(10);
+            const topLevels = await db.getTopLevels(10);
             
             // Data validation logging as requested in problem statement
             console.log("Fetched LC Ranking:", topLC);
@@ -68,23 +68,16 @@ module.exports = {
             console.log(`   - Fetched ${topLC.length} LC rankings`);
             console.log(`   - Fetched ${topLevels.length} level rankings`);
             
-            // Apply ranking filters as per requirements
-            const filteredLC = topLC.filter(user => user.balance >= 200);
-            const filteredLevels = topLevels.filter(user => user.level >= 2);
-            
-            console.log(`   - Filtered to ${filteredLC.length} LC users (>= 200 LC)`);
-            console.log(`   - Filtered to ${filteredLevels.length} level users (>= Level 2)`);
-            
-            // Take top 10 after filtering
-            const finalLC = filteredLC.slice(0, 10);
-            const finalLevels = filteredLevels.slice(0, 10);
-            
-            // Check if there's any ranking data available after filtering
-            if (finalLC.length === 0 && finalLevels.length === 0) {
-                console.log(`   ⚠️ No ranking data available after filtering`);
+            // Check if there's any ranking data available
+            if (topLC.length === 0 && topLevels.length === 0) {
+                console.log(`   ⚠️ No ranking data available`);
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return;
             }
+            
+            // Use top users directly (no filtering)
+            const finalLC = topLC;
+            const finalLevels = topLevels;
 
             // Generate rankings image (pancarte)
             console.log('🖼️ Generating rankings image...');

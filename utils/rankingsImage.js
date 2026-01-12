@@ -6,8 +6,8 @@ const ALPHA_TRANSPARENCY = '20';
 /**
  * Generate a rankings image (pancarte) using Canvas
  * Displays Top 10 for both LC and Niveaux side-by-side
- * @param {Array} topLC - Top LC users (filtered: >= 200 LC)
- * @param {Array} topLevels - Top Level users (filtered: >= 2 Niveau)
+ * @param {Array} topLC - Top LC users (all users included)
+ * @param {Array} topLevels - Top Level users (all users included)
  * @param {Guild} guild - Discord guild for fetching avatars
  * @returns {Buffer} - PNG image buffer
  */
