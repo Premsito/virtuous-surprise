@@ -209,6 +209,7 @@ module.exports = {
      * @param {Client} client - Discord client
      * @param {Array} topLC - Top 3 LC users
      * @param {Array} topLevels - Top 3 Level users
+     * @returns {Promise<EmbedBuilder>} The consolidated podiums embed
      */
     async createConsolidatedPodiumsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
@@ -280,6 +281,7 @@ module.exports = {
      * Create a consolidated rankings embed with both LC and Levels rankings
      * @param {Array} topLC - Top 10 LC users
      * @param {Array} topLevels - Top 10 Level users
+     * @returns {EmbedBuilder} The consolidated rankings embed
      */
     createConsolidatedRankingsEmbed(topLC, topLevels) {
         const embed = new EmbedBuilder()
