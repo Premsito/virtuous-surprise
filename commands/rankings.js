@@ -14,8 +14,12 @@ module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
     
-    // Track the last posted rankings message for cleanup
+    // Track the last posted rankings message for cleanup (in-memory cache)
+    // Note: This is also persisted to database for recovery after restarts
     lastRankingsMessage: null,
+    
+    // Flag to track if we've loaded the message from DB
+    hasLoadedFromDB: false,
     
     async execute(message, args) {
         try {
@@ -207,6 +211,60 @@ module.exports = {
     },
 
     /**
+     * Load the last rankings message from database and cache it in memory
+     * This is called on bot startup to recover message tracking after restarts
+     * @param {Client} client - Discord client
+     */
+    async loadLastMessageFromDB(client) {
+        try {
+            console.log('🔍 Loading last rankings message from database...');
+            
+            const rankingsChannelId = config.channels.rankings;
+            if (!rankingsChannelId) {
+                console.log('   ⚠️ Rankings channel not configured');
+                return;
+            }
+
+            // Get stored message ID from database
+            const messageId = await db.getBotState('rankings_message_id');
+            
+            if (!messageId) {
+                console.log('   ℹ️ No rankings message ID found in database');
+                return;
+            }
+
+            console.log(`   📝 Found stored message ID: ${messageId}`);
+
+            // Fetch the channel
+            const channel = await client.channels.fetch(rankingsChannelId).catch(() => null);
+            if (!channel) {
+                console.log('   ⚠️ Could not fetch rankings channel');
+                // Clear the invalid message ID from database
+                await db.setBotState('rankings_message_id', null);
+                return;
+            }
+
+            // Try to fetch the message
+            try {
+                const message = await channel.messages.fetch(messageId);
+                this.lastRankingsMessage = message;
+                console.log('   ✅ Successfully loaded rankings message from database');
+            } catch (fetchError) {
+                // Message doesn't exist anymore (was manually deleted)
+                console.log('   ⚠️ Message not found in channel (may have been deleted)');
+                // Clear the invalid message ID from database
+                await db.setBotState('rankings_message_id', null);
+                this.lastRankingsMessage = null;
+            }
+
+            this.hasLoadedFromDB = true;
+        } catch (error) {
+            console.error('❌ Error loading last rankings message:', error.message);
+            this.hasLoadedFromDB = true; // Mark as attempted to avoid infinite retry
+        }
+    },
+
+    /**
      * Update rankings in the configured channel
      * @param {Client} client - Discord client
      */
@@ -251,6 +309,11 @@ module.exports = {
             
             console.log('✅ Bot has all required permissions (View, Send, Embed, Manage)');
 
+            // Load last message from database if not already loaded (handles bot restarts)
+            if (!this.hasLoadedFromDB) {
+                await this.loadLastMessageFromDB(client);
+            }
+
             // Delete previous rankings message if it exists
             if (this.lastRankingsMessage) {
                 console.log('🧹 Deleting previous rankings message...');
@@ -268,10 +331,13 @@ module.exports = {
             console.log('📊 Displaying new rankings...');
             const sentMessage = await this.displayRankings(channel);
             
-            // Track the new message for future deletion
+            // Track the new message for future deletion (in-memory and database)
             if (sentMessage) {
                 this.lastRankingsMessage = sentMessage;
+                // Persist message ID to database for recovery after bot restarts
+                await db.setBotState('rankings_message_id', sentMessage.id);
                 console.log('   ✅ New rankings message tracked for future cleanup');
+                console.log(`   📝 Message ID ${sentMessage.id} saved to database`);
             }
             
             console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);

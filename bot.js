@@ -369,11 +369,21 @@ client.once('clientReady', async () => {
         console.log('✅ Dynamic LC rankings synchronization enabled');
         
         // Start rankings auto-update (every 5 minutes)
+        console.log('⏰ Rankings auto-update interval configured: 5 minutes (300,000ms)');
         setInterval(async () => {
             try {
-                console.log('🔄 Starting scheduled rankings update...');
+                const now = new Date();
+                console.log(`\n${'='.repeat(60)}`);
+                console.log(`🔄 [${now.toISOString()}] Starting scheduled rankings update...`);
+                console.log(`   Interval: Every 5 minutes`);
+                console.log(`${'='.repeat(60)}\n`);
+                
                 await rankingsCommand.updateRankingsChannel(client);
-                console.log('✅ Scheduled rankings update completed');
+                
+                const completedAt = new Date();
+                console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
+                console.log(`   Duration: ${completedAt - now}ms`);
+                console.log(`   Next update: ${new Date(completedAt.getTime() + 5 * 60 * 1000).toISOString()}\n`);
             } catch (error) {
                 if (shouldLogError('rankings_update')) {
                     console.error('❌ Error updating rankings (throttled):', error.message);
@@ -385,9 +395,9 @@ client.once('clientReady', async () => {
         // Initial rankings update
         setTimeout(async () => {
             try {
-                console.log('🎯 Displaying initial rankings...');
+                console.log('\n🎯 Displaying initial rankings (5 seconds after bot ready)...');
                 await rankingsCommand.updateRankingsChannel(client);
-                console.log('✅ Initial rankings displayed successfully');
+                console.log('✅ Initial rankings displayed successfully\n');
             } catch (error) {
                 console.error('❌ Error displaying initial rankings:', error.message);
                 console.error('   Stack:', error.stack);
