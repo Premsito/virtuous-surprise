@@ -134,92 +134,6 @@ module.exports = {
     },
 
     /**
-     * Create a podium embed with profile pictures
-     * @param {Client} client - Discord client
-     * @param {Array} topUsers - Top 3 users
-     * @param {string} type - Type of ranking (LC or Levels)
-     * @param {string} title - Embed title
-     * @param {string} color - Embed color
-     * @param {Function} valueFormatter - Function to format the value display
-     */
-    async createPodiumEmbed(client, topUsers, type, title, color, valueFormatter) {
-        const embed = new EmbedBuilder()
-            .setColor(color)
-            .setTitle(title)
-            .setTimestamp();
-
-        let description = '';
-
-        for (let i = 0; i < Math.min(3, topUsers.length); i++) {
-            const user = topUsers[i];
-            const medal = getMedalForPosition(i);
-            
-            // Fetch user from Discord to get avatar
-            let discordUser;
-            try {
-                discordUser = await client.users.fetch(user.user_id);
-                console.log(`   ✓ Fetched user ${discordUser.username} (${medal}) for podium`);
-            } catch (error) {
-                console.error(`   ⚠️ Could not fetch user ${user.user_id}:`, error.message);
-            }
-
-            const username = discordUser ? discordUser.username : user.username;
-            const value = valueFormatter(user);
-
-            // Add to description with appropriate spacing based on position
-            if (i === 0) {
-                // First place - 128px avatar as thumbnail
-                description += `\n**${medal} ${username}**\n`;
-                description += `└─ ${value}\n`;
-                if (discordUser) {
-                    try {
-                        const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
-                        embed.setThumbnail(avatarUrl);
-                        console.log(`   🖼️ Set 1st place avatar: ${username} (128px thumbnail)`);
-                    } catch (error) {
-                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
-                        // Continue without setting the thumbnail
-                    }
-                }
-            } else if (i === 1) {
-                // Second place - 128px avatar as image
-                description += `\n**${medal} ${username}**\n`;
-                description += `└─ ${value}\n`;
-                if (discordUser) {
-                    try {
-                        const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
-                        embed.setImage(avatarUrl);
-                        console.log(`   🖼️ Set 2nd place avatar: ${username} (128px image)`);
-                    } catch (error) {
-                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
-                        // Continue without setting the image
-                    }
-                }
-            } else {
-                // Third place - 64px avatar in author section (alternative to footer)
-                description += `\n**${medal} ${username}**\n`;
-                description += `└─ ${value}\n`;
-                if (discordUser) {
-                    try {
-                        const avatarUrl = discordUser.displayAvatarURL({ size: 64, dynamic: true });
-                        embed.setAuthor({
-                            name: `🥉 ${username}`,
-                            iconURL: avatarUrl
-                        });
-                        console.log(`   🖼️ Set 3rd place avatar: ${username} (64px author icon)`);
-                    } catch (error) {
-                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
-                        // Continue without setting the author avatar
-                    }
-                }
-            }
-        }
-
-        embed.setDescription(description || 'Aucune donnée disponible');
-        return embed;
-    },
-
-    /**
      * Create a consolidated podiums embed with both LC and Levels podiums
      * @param {Guild} guild - Discord guild
      * @param {Array} topLC - Top 3 LC users
@@ -373,37 +287,6 @@ module.exports = {
             { name: '📊 Classement Niveaux', value: levelRankingData || 'Aucune donnée disponible', inline: true }
         );
 
-        return embed;
-    },
-
-    /**
-     * Create a rankings table embed
-     * @param {Array} topUsers - Top 10 users
-     * @param {string} title - Embed title
-     * @param {string} color - Embed color
-     * @param {Function} valueFormatter - Function to format the value display
-     */
-    createRankingsTableEmbed(topUsers, title, color, valueFormatter) {
-        const embed = new EmbedBuilder()
-            .setColor(color)
-            .setTitle(title)
-            .setTimestamp();
-
-        let description = '';
-
-        for (let i = 0; i < Math.min(10, topUsers.length); i++) {
-            const user = topUsers[i];
-            const medal = getMedalForPosition(i);
-            const value = valueFormatter(user);
-            
-            description += `${medal} **${user.username}** - ${value}\n`;
-        }
-
-        if (description === '') {
-            description = 'Aucune donnée disponible';
-        }
-
-        embed.setDescription(description);
         return embed;
     },
 
