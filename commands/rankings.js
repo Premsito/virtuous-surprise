@@ -1,8 +1,7 @@
-const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
-const { generateRankingsImage } = require('../utils/rankingsImage');
 
 // Error message constants
 const ERROR_MESSAGES = {
@@ -75,22 +74,32 @@ module.exports = {
                 return;
             }
 
-            // Generate rankings image (pancarte)
-            console.log('🖼️ Generating rankings image...');
-            const imageBuffer = await generateRankingsImage(
+            // Create embeds for rankings
+            console.log('📝 Creating rankings embeds...');
+            
+            // LC Rankings Embed
+            const lcEmbed = await this.createRankingEmbed(
                 topLC,
-                topLevels,
+                '💰 Classement LC - Top 10',
+                config.colors.gold,
+                (user) => `${user.balance} LC`,
                 channel.guild
             );
             
-            // Create attachment
-            const attachment = new AttachmentBuilder(imageBuffer, { name: 'classements.png' });
+            // Level Rankings Embed
+            const levelEmbed = await this.createRankingEmbed(
+                topLevels,
+                '📊 Classement Niveaux - Top 10',
+                config.colors.primary,
+                (user) => `Niveau ${user.level}`,
+                channel.guild
+            );
             
-            // Send the image
-            console.log('📤 Sending rankings image...');
-            await channel.send({ files: [attachment] });
+            // Send the embeds
+            console.log('📤 Sending rankings embeds...');
+            await channel.send({ embeds: [lcEmbed, levelEmbed] });
             
-            console.log('✅ Rankings image sent successfully');
+            console.log('✅ Rankings embeds sent successfully');
 
         } catch (error) {
             console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
@@ -105,6 +114,70 @@ module.exports = {
             }
             throw error;
         }
+    },
+
+    /**
+     * Create a ranking embed with medal emojis and user info
+     * @param {Array} users - Array of user data
+     * @param {string} title - Embed title
+     * @param {string} color - Embed color
+     * @param {Function} valueFormatter - Function to format the value display
+     * @param {Guild} guild - Discord guild for fetching member info
+     * @returns {EmbedBuilder} - Formatted embed
+     */
+    async createRankingEmbed(users, title, color, valueFormatter, guild) {
+        const embed = new EmbedBuilder()
+            .setTitle(`🏆 ${title}`)
+            .setColor(color)
+            .setTimestamp()
+            .setFooter({ text: 'Mise à jour automatique toutes les 5 minutes' });
+        
+        // If no users, show empty message
+        if (!users || users.length === 0) {
+            embed.setDescription('Aucun classement disponible pour l\'instant.');
+            return embed;
+        }
+        
+        // Get medal emojis
+        const getMedal = (index) => {
+            const medals = ['🥇', '🥈', '🥉'];
+            return index < 3 ? medals[index] : `**${index + 1}.**`;
+        };
+        
+        // Build ranking text
+        let rankingText = '';
+        
+        for (let i = 0; i < Math.min(users.length, 10); i++) {
+            const user = users[i];
+            const medal = getMedal(i);
+            
+            // Fetch guild member for display name and avatar
+            let displayName = user.username;
+            let avatarURL = null;
+            
+            try {
+                const guildMember = await guild.members.fetch(user.user_id).catch(() => null);
+                if (guildMember) {
+                    displayName = guildMember.displayName;
+                    avatarURL = guildMember.displayAvatarURL({ extension: 'png', size: 64 });
+                }
+            } catch (error) {
+                console.log(`   ⚠️ Could not fetch member ${user.user_id}: ${error.message}`);
+            }
+            
+            // Format the ranking entry
+            const value = valueFormatter(user);
+            rankingText += `${medal} **${displayName}** • \`${value}\`\n`;
+            
+            // Set thumbnail to #1 user's avatar if available
+            if (i === 0 && avatarURL) {
+                embed.setThumbnail(avatarURL);
+            }
+        }
+        
+        embed.setDescription(rankingText);
+        
+        return embed;
     },
 
     /**
