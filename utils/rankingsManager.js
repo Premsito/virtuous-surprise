@@ -1,5 +1,9 @@
 const lcEventEmitter = require('./lcEventEmitter');
 const { db } = require('../database/db');
+const config = require('../config.json');
+
+// Constants
+const TOP_RANKINGS_LIMIT = 10;
 
 /**
  * Rankings Manager
@@ -30,6 +34,9 @@ class RankingsManager {
         // Cache for position tracking
         this.lastRankingsCache = new Map(); // userId -> position
         
+        // Cache for rankings channel
+        this.rankingsChannel = null;
+        
         // Bind LC change handler
         this.handleLCChange = this.handleLCChange.bind(this);
     }
@@ -39,9 +46,22 @@ class RankingsManager {
      * @param {Client} client - Discord client
      * @param {Object} rankingsCommand - Rankings command module
      */
-    initialize(client, rankingsCommand) {
+    async initialize(client, rankingsCommand) {
         this.client = client;
         this.rankingsCommand = rankingsCommand;
+        
+        // Pre-fetch and cache the rankings channel
+        try {
+            const rankingsChannelId = config.channels.rankings;
+            if (rankingsChannelId) {
+                this.rankingsChannel = await client.channels.fetch(rankingsChannelId).catch(() => null);
+                if (this.rankingsChannel) {
+                    console.log(`✅ Rankings channel cached: #${this.rankingsChannel.name}`);
+                }
+            }
+        } catch (error) {
+            console.error('⚠️ Failed to cache rankings channel:', error.message);
+        }
         
         // Subscribe to LC change events
         lcEventEmitter.onLCChange(this.handleLCChange);
@@ -159,7 +179,7 @@ class RankingsManager {
      */
     async getCurrentRankings() {
         try {
-            const topLC = await db.getTopLC(10);
+            const topLC = await db.getTopLC(TOP_RANKINGS_LIMIT);
             const rankings = new Map();
             
             topLC.forEach((user, index) => {
@@ -183,15 +203,9 @@ class RankingsManager {
      */
     async notifyPositionChanges(oldRankings, newRankings) {
         try {
-            const config = require('../config.json');
-            const rankingsChannelId = config.channels.rankings;
-            
-            if (!rankingsChannelId || !this.client) {
-                return;
-            }
-            
-            const channel = await this.client.channels.fetch(rankingsChannelId).catch(() => null);
-            if (!channel) {
+            // Use cached channel
+            if (!this.rankingsChannel) {
+                console.log('⚠️ Rankings channel not available for notifications');
                 return;
             }
             
@@ -200,25 +214,30 @@ class RankingsManager {
                 const oldData = oldRankings.get(userId);
                 const newData = newRankings.get(userId);
                 
-                // User entered top 10
-                if (!oldData && newData) {
-                    const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
-                    await channel.send(`🎉 <@${userId}> a rejoint le Top 10 LC ! ${medal}`).catch(() => {});
-                }
-                // User improved position in top 10
-                else if (oldData && newData && newData.position < oldData.position) {
-                    const gained = oldData.position - newData.position;
-                    const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
-                    await channel.send(`📈 <@${userId}> a gagné ${gained} place(s) dans le classement LC ! ${medal}`).catch(() => {});
-                }
-                // User dropped position in top 10
-                else if (oldData && newData && newData.position > oldData.position) {
-                    const lost = newData.position - oldData.position;
-                    await channel.send(`📉 <@${userId}> a perdu ${lost} place(s) dans le classement LC. Position actuelle: #${newData.position}`).catch(() => {});
-                }
-                // User fell out of top 10
-                else if (oldData && !newData) {
-                    await channel.send(`😢 <@${userId}> a quitté le Top 10 LC.`).catch(() => {});
+                try {
+                    // User entered top 10
+                    if (!oldData && newData) {
+                        const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
+                        await this.rankingsChannel.send(`🎉 <@${userId}> a rejoint le Top ${TOP_RANKINGS_LIMIT} LC ! ${medal}`);
+                    }
+                    // User improved position in top 10
+                    else if (oldData && newData && newData.position < oldData.position) {
+                        const gained = oldData.position - newData.position;
+                        const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
+                        await this.rankingsChannel.send(`📈 <@${userId}> a gagné ${gained} place(s) dans le classement LC ! ${medal}`);
+                    }
+                    // User dropped position in top 10
+                    else if (oldData && newData && newData.position > oldData.position) {
+                        const lost = newData.position - oldData.position;
+                        await this.rankingsChannel.send(`📉 <@${userId}> a perdu ${lost} place(s) dans le classement LC. Position actuelle: #${newData.position}`);
+                    }
+                    // User fell out of top 10
+                    else if (oldData && !newData) {
+                        await this.rankingsChannel.send(`😢 <@${userId}> a quitté le Top ${TOP_RANKINGS_LIMIT} LC.`);
+                    }
+                } catch (sendError) {
+                    console.error(`⚠️ Failed to send notification for user ${userId}:`, sendError.message);
+                    // Continue with other notifications even if one fails
                 }
             }
         } catch (error) {

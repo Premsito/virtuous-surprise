@@ -365,7 +365,7 @@ client.once('clientReady', async () => {
         }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
         
         // Initialize dynamic rankings manager
-        rankingsManager.initialize(client, rankingsCommand);
+        await rankingsManager.initialize(client, rankingsCommand);
         console.log('✅ Dynamic LC rankings synchronization enabled');
         
         // Start rankings auto-update (every 5 minutes)
