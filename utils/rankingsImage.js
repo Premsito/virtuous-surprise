@@ -1,5 +1,8 @@
 const { createCanvas, loadImage } = require('canvas');
 
+// Constants for visual styling
+const ALPHA_TRANSPARENCY = '20';
+
 /**
  * Generate a rankings image (pancarte) using Canvas
  * Displays Top 10 for both LC and Niveaux side-by-side
@@ -82,6 +85,29 @@ async function generateRankingsImage(topLC, topLevels, guild) {
 }
 
 /**
+ * Draw a placeholder avatar circle
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @param {number} size - Avatar size
+ * @param {string} borderColor - Border color
+ */
+function drawPlaceholderAvatar(ctx, x, y, size, borderColor) {
+    // Draw placeholder circle
+    ctx.fillStyle = '#7289DA';
+    ctx.beginPath();
+    ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Avatar border
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+    ctx.stroke();
+}
+
+/**
  * Draw a ranking column with header and user entries
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {number} x - Column X position
@@ -125,7 +151,7 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         if (i < 3) {
             // Top 3 get special gold/silver/bronze tint
             const topColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-            ctx.fillStyle = topColors[i] + '20'; // 20 = alpha for transparency
+            ctx.fillStyle = topColors[i] + ALPHA_TRANSPARENCY;
         } else {
             ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F5F5F5';
         }
@@ -146,11 +172,16 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const avatarX = x + 50;
         const avatarY = entryY + (entryHeight - avatarSize) / 2;
         
+        // Fetch guild member once for both avatar and display name
+        let guildMember = null;
         try {
-            // Fetch guild member to get avatar
-            const guildMember = await guild.members.fetch(user.user_id).catch(() => null);
-            
-            if (guildMember) {
+            guildMember = await guild.members.fetch(user.user_id).catch(() => null);
+        } catch (error) {
+            // Member fetch failed, will use placeholder
+        }
+        
+        if (guildMember) {
+            try {
                 const avatarURL = guildMember.displayAvatarURL({ extension: 'png', size: 128 });
                 const avatar = await loadImage(avatarURL);
                 
@@ -169,32 +200,19 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
                 ctx.beginPath();
                 ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
                 ctx.stroke();
-            } else {
-                // Fallback: draw placeholder circle
-                ctx.fillStyle = '#7289DA';
-                ctx.beginPath();
-                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-                ctx.fill();
+            } catch (error) {
+                console.error(`Error loading avatar for user ${user.user_id}:`, error.message);
+                // Draw placeholder on error
+                drawPlaceholderAvatar(ctx, avatarX, avatarY, avatarSize, color);
             }
-        } catch (error) {
-            console.error(`Error loading avatar for user ${user.user_id}:`, error.message);
-            // Draw placeholder on error
-            ctx.fillStyle = '#7289DA';
-            ctx.beginPath();
-            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-            ctx.fill();
+        } else {
+            // Draw placeholder circle if member not found
+            drawPlaceholderAvatar(ctx, avatarX, avatarY, avatarSize, color);
         }
         
         // Username
         const nameX = avatarX + avatarSize + 10;
         const nameY = entryY + 28;
-        
-        let guildMember;
-        try {
-            guildMember = await guild.members.fetch(user.user_id).catch(() => null);
-        } catch (error) {
-            // Ignore fetch errors
-        }
         
         const displayName = guildMember ? guildMember.displayName : user.username;
         ctx.fillStyle = '#2C2F33';
