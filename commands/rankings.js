@@ -129,7 +129,7 @@ module.exports = {
     /**
      * Display the rankings in a channel
      * @param {TextChannel} channel - The channel to display rankings in
-     * @returns {Message} The sent message
+     * @returns {Promise<Message|null>} The sent message, or null if an error occurred or no data available
      */
     async displayRankings(channel) {
         try {
