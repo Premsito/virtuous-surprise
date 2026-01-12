@@ -57,7 +57,7 @@ module.exports = {
                 return;
             }
             
-            // Get top 10 users (include all users, no filtering)
+            // Get top 10 users by LC and Level (no minimum threshold filtering)
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
             
