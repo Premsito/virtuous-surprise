@@ -217,11 +217,12 @@ module.exports = {
      */
     async loadLastMessageFromDB(client) {
         try {
-            console.log('🔍 Loading last rankings message from database...');
+            console.log('🔍 [RECOVERY] Loading last rankings message from database...');
             
             const rankingsChannelId = config.channels.rankings;
             if (!rankingsChannelId) {
                 console.log('   ⚠️ Rankings channel not configured');
+                this.hasLoadedFromDB = true;
                 return;
             }
 
@@ -229,29 +230,41 @@ module.exports = {
             const messageId = await db.getBotState('rankings_message_id');
             
             if (!messageId) {
-                console.log('   ℹ️ No rankings message ID found in database');
+                console.log('   ℹ️ No rankings message ID found in database (first run or no previous message)');
+                this.hasLoadedFromDB = true;
                 return;
             }
 
             console.log(`   📝 Found stored message ID: ${messageId}`);
 
             // Fetch the channel
-            const channel = await client.channels.fetch(rankingsChannelId).catch(() => null);
+            console.log(`   📡 Fetching channel ${rankingsChannelId}...`);
+            const channel = await client.channels.fetch(rankingsChannelId).catch((err) => {
+                console.log(`   ⚠️ Could not fetch rankings channel: ${err.message}`);
+                return null;
+            });
+            
             if (!channel) {
-                console.log('   ⚠️ Could not fetch rankings channel');
+                console.log('   ⚠️ Rankings channel not accessible');
                 // Clear the invalid message ID from database
                 await db.setBotState('rankings_message_id', null);
+                this.hasLoadedFromDB = true;
                 return;
             }
 
+            console.log(`   ✅ Channel fetched: #${channel.name}`);
+
             // Try to fetch the message
             try {
+                console.log(`   📡 Fetching message ${messageId} from channel...`);
                 const message = await channel.messages.fetch(messageId);
                 this.lastRankingsMessage = message;
                 console.log('   ✅ Successfully loaded rankings message from database');
+                console.log(`   📊 Message will be edited on next update instead of reposting`);
             } catch (fetchError) {
                 // Message doesn't exist anymore (was manually deleted)
-                console.log('   ⚠️ Message not found in channel (may have been deleted)');
+                console.log(`   ⚠️ Message not found in channel: ${fetchError.message}`);
+                console.log('   ℹ️ Message may have been manually deleted - will create new message');
                 // Clear the invalid message ID from database
                 await db.setBotState('rankings_message_id', null);
                 this.lastRankingsMessage = null;
@@ -259,7 +272,8 @@ module.exports = {
 
             this.hasLoadedFromDB = true;
         } catch (error) {
-            console.error('❌ Error loading last rankings message:', error.message);
+            console.error('❌ [ERROR] Error loading last rankings message:', error.message);
+            console.error('   Stack:', error.stack);
             this.hasLoadedFromDB = true; // Mark as attempted to avoid infinite retry
         }
     },
@@ -272,18 +286,24 @@ module.exports = {
         let channel = null;
         try {
             const rankingsChannelId = config.channels.rankings;
-            console.log(`🔍 Attempting to update rankings in channel: ${rankingsChannelId}`);
+            console.log(`🔍 [UPDATE] Attempting to update rankings in channel: ${rankingsChannelId}`);
+            console.log(`   - Timestamp: ${new Date().toISOString()}`);
             
             if (!rankingsChannelId) {
                 console.error('❌ Rankings channel not configured in config.json');
                 return;
             }
 
-            console.log(`📡 Fetching channel ${rankingsChannelId}...`);
+            console.log(`📡 [FETCH] Fetching channel ${rankingsChannelId}...`);
             channel = await client.channels.fetch(rankingsChannelId);
             
             // Detailed channel logging as requested in problem statement
-            console.log("Channel fetched:", channel);
+            console.log(`   ✅ Channel fetched:`, {
+                id: channel.id,
+                name: channel.name,
+                type: channel.type,
+                guild: channel.guild?.name || 'N/A'
+            });
             
             if (!channel) {
                 console.error(`❌ Could not fetch rankings channel: ${rankingsChannelId}`);
@@ -292,13 +312,9 @@ module.exports = {
                 return;
             }
             
-            console.log(`✅ Channel fetched successfully: #${channel.name}`);
-            console.log(`   - Channel type: ${channel.type}`);
-            console.log(`   - Channel guild: ${channel.guild?.name || 'N/A'}`);
-            
             // Verify bot permissions
             const permissions = channel.permissionsFor(client.user);
-            const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks', 'ManageMessages'];
+            const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
             
             if (missingPermissions.length > 0) {
@@ -307,43 +323,87 @@ module.exports = {
                 return;
             }
             
-            console.log('✅ Bot has all required permissions (View, Send, Embed, Manage)');
+            console.log('✅ [PERMISSIONS] Bot has all required permissions (View, Send, Embed)');
 
             // Load last message from database if not already loaded (handles bot restarts)
             if (!this.hasLoadedFromDB) {
+                console.log('🔄 [RECOVERY] Loading last message from database...');
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Delete previous rankings message if it exists
+            // Try to edit existing message instead of deleting and reposting
             if (this.lastRankingsMessage) {
-                console.log('🧹 Deleting previous rankings message...');
+                console.log(`✏️ [EDIT] Attempting to edit existing rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
-                    await this.lastRankingsMessage.delete();
-                    console.log('   ✅ Previous rankings message deleted successfully');
-                } catch (deleteError) {
-                    // Message might already be deleted or doesn't exist
-                    console.log('   ⚠️ Could not delete previous message:', deleteError.message);
+                    // Get top 10 users by LC and Level
+                    console.log('📊 [DATA] Fetching rankings data...');
+                    const topLC = await db.getTopLC(10);
+                    const topLevels = await db.getTopLevels(10);
+                    
+                    console.log(`   - Fetched ${topLC.length} LC rankings`);
+                    console.log(`   - Fetched ${topLevels.length} level rankings`);
+                    
+                    // Check if there's any ranking data available
+                    if (topLC.length === 0 && topLevels.length === 0) {
+                        console.log(`   ⚠️ No ranking data available`);
+                        return;
+                    }
+
+                    // Create ranking embeds
+                    console.log('🎨 [EMBEDS] Creating ranking embeds...');
+                    
+                    const lcEmbed = await this.createRankingEmbed(
+                        topLC,
+                        '💰 Classement LC - Top 10',
+                        config.colors.gold,
+                        (user) => `${user.balance} LC`,
+                        channel.guild
+                    );
+                    
+                    const levelEmbed = await this.createRankingEmbed(
+                        topLevels,
+                        '📊 Classement Niveaux - Top 10',
+                        config.colors.primary,
+                        (user) => `Niveau ${user.level}`,
+                        channel.guild
+                    );
+                    
+                    // Edit the existing message
+                    await this.lastRankingsMessage.edit({ 
+                        content: '🏆 **Classements Discord** 🏆',
+                        embeds: [lcEmbed, levelEmbed] 
+                    });
+                    
+                    console.log('   ✅ Rankings message edited successfully');
+                    console.log(`   📝 Message ID ${this.lastRankingsMessage.id} remains unchanged`);
+                    console.log(`✅ [SUCCESS] Rankings successfully updated via edit in channel #${channel.name}`);
+                    return;
+                } catch (editError) {
+                    // If edit fails (message was deleted, etc.), fall back to posting new message
+                    console.log(`   ⚠️ Could not edit message (${editError.message}), will post new message`);
+                    this.lastRankingsMessage = null;
+                    await db.setBotState('rankings_message_id', null);
                 }
-                this.lastRankingsMessage = null;
             }
 
-            // Display new rankings
-            console.log('📊 Displaying new rankings...');
+            // Post new message (first time or if edit failed)
+            console.log('📤 [POST] Posting new rankings message...');
             const sentMessage = await this.displayRankings(channel);
             
-            // Track the new message for future deletion (in-memory and database)
+            // Track the new message for future edits (in-memory and database)
             if (sentMessage) {
                 this.lastRankingsMessage = sentMessage;
                 // Persist message ID to database for recovery after bot restarts
                 await db.setBotState('rankings_message_id', sentMessage.id);
-                console.log('   ✅ New rankings message tracked for future cleanup');
-                console.log(`   📝 Message ID ${sentMessage.id} saved to database`);
+                console.log('   ✅ New rankings message posted and tracked');
+                console.log(`   📝 Message ID ${sentMessage.id} saved to database for future edits`);
             }
             
-            console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
+            console.log(`✅ [SUCCESS] Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
-            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error.message);
+            console.error(`❌ [ERROR] ${ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR}`, error.message);
             console.error('   Channel ID:', config.channels.rankings);
+            console.error('   Timestamp:', new Date().toISOString());
             console.error('   Stack:', error.stack);
             
             // Log Discord API errors specifically
@@ -354,14 +414,8 @@ module.exports = {
                 console.error(`   HTTP Status: ${error.httpStatus}`);
             }
             
-            // Try to send error notification to the channel if possible with error details
-            try {
-                if (channel) {
-                    await channel.send("⛔ Une erreur critique est survenue : " + error.message);
-                }
-            } catch (notifyError) {
-                console.error('   Could not send error notification to channel:', notifyError.message);
-            }
+            // Re-throw error so interval handler can catch it and potentially restart
+            throw error;
         }
     }
 };

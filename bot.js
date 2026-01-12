@@ -370,13 +370,26 @@ client.once('clientReady', async () => {
         
         // Start rankings auto-update (every 5 minutes)
         const RANKINGS_UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+        const RANKINGS_RETRY_DELAY_MS = 30 * 1000; // 30 seconds retry delay on error
+        const RANKINGS_MAX_RETRIES = 3; // Maximum retry attempts per update cycle
+        
         console.log(`⏰ Rankings auto-update interval configured: 5 minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
-        setInterval(async () => {
+        console.log(`   - Retry delay on error: ${RANKINGS_RETRY_DELAY_MS / 1000} seconds`);
+        console.log(`   - Max retries per cycle: ${RANKINGS_MAX_RETRIES}`);
+        
+        /**
+         * Update rankings with retry logic
+         * @param {number} retryCount - Current retry attempt number
+         */
+        async function updateRankingsWithRetry(retryCount = 0) {
             try {
                 const now = new Date();
                 console.log(`\n${'='.repeat(60)}`);
                 console.log(`🔄 [${now.toISOString()}] Starting scheduled rankings update...`);
                 console.log(`   Interval: Every 5 minutes`);
+                if (retryCount > 0) {
+                    console.log(`   Retry attempt: ${retryCount}/${RANKINGS_MAX_RETRIES}`);
+                }
                 console.log(`${'='.repeat(60)}\n`);
                 
                 await rankingsCommand.updateRankingsChannel(client);
@@ -386,23 +399,62 @@ client.once('clientReady', async () => {
                 console.log(`   Duration: ${completedAt - now}ms`);
                 console.log(`   Next update: ${new Date(completedAt.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}\n`);
             } catch (error) {
-                if (shouldLogError('rankings_update')) {
-                    console.error('❌ Error updating rankings (throttled):', error.message);
-                    console.error('   Stack:', error.stack);
+                const errorTime = new Date();
+                console.error(`\n❌ [${errorTime.toISOString()}] Error updating rankings:`, error.message);
+                console.error('   Error type:', error.name);
+                console.error('   Stack:', error.stack);
+                
+                // Retry logic for transient errors
+                if (retryCount < RANKINGS_MAX_RETRIES) {
+                    const nextRetry = retryCount + 1;
+                    console.log(`⏰ [RETRY] Scheduling retry ${nextRetry}/${RANKINGS_MAX_RETRIES} in ${RANKINGS_RETRY_DELAY_MS / 1000} seconds...`);
+                    
+                    setTimeout(async () => {
+                        await updateRankingsWithRetry(nextRetry);
+                    }, RANKINGS_RETRY_DELAY_MS);
+                } else {
+                    console.error(`❌ [FAILED] Max retries (${RANKINGS_MAX_RETRIES}) reached. Will try again on next scheduled interval.`);
+                    console.error(`   Next attempt: ${new Date(errorTime.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}`);
                 }
             }
+        }
+        
+        // Set up the interval for rankings updates
+        setInterval(async () => {
+            await updateRankingsWithRetry(0);
         }, RANKINGS_UPDATE_INTERVAL_MS);
         
         // Initial rankings update
         setTimeout(async () => {
-            try {
-                console.log('\n🎯 Displaying initial rankings (5 seconds after bot ready)...');
-                await rankingsCommand.updateRankingsChannel(client);
-                console.log('✅ Initial rankings displayed successfully\n');
-            } catch (error) {
-                console.error('❌ Error displaying initial rankings:', error.message);
-                console.error('   Stack:', error.stack);
+            let retryCount = 0;
+            const maxInitialRetries = 3;
+            
+            async function displayInitialRankings() {
+                try {
+                    console.log('\n🎯 Displaying initial rankings (5 seconds after bot ready)...');
+                    if (retryCount > 0) {
+                        console.log(`   Retry attempt: ${retryCount}/${maxInitialRetries}`);
+                    }
+                    
+                    await rankingsCommand.updateRankingsChannel(client);
+                    console.log('✅ Initial rankings displayed successfully\n');
+                } catch (error) {
+                    console.error('❌ Error displaying initial rankings:', error.message);
+                    console.error('   Stack:', error.stack);
+                    
+                    // Retry for initial display
+                    if (retryCount < maxInitialRetries) {
+                        retryCount++;
+                        console.log(`⏰ Retrying initial rankings display in 10 seconds... (${retryCount}/${maxInitialRetries})`);
+                        setTimeout(displayInitialRankings, 10000);
+                    } else {
+                        console.error(`❌ Failed to display initial rankings after ${maxInitialRetries} attempts.`);
+                        console.error('   Rankings will be updated on next scheduled interval.');
+                    }
+                }
             }
+            
+            await displayInitialRankings();
         }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
         
         console.log('✅ Bot is fully ready!');
