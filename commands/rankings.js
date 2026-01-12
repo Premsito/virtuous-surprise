@@ -3,6 +3,13 @@ const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
 
+// Error message constants
+const ERROR_MESSAGES = {
+    CRITICAL_DISPLAY_ERROR: 'Critical error in ranking display:',
+    USER_ERROR_MESSAGE: 'Une erreur critique est survenue. Contactez un administrateur.',
+    USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
+};
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -43,6 +50,10 @@ module.exports = {
             // Get top users
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
+            
+            // Detailed logging as requested in problem statement
+            console.log("Data fetched for LC Ranking:", topLC);
+            console.log("Data fetched for Level Ranking:", topLevels);
             
             console.log(`   - Fetched ${topLC.length} LC rankings`);
             console.log(`   - Fetched ${topLevels.length} level rankings`);
@@ -107,9 +118,16 @@ module.exports = {
             console.log('✅ All rankings embeds sent successfully');
 
         } catch (error) {
-            console.error('❌ Error in displayRankings:', error);
+            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
             console.error('   Channel ID:', channel?.id);
             console.error('   Stack:', error.stack);
+            
+            // Send helpful error message to the channel
+            try {
+                await channel.send(ERROR_MESSAGES.USER_ERROR_MESSAGE);
+            } catch (sendError) {
+                console.error('   Failed to send error message to channel:', sendError.message);
+            }
             throw error;
         }
     },
@@ -218,6 +236,7 @@ module.exports = {
      * @param {Client} client - Discord client
      */
     async updateRankingsChannel(client) {
+        let channel = null;
         try {
             const rankingsChannelId = config.channels.rankings;
             console.log(`🔍 Attempting to update rankings in channel: ${rankingsChannelId}`);
@@ -228,7 +247,10 @@ module.exports = {
             }
 
             console.log(`📡 Fetching channel ${rankingsChannelId}...`);
-            const channel = await client.channels.fetch(rankingsChannelId);
+            channel = await client.channels.fetch(rankingsChannelId);
+            
+            // Detailed channel logging as requested in problem statement
+            console.log("Channel fetched:", channel);
             
             if (!channel) {
                 console.error(`❌ Could not fetch rankings channel: ${rankingsChannelId}`);
@@ -238,6 +260,8 @@ module.exports = {
             }
             
             console.log(`✅ Channel fetched successfully: #${channel.name}`);
+            console.log(`   - Channel type: ${channel.type}`);
+            console.log(`   - Channel guild: ${channel.guild?.name || 'N/A'}`);
             
             // Verify bot permissions
             const permissions = channel.permissionsFor(client.user);
@@ -251,6 +275,22 @@ module.exports = {
             }
             
             console.log('✅ Bot has all required permissions (View, Send, Embed, Manage)');
+            
+            // Test basic message sending functionality as requested in problem statement
+            console.log('🧪 Testing basic message sending functionality...');
+            try {
+                const testMessage = await channel.send("Test: Classement affichage fonctionnel.");
+                console.log('   ✅ Test message sent successfully');
+                // Delete the test message after a short delay (simplified pattern)
+                setTimeout(() => { 
+                    testMessage.delete().catch((err) => {
+                        console.log('   ⚠️ Could not delete test message:', err.message);
+                    });
+                }, 2000);
+            } catch (testError) {
+                console.error('   ❌ Failed to send test message:', testError.message);
+                throw new Error(`Cannot send messages to channel ${rankingsChannelId}: ${testError.message}`);
+            }
 
             // Delete previous messages in the channel (clean slate)
             console.log('🧹 Cleaning old messages from rankings channel...');
@@ -290,7 +330,7 @@ module.exports = {
             
             console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
-            console.error('❌ Error updating rankings channel:', error.message);
+            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error.message);
             console.error('   Channel ID:', config.channels.rankings);
             console.error('   Stack:', error.stack);
             
@@ -300,6 +340,15 @@ module.exports = {
             }
             if (error.httpStatus) {
                 console.error(`   HTTP Status: ${error.httpStatus}`);
+            }
+            
+            // Try to send error notification to the channel if possible
+            try {
+                if (channel) {
+                    await channel.send(ERROR_MESSAGES.USER_UPDATE_ERROR_MESSAGE);
+                }
+            } catch (notifyError) {
+                console.error('   Could not send error notification to channel:', notifyError.message);
             }
         }
     }
