@@ -10,6 +10,9 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+// Visual formatting constants
+const TOP_POSITIONS_WITH_SPECIAL_FORMATTING = 3;
+
 /**
  * Helper function to get medal or position number for rankings
  * @param {number} position - Zero-based position (0 = first place)
@@ -226,7 +229,7 @@ module.exports = {
     async createConsolidatedPodiumsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
-            .setTitle('═══════════════════════════════════════\n🏆 **Classements Discord** 🏆\n═══════════════════════════════════════')
+            .setTitle('━━━━━━━━━━━━━━━━━━━\n🏆 **Classements Discord** 🏆\n━━━━━━━━━━━━━━━━━━━')
             .setTimestamp();
 
         // Build LC podium data with enhanced formatting
@@ -311,7 +314,7 @@ module.exports = {
     async createConsolidatedRankingsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.gold)
-            .setTitle('═══════════════════════════════════════\n📊 **Top 10 Classements** 📊\n═══════════════════════════════════════')
+            .setTitle('━━━━━━━━━━━━━━━━━━━\n📊 **Top 10 Classements** 📊\n━━━━━━━━━━━━━━━━━━━')
             .setTimestamp();
 
         // Collect all unique user IDs to fetch
@@ -341,7 +344,7 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             
             // Enhanced formatting with better spacing
-            if (i < 3) {
+            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
                 lcRankingData += `${medal} **${username}**\n   💰 ${user.balance} LC\n`;
             } else {
                 lcRankingData += `${medal} ${username} - ${user.balance} LC\n`;
@@ -357,7 +360,7 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             
             // Enhanced formatting with better spacing
-            if (i < 3) {
+            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
                 levelRankingData += `${medal} **${username}**\n   📊 Niveau ${user.level}\n`;
             } else {
                 levelRankingData += `${medal} ${username} - Niveau ${user.level}\n`;

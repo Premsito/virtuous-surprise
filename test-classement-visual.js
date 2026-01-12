@@ -29,7 +29,7 @@ function getMedalForPosition(position) {
 function createConsolidatedPodiumsEmbed(topLC, topLevels) {
     const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setTitle('═══════════════════════════════════════\n🏆 **Classements Discord** 🏆\n═══════════════════════════════════════')
+        .setTitle('━━━━━━━━━━━━━━━━━━━\n🏆 **Classements Discord** 🏆\n━━━━━━━━━━━━━━━━━━━')
         .setTimestamp();
 
     // Build LC podium data with enhanced formatting
@@ -81,7 +81,7 @@ function createConsolidatedPodiumsEmbed(topLC, topLevels) {
 function createConsolidatedRankingsEmbed(topLC, topLevels) {
     const embed = new EmbedBuilder()
         .setColor(config.colors.gold)
-        .setTitle('═══════════════════════════════════════\n📊 **Top 10 Classements** 📊\n═══════════════════════════════════════')
+        .setTitle('━━━━━━━━━━━━━━━━━━━\n📊 **Top 10 Classements** 📊\n━━━━━━━━━━━━━━━━━━━')
         .setTimestamp();
 
     // Build LC rankings data with enhanced formatting
@@ -194,13 +194,13 @@ async function testVisualFormatting() {
         console.log('\n🔍 Verifying Visual Enhancements...');
         
         // Check title has decorative separators
-        if (podiumsEmbed.data.title.includes('═══')) {
+        if (podiumsEmbed.data.title.includes('━━━')) {
             console.log('   ✓ Podiums embed has decorative title separators');
         } else {
             throw new Error('Podiums embed missing decorative title separators');
         }
 
-        if (rankingsEmbed.data.title.includes('═══')) {
+        if (rankingsEmbed.data.title.includes('━━━')) {
             console.log('   ✓ Rankings embed has decorative title separators');
         } else {
             throw new Error('Rankings embed missing decorative title separators');
