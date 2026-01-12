@@ -10,6 +10,18 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+/**
+ * Helper function to get medal or position number for rankings
+ * @param {number} position - Zero-based position (0 = first place)
+ * @returns {string} Medal emoji or position number
+ */
+function getMedalForPosition(position) {
+    if (position === 0) return '🥇';
+    if (position === 1) return '🥈';
+    if (position === 2) return '🥉';
+    return `${position + 1}.`;
+}
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -125,7 +137,7 @@ module.exports = {
 
         for (let i = 0; i < Math.min(3, topUsers.length); i++) {
             const user = topUsers[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+            const medal = getMedalForPosition(i);
             
             // Fetch user from Discord to get avatar
             let discordUser;
@@ -208,7 +220,7 @@ module.exports = {
         let podiumLCData = '';
         for (let i = 0; i < Math.min(3, topLC.length); i++) {
             const user = topLC[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+            const medal = getMedalForPosition(i);
             
             let discordUser;
             try {
@@ -223,7 +235,7 @@ module.exports = {
             
             podiumLCData += `${medal} **${username}** → ${value}\n`;
 
-            // Set first place avatar at 128px
+            // Set first place LC avatar at 128px (consistent display rule)
             if (i === 0 && discordUser) {
                 try {
                     const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
@@ -239,7 +251,7 @@ module.exports = {
         let podiumLevelData = '';
         for (let i = 0; i < Math.min(3, topLevels.length); i++) {
             const user = topLevels[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+            const medal = getMedalForPosition(i);
             
             let discordUser;
             try {
@@ -279,7 +291,7 @@ module.exports = {
         let lcRankingData = '';
         for (let i = 0; i < Math.min(10, topLC.length); i++) {
             const user = topLC[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+            const medal = getMedalForPosition(i);
             lcRankingData += `${medal} **${user.username}** → ${user.balance} LC\n`;
         }
 
@@ -287,7 +299,7 @@ module.exports = {
         let levelRankingData = '';
         for (let i = 0; i < Math.min(10, topLevels.length); i++) {
             const user = topLevels[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+            const medal = getMedalForPosition(i);
             levelRankingData += `${medal} **${user.username}** → Niveau ${user.level}\n`;
         }
 
@@ -317,7 +329,7 @@ module.exports = {
 
         for (let i = 0; i < Math.min(10, topUsers.length); i++) {
             const user = topUsers[i];
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+            const medal = getMedalForPosition(i);
             const value = valueFormatter(user);
             
             description += `${medal} **${user.username}** → ${value}\n`;
