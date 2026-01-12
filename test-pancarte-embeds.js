@@ -5,7 +5,7 @@
 
 const { EmbedBuilder } = require('discord.js');
 const { calculateLevelReward } = require('./utils/rewardHelper');
-const { getXPProgress } = require('./utils/xpHelper');
+const { getXPProgress, getXPForLevel } = require('./utils/xpHelper');
 const config = require('./config.json');
 
 // Mock Discord user object for testing
@@ -91,9 +91,18 @@ async function testPancarteEmbeds() {
         console.log('🧪 Testing Discord Embed Pancartes for Level-Up Notifications\n');
         console.log('This test demonstrates the visual appearance of different level-up types:\n');
         
+        // Helper function to calculate total XP for a given level
+        function getTotalXPForLevel(level) {
+            let totalXP = 0;
+            for (let i = 1; i < level; i++) {
+                totalXP += getXPForLevel(i);
+            }
+            return totalXP;
+        }
+        
         // Test case 1: Milestone level 5 (Trésor at every 5th level)
         console.log('📝 Test 1: Milestone Level 5 - Grand trésor 💎');
-        const level5XP = 1000 + 250; // XP sum for levels 1-4 + some progress
+        const level5XP = getTotalXPForLevel(5) + 250; // XP for levels 1-4 + partial progress
         const reward5 = calculateLevelReward(5);
         const embed5 = generateLevelUpPancarte(mockUser, 5, level5XP, reward5);
         displayEmbed(5, embed5);
@@ -103,7 +112,7 @@ async function testPancarteEmbeds() {
         
         // Test case 2: Milestone level 10 (Trésor épique with boost)
         console.log('\n📝 Test 2: Milestone Level 10 - Trésor épique 💎⚡');
-        const level10XP = 5500 + 500; // XP sum for levels 1-9 + some progress
+        const level10XP = getTotalXPForLevel(10) + 500; // XP for levels 1-9 + partial progress
         const reward10 = calculateLevelReward(10);
         const embed10 = generateLevelUpPancarte(mockUser, 10, level10XP, reward10);
         displayEmbed(10, embed10);
@@ -113,7 +122,7 @@ async function testPancarteEmbeds() {
         
         // Test case 3: Intermediate level 3 (Bonus LC boost)
         console.log('\n📝 Test 3: Intermediate Level 3 - Bonus ⚡');
-        const level3XP = 300 + 150; // XP sum for levels 1-2 + some progress
+        const level3XP = getTotalXPForLevel(3) + 150; // XP for levels 1-2 + partial progress
         const reward3 = calculateLevelReward(3);
         const embed3 = generateLevelUpPancarte(mockUser, 3, level3XP, reward3);
         displayEmbed(3, embed3);
@@ -123,7 +132,7 @@ async function testPancarteEmbeds() {
         
         // Test case 4: Even level 8 (Fixed LC reward)
         console.log('\n📝 Test 4: Even Level 8 - Fixed LC Reward 💰');
-        const level8XP = 3600 + 400; // XP sum for levels 1-7 + some progress
+        const level8XP = getTotalXPForLevel(8) + 400; // XP for levels 1-7 + partial progress
         const reward8 = calculateLevelReward(8);
         const embed8 = generateLevelUpPancarte(mockUser, 8, level8XP, reward8);
         displayEmbed(8, embed8);
@@ -133,7 +142,7 @@ async function testPancarteEmbeds() {
         
         // Test case 5: Milestone level 15 (Trésor légendaire)
         console.log('\n📝 Test 5: Milestone Level 15 - Trésor légendaire 💎');
-        const level15XP = 12000 + 750; // XP sum for levels 1-14 + some progress
+        const level15XP = getTotalXPForLevel(15) + 750; // XP for levels 1-14 + partial progress
         const reward15 = calculateLevelReward(15);
         const embed15 = generateLevelUpPancarte(mockUser, 15, level15XP, reward15);
         displayEmbed(15, embed15);

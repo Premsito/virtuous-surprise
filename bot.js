@@ -1,10 +1,9 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
-const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG } = require('./utils/xpHelper');
-const { getXPProgress } = require('./utils/xpHelper');
+const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG, getXPProgress } = require('./utils/xpHelper');
 const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
 
 // Log npm configuration for debugging deployment issues
