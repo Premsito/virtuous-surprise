@@ -40,7 +40,7 @@ module.exports = {
         // Update user's last_gift_time and add 25 LC
         try {
             await db.updateGiftTime(userId, new Date());
-            await db.updateBalance(userId, 25);
+            await db.updateBalance(userId, 25, 'daily_gift');
             await db.recordTransaction(null, userId, 25, 'daily_gift', 'Daily gift via !cadeau');
 
             const embed = new EmbedBuilder()

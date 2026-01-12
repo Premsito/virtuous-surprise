@@ -222,8 +222,8 @@ module.exports = {
                         const winnerUser = currentPlayerId === challengerId ? opponentMention : challenger;
                         
                         // Transfer LC
-                        await db.updateBalance(winner, betAmount);
-                        await db.updateBalance(loser, -betAmount);
+                        await db.updateBalance(winner, betAmount, 'game_c21_win');
+                        await db.updateBalance(loser, -betAmount, 'game_c21_loss');
                         
                         // Record game
                         await db.recordGame('c21', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);
@@ -270,8 +270,8 @@ module.exports = {
                     await turnMsg.edit({ components: [turnRow] });
                     
                     // Transfer LC (winner gets the bet)
-                    await db.updateBalance(winner, betAmount);
-                    await db.updateBalance(loser, -betAmount);
+                    await db.updateBalance(winner, betAmount, 'game_c21_win');
+                    await db.updateBalance(loser, -betAmount, 'game_c21_loss');
                     
                     // Record game
                     await db.recordGame('c21', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);

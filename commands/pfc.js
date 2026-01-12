@@ -277,8 +277,8 @@ module.exports = {
                     .setFooter({ text: opponentMention.username, iconURL: opponentAvatar });
             } else {
                 // Transfer LC
-                await db.updateBalance(winner, betAmount);
-                await db.updateBalance(loser, -betAmount);
+                await db.updateBalance(winner, betAmount, 'game_pfc_win');
+                await db.updateBalance(loser, -betAmount, 'game_pfc_loss');
                 
                 // Record game
                 await db.recordGame('pfc', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);

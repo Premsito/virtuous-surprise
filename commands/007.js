@@ -633,8 +633,8 @@ async function endGame(message, winnerId, challengerId, opponentId, challengerUs
     const loserId = winnerId === challengerId ? opponentId : challengerId;
     
     // Transfer LC
-    await db.updateBalance(winnerId, betAmount);
-    await db.updateBalance(loserId, -betAmount);
+    await db.updateBalance(winnerId, betAmount, 'game_007_win');
+    await db.updateBalance(loserId, -betAmount, 'game_007_loss');
     
     // Record game
     await db.recordGame('007', challengerId, opponentId, betAmount, winnerId === challengerId ? 'win' : 'loss', winnerId === challengerId ? betAmount : 0);

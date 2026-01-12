@@ -71,7 +71,7 @@ async function handlePurchase(message, args) {
         const drawTime = lotteryState.next_draw_time;
         
         // Deduct balance
-        await db.updateBalance(playerId, -totalCost);
+        await db.updateBalance(playerId, -totalCost, 'lottery_purchase');
         
         // Purchase tickets (this now also updates jackpot and ticket count in a single transaction)
         const tickets = await db.purchaseLotteryTickets(playerId, count, drawTime);
@@ -232,7 +232,7 @@ async function performDraw(client) {
         const winnerId = winnerData.user_id;
         
         // Award jackpot to winner
-        await db.updateBalance(winnerId, jackpot);
+        await db.updateBalance(winnerId, jackpot, 'lottery_win');
         await db.recordTransaction(null, winnerId, jackpot, 'lottery_win', `Gain de la loterie - Ticket #${winningTicket}`);
         
         // Record draw in history
