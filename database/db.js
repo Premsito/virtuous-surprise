@@ -386,6 +386,23 @@ const db = {
         return result.rows[0];
     },
 
+    // Bot state operations (for persistent bot configuration)
+    async getBotState(key) {
+        const result = await pool.query(
+            'SELECT value FROM bot_state WHERE key = $1',
+            [key]
+        );
+        return result.rows[0]?.value;
+    },
+
+    async setBotState(key, value) {
+        const result = await pool.query(
+            'INSERT INTO bot_state (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP RETURNING *',
+            [key, value]
+        );
+        return result.rows[0];
+    },
+
     // Inventory operations
     async getInventory(userId) {
         const result = await pool.query(
