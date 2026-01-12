@@ -47,6 +47,16 @@ async function testRankingsStructure() {
         }
         console.log('   ✓ updateRankingsChannel function exists');
 
+        if (typeof rankingsCommand.createConsolidatedPodiumsEmbed !== 'function') {
+            throw new Error('Missing createConsolidatedPodiumsEmbed function');
+        }
+        console.log('   ✓ createConsolidatedPodiumsEmbed function exists');
+
+        if (typeof rankingsCommand.createConsolidatedRankingsEmbed !== 'function') {
+            throw new Error('Missing createConsolidatedRankingsEmbed function');
+        }
+        console.log('   ✓ createConsolidatedRankingsEmbed function exists');
+
         console.log('\n🔍 Testing embed creation functions...');
         
         // Test createRankingsTableEmbed with mock data
@@ -95,6 +105,29 @@ async function testRankingsStructure() {
             throw new Error('Third place medal (🥉) not found in description');
         }
         console.log('   ✓ Third place medal (🥉) assigned correctly');
+
+        console.log('\n🔍 Testing consolidated embeds...');
+        
+        // Test createConsolidatedRankingsEmbed
+        const consolidatedRankingsEmbed = rankingsCommand.createConsolidatedRankingsEmbed(
+            mockUsers,
+            mockUsers
+        );
+
+        console.log('   ✓ Consolidated rankings embed created');
+        console.log(`     - Title: ${consolidatedRankingsEmbed.data.title}`);
+        console.log(`     - Fields count: ${consolidatedRankingsEmbed.data.fields.length}`);
+        
+        // Check that fields are inline
+        if (consolidatedRankingsEmbed.data.fields[0].inline !== true) {
+            throw new Error('LC rankings field should be inline');
+        }
+        console.log('   ✓ LC rankings field is inline');
+        
+        if (consolidatedRankingsEmbed.data.fields[1].inline !== true) {
+            throw new Error('Levels rankings field should be inline');
+        }
+        console.log('   ✓ Levels rankings field is inline');
 
         console.log('\n✅ All rankings structure tests passed!');
         
