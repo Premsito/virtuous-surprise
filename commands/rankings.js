@@ -64,6 +64,13 @@ module.exports = {
             console.log("Channel fetched:", channel);
             console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
             
+            // Ensure we have a guild context (rankings only work in guilds, not DMs)
+            if (!channel.guild) {
+                console.error('   ❌ Channel is not in a guild context');
+                await channel.send('❌ Cette commande ne fonctionne que dans un serveur.');
+                return;
+            }
+            
             // Get top users (fetch more to account for filtering)
             const topLC = await db.getTopLC(50);
             const topLevels = await db.getTopLevels(50);
