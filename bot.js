@@ -126,66 +126,96 @@ setInterval(() => {
 async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardInfo) {
     try {
         const levelUpChannelId = config.channels.levelUpNotification;
+        console.log(`[LEVEL-UP] Attempting to send notification to channel ${levelUpChannelId} for ${user.username} (Level ${newLevel})`);
+        
         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
         
-        if (levelUpChannel) {
-            // Get XP progress for the new level
-            const progress = getXPProgress(totalXP);
-            
-            // Determine embed color based on reward type
-            let embedColor = config.colors.primary;
-            if (rewardInfo.type === 'milestone') {
-                embedColor = config.colors.gold; // Golden for milestone rewards
-            } else if (rewardInfo.type === 'boost') {
-                embedColor = rewardInfo.boost.type === 'xp' ? config.colors.warning : config.colors.success;
-            }
-            
-            // Create the embed pancarte
-            const embed = new EmbedBuilder()
-                .setColor(embedColor)
-                .setTitle('🎉 Félicitations 🎉')
-                .setDescription(`**Tu as atteint le Niveau ${newLevel}** 🏆`)
-                .setThumbnail(user.displayAvatarURL({ size: 256 }))
-                .addFields(
-                    {
-                        name: '📊 Progression XP',
-                        value: `${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`,
-                        inline: true
-                    },
-                    {
-                        name: '🎁 Récompense',
-                        value: rewardInfo.description,
-                        inline: true
-                    }
-                )
-                .setTimestamp();
-            
-            // Add special message for milestone levels
-            if (rewardInfo.type === 'milestone') {
-                const nextMilestone = Math.ceil((newLevel + 1) / 5) * 5;
-                embed.setFooter({ 
-                    text: `Continue jusqu'au niveau ${nextMilestone} pour le prochain trésor ! 💎` 
-                });
-            } else {
-                embed.setFooter({ 
-                    text: '💡 Les !missions permettent de gagner de l\'XP et des LC !' 
-                });
-            }
-            
-            // Send with mention
-            await levelUpChannel.send({
-                content: `<@${userId}>`,
-                embeds: [embed]
-            });
-            
-            console.log(`✅ Sent level-up pancarte for ${user.username} (Level ${newLevel})`);
+        if (!levelUpChannel) {
+            console.error(`❌ [LEVEL-UP] Channel ${levelUpChannelId} not found!`);
+            return;
         }
+        
+        console.log(`[LEVEL-UP] Channel fetched successfully: ${levelUpChannel.name} (${levelUpChannel.id})`);
+        
+        // Check bot permissions
+        const permissions = levelUpChannel.permissionsFor(client.user);
+        if (!permissions) {
+            console.error(`❌ [LEVEL-UP] Cannot check permissions for channel ${levelUpChannelId}`);
+        } else {
+            const canSend = permissions.has('SendMessages');
+            const canEmbed = permissions.has('EmbedLinks');
+            console.log(`[LEVEL-UP] Permissions - SendMessages: ${canSend}, EmbedLinks: ${canEmbed}`);
+            
+            if (!canSend) {
+                console.error(`❌ [LEVEL-UP] Bot lacks SendMessages permission in channel ${levelUpChannelId}`);
+                return;
+            }
+            if (!canEmbed) {
+                console.warn(`⚠️ [LEVEL-UP] Bot lacks EmbedLinks permission in channel ${levelUpChannelId}, will attempt text-only`);
+            }
+        }
+        
+        // Get XP progress for the new level
+        const progress = getXPProgress(totalXP);
+        
+        // Determine embed color based on reward type
+        let embedColor = config.colors.primary;
+        if (rewardInfo.type === 'milestone') {
+            embedColor = config.colors.gold; // Golden for milestone rewards
+        } else if (rewardInfo.type === 'boost') {
+            embedColor = rewardInfo.boost.type === 'xp' ? config.colors.warning : config.colors.success;
+        }
+        
+        // Create the embed pancarte
+        const embed = new EmbedBuilder()
+            .setColor(embedColor)
+            .setTitle('🎉 Félicitations 🎉')
+            .setDescription(`**Tu as atteint le Niveau ${newLevel}** 🏆`)
+            .setThumbnail(user.displayAvatarURL({ size: 256 }))
+            .addFields(
+                {
+                    name: '📊 Progression XP',
+                    value: `${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`,
+                    inline: true
+                },
+                {
+                    name: '🎁 Récompense',
+                    value: rewardInfo.description,
+                    inline: true
+                }
+            )
+            .setTimestamp();
+        
+        // Add special message for milestone levels
+        if (rewardInfo.type === 'milestone') {
+            const nextMilestone = Math.ceil((newLevel + 1) / 5) * 5;
+            embed.setFooter({ 
+                text: `Continue jusqu'au niveau ${nextMilestone} pour le prochain trésor ! 💎` 
+            });
+        } else {
+            embed.setFooter({ 
+                text: '💡 Les !missions permettent de gagner de l\'XP et des LC !' 
+            });
+        }
+        
+        console.log(`[LEVEL-UP] Sending embed to channel...`);
+        
+        // Send with mention
+        await levelUpChannel.send({
+            content: `<@${userId}>`,
+            embeds: [embed]
+        });
+        
+        console.log(`✅ [LEVEL-UP] Successfully sent level-up pancarte for ${user.username} (Level ${newLevel})`);
     } catch (error) {
-        console.error('Error sending level up pancarte:', error.message);
+        console.error('❌ [LEVEL-UP] Error sending level up pancarte:', error.message);
         console.error('  Channel ID:', config.channels.levelUpNotification);
         console.error('  User:', userId);
+        console.error('  Error stack:', error.stack);
+        
         // Fallback to text notification
         try {
+            console.log('[LEVEL-UP] Attempting fallback text notification...');
             const levelUpChannel = await client.channels.fetch(config.channels.levelUpNotification);
             if (levelUpChannel) {
                 await levelUpChannel.send(
@@ -193,9 +223,13 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                     `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
                     `💝 Récompense : **${rewardInfo.description}** 🚀 !`
                 );
+                console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
+            } else {
+                console.error(`❌ [LEVEL-UP] Failed to fetch channel for fallback notification`);
             }
         } catch (fallbackError) {
-            console.error('Error sending fallback level up notification:', fallbackError.message);
+            console.error('❌ [LEVEL-UP] Error sending fallback level up notification:', fallbackError.message);
+            console.error('  Fallback error stack:', fallbackError.stack);
         }
     }
 }
@@ -210,26 +244,34 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
  */
 async function handleLevelUp(client, userId, user, newLevel, totalXP) {
     try {
+        console.log(`[LEVEL-UP] Starting level-up handler for ${user.username} (Level ${newLevel}, ${totalXP} XP)`);
+        
         // Calculate reward for this level
         const reward = calculateLevelReward(newLevel);
+        console.log(`[LEVEL-UP] Reward calculated: ${JSON.stringify(reward)}`);
         
         // Apply LC reward if applicable
         if (reward.lcAmount > 0) {
+            console.log(`[LEVEL-UP] Granting ${reward.lcAmount} LC to ${user.username}`);
             await db.updateBalance(userId, reward.lcAmount, 'level_up');
             await db.recordTransaction(null, userId, reward.lcAmount, 'level_up', `Niveau ${newLevel} atteint`);
         }
         
         // Apply boost if applicable
         if (reward.boost) {
+            console.log(`[LEVEL-UP] Activating ${reward.boost.type.toUpperCase()} x${reward.boost.multiplier} boost for ${user.username} (${reward.boost.duration}s)`);
             await db.activateBoost(userId, reward.boost.type, reward.boost.multiplier, reward.boost.duration);
-            console.log(`✅ Activated ${reward.boost.type.toUpperCase()} x${reward.boost.multiplier} boost for ${user.username} (${reward.boost.duration}s)`);
+            console.log(`✅ [LEVEL-UP] Boost activated successfully`);
         }
         
         // Send level-up notification with reward object
+        console.log(`[LEVEL-UP] Calling sendLevelUpCard...`);
         await sendLevelUpCard(client, userId, user, newLevel, totalXP, reward);
+        console.log(`[LEVEL-UP] Level-up handler completed successfully for ${user.username}`);
         
     } catch (error) {
-        console.error('Error handling level up:', error.message);
+        console.error('❌ [LEVEL-UP] Error handling level up:', error.message);
+        console.error('  Error stack:', error.stack);
     }
 }
 
@@ -329,10 +371,13 @@ client.once('clientReady', async () => {
                                 const updatedUser = await db.addXP(userId, xpGained);
                                 const newLevel = getLevelFromXP(updatedUser.xp);
                                 
+                                // Debug logging for voice XP tracking
+                                console.log(`[XP] Voice XP granted to ${userInVoice.user.username}: +${xpGained} XP (${user.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+                                
                                 // Check for hourly bonus (60 minutes)
                                 if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
                                     await db.addXP(userId, XP_CONFIG.VOICE_HOUR_BONUS);
-                                    console.log(`Granted hourly voice bonus to ${userId}: ${XP_CONFIG.VOICE_HOUR_BONUS} XP`);
+                                    console.log(`[XP] Granted hourly voice bonus to ${userInVoice.user.username}: ${XP_CONFIG.VOICE_HOUR_BONUS} XP`);
                                 }
                                 
                                 // Update session tracking
@@ -343,6 +388,7 @@ client.once('clientReady', async () => {
                                 
                                 // Check for level up
                                 if (newLevel > oldLevel) {
+                                    console.log(`🎉 [LEVEL UP] ${userInVoice.user.username} leveled up from ${oldLevel} to ${newLevel}!`);
                                     await db.updateLevel(userId, newLevel);
                                     
                                     // Handle level-up rewards
@@ -733,6 +779,9 @@ client.on('messageReactionAdd', async (reaction, user) => {
             const updatedUser = await db.addXP(authorId, xpToGrant);
             const newLevel = getLevelFromXP(updatedUser.xp);
             
+            // Debug logging for reaction XP tracking
+            console.log(`[XP] Reaction XP granted to ${messageAuthor.username}: +${xpToGrant} XP (${authorUser.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+            
             // Update message reaction XP tracking
             if (messageReactionData) {
                 await db.updateMessageReactionXP(messageId, xpToGrant);
@@ -742,6 +791,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
             
             // Check for level up
             if (newLevel > oldLevel) {
+                console.log(`🎉 [LEVEL UP] ${messageAuthor.username} leveled up from ${oldLevel} to ${newLevel}!`);
                 await db.updateLevel(authorId, newLevel);
                 
                 // Handle level-up rewards
@@ -793,8 +843,12 @@ client.on('messageCreate', async (message) => {
             
             const newLevel = getLevelFromXP(updatedUser.xp);
             
+            // Debug logging for XP tracking
+            console.log(`[XP] Message XP granted to ${username}: +${xpGained} XP (${user.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+            
             // Check for level up
             if (newLevel > oldLevel) {
+                console.log(`🎉 [LEVEL UP] ${username} leveled up from ${oldLevel} to ${newLevel}!`);
                 await db.updateLevel(userId, newLevel);
                 
                 // Handle level-up rewards
