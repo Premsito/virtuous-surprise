@@ -96,7 +96,7 @@ module.exports = {
             // Create consolidated podiums embed (top 3 from filtered data)
             console.log('🏆 Creating consolidated podiums embed...');
             const podiumsEmbed = await this.createConsolidatedPodiumsEmbed(
-                channel.client,
+                channel.guild,
                 finalLC.slice(0, 3),
                 finalLevels.slice(0, 3)
             );
@@ -104,7 +104,7 @@ module.exports = {
             // Create consolidated rankings embed with inline fields (top 10 from filtered data)
             console.log('📊 Creating consolidated rankings embed...');
             const rankingsEmbed = await this.createConsolidatedRankingsEmbed(
-                channel.client,
+                channel.guild,
                 finalLC,
                 finalLevels
             );
@@ -221,12 +221,12 @@ module.exports = {
 
     /**
      * Create a consolidated podiums embed with both LC and Levels podiums
-     * @param {Client} client - Discord client
+     * @param {Guild} guild - Discord guild
      * @param {Array} topLC - Top 3 LC users
      * @param {Array} topLevels - Top 3 Level users
      * @returns {Promise<EmbedBuilder>} The consolidated podiums embed
      */
-    async createConsolidatedPodiumsEmbed(client, topLC, topLevels) {
+    async createConsolidatedPodiumsEmbed(guild, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
             .setTitle('━━━━━━━━━━━━━━━━━━━\n🏆 **Classements Discord** 🏆\n━━━━━━━━━━━━━━━━━━━')
@@ -238,33 +238,33 @@ module.exports = {
             const user = topLC[i];
             const medal = getMedalForPosition(i);
             
-            let discordUser;
+            let guildMember;
             try {
-                discordUser = await client.users.fetch(user.user_id);
-                console.log(`   ✓ Fetched LC user ${discordUser.username} (${medal}) for podium`);
+                guildMember = await guild.members.fetch(user.user_id);
+                console.log(`   ✓ Fetched LC user ${guildMember.displayName} (${medal}) for podium`);
             } catch (error) {
                 console.error(`   ⚠️ Could not fetch LC user ${user.user_id}:`, error.message);
             }
 
-            const username = discordUser ? discordUser.username : user.username;
+            const displayName = guildMember ? guildMember.displayName : user.username;
             const value = `${user.balance} LC`;
             
             // Enhanced formatting with spacing
             if (i === 0) {
-                podiumLCData += `${medal} **${username}**\n`;
+                podiumLCData += `${medal} **${displayName}**\n`;
                 podiumLCData += `    💰 ${value}\n`;
             } else {
-                podiumLCData += `${medal} **${username}** - ${value}\n`;
+                podiumLCData += `${medal} **${displayName}** - ${value}\n`;
             }
 
             // Set first place LC avatar at 128px (consistent display rule)
-            if (i === 0 && discordUser) {
+            if (i === 0 && guildMember) {
                 try {
-                    const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
+                    const avatarUrl = guildMember.displayAvatarURL({ size: 128, dynamic: true });
                     embed.setThumbnail(avatarUrl);
-                    console.log(`   🖼️ Set LC 1st place avatar: ${username} (128px thumbnail)`);
+                    console.log(`   🖼️ Set LC 1st place avatar: ${displayName} (128px thumbnail)`);
                 } catch (error) {
-                    console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
+                    console.error(`   ⚠️ Avatar size error for ${displayName}:`, error.message);
                 }
             }
         }
@@ -275,23 +275,23 @@ module.exports = {
             const user = topLevels[i];
             const medal = getMedalForPosition(i);
             
-            let discordUser;
+            let guildMember;
             try {
-                discordUser = await client.users.fetch(user.user_id);
-                console.log(`   ✓ Fetched Level user ${discordUser.username} (${medal}) for podium`);
+                guildMember = await guild.members.fetch(user.user_id);
+                console.log(`   ✓ Fetched Level user ${guildMember.displayName} (${medal}) for podium`);
             } catch (error) {
                 console.error(`   ⚠️ Could not fetch Level user ${user.user_id}:`, error.message);
             }
 
-            const username = discordUser ? discordUser.username : user.username;
+            const displayName = guildMember ? guildMember.displayName : user.username;
             const value = `Niveau ${user.level}`;
             
             // Enhanced formatting with spacing
             if (i === 0) {
-                podiumLevelData += `${medal} **${username}**\n`;
+                podiumLevelData += `${medal} **${displayName}**\n`;
                 podiumLevelData += `    📊 ${value}\n`;
             } else {
-                podiumLevelData += `${medal} **${username}** - ${value}\n`;
+                podiumLevelData += `${medal} **${displayName}** - ${value}\n`;
             }
         }
 
@@ -306,12 +306,12 @@ module.exports = {
 
     /**
      * Create a consolidated rankings embed with both LC and Levels rankings
-     * @param {Client} client - Discord client
+     * @param {Guild} guild - Discord guild
      * @param {Array} topLC - Top 10 LC users
      * @param {Array} topLevels - Top 10 Level users
      * @returns {Promise<EmbedBuilder>} The consolidated rankings embed
      */
-    async createConsolidatedRankingsEmbed(client, topLC, topLevels) {
+    async createConsolidatedRankingsEmbed(guild, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.gold)
             .setTitle('━━━━━━━━━━━━━━━━━━━\n📊 **Top 10 Classements** 📊\n━━━━━━━━━━━━━━━━━━━')
@@ -322,15 +322,15 @@ module.exports = {
         topLC.forEach(user => allUserIds.add(user.user_id));
         topLevels.forEach(user => allUserIds.add(user.user_id));
 
-        // Batch fetch all Discord users
-        const userCache = new Map();
+        // Batch fetch all Discord guild members
+        const memberCache = new Map();
         await Promise.all(
             Array.from(allUserIds).map(async (userId) => {
                 try {
-                    const discordUser = await client.users.fetch(userId);
-                    userCache.set(userId, discordUser);
+                    const guildMember = await guild.members.fetch(userId);
+                    memberCache.set(userId, guildMember);
                 } catch (error) {
-                    console.error(`   ⚠️ Could not fetch user ${userId}:`, error.message);
+                    console.error(`   ⚠️ Could not fetch member ${userId}:`, error.message);
                 }
             })
         );
@@ -340,14 +340,14 @@ module.exports = {
         for (let i = 0; i < Math.min(10, topLC.length); i++) {
             const user = topLC[i];
             const medal = getMedalForPosition(i);
-            const discordUser = userCache.get(user.user_id);
-            const username = discordUser ? discordUser.username : user.username;
+            const guildMember = memberCache.get(user.user_id);
+            const displayName = guildMember ? guildMember.displayName : user.username;
             
             // Enhanced formatting with better spacing
             if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
-                lcRankingData += `${medal} **${username}**\n   💰 ${user.balance} LC\n`;
+                lcRankingData += `${medal} **${displayName}**\n   💰 ${user.balance} LC\n`;
             } else {
-                lcRankingData += `${medal} ${username} - ${user.balance} LC\n`;
+                lcRankingData += `${medal} ${displayName} - ${user.balance} LC\n`;
             }
         }
 
@@ -356,14 +356,14 @@ module.exports = {
         for (let i = 0; i < Math.min(10, topLevels.length); i++) {
             const user = topLevels[i];
             const medal = getMedalForPosition(i);
-            const discordUser = userCache.get(user.user_id);
-            const username = discordUser ? discordUser.username : user.username;
+            const guildMember = memberCache.get(user.user_id);
+            const displayName = guildMember ? guildMember.displayName : user.username;
             
             // Enhanced formatting with better spacing
             if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
-                levelRankingData += `${medal} **${username}**\n   📊 Niveau ${user.level}\n`;
+                levelRankingData += `${medal} **${displayName}**\n   📊 Niveau ${user.level}\n`;
             } else {
-                levelRankingData += `${medal} ${username} - Niveau ${user.level}\n`;
+                levelRankingData += `${medal} ${displayName} - Niveau ${user.level}\n`;
             }
         }
 
