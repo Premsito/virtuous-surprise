@@ -1,7 +1,8 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
+const { generateRankingsImage } = require('../utils/rankingsImage');
 
 // Error message constants
 const ERROR_MESSAGES = {
@@ -9,21 +10,6 @@ const ERROR_MESSAGES = {
     USER_ERROR_MESSAGE: '⛔ Une erreur critique est survenue. Contactez un administrateur.',
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
-
-// Visual formatting constants
-const TOP_POSITIONS_WITH_SPECIAL_FORMATTING = 3;
-
-/**
- * Helper function to get medal or position number for rankings
- * @param {number} position - Zero-based position (0 = first place)
- * @returns {string} Medal emoji or position number
- */
-function getMedalForPosition(position) {
-    if (position === 0) return '🥇';
-    if (position === 1) return '🥈';
-    if (position === 2) return '🥉';
-    return `${position + 1}.`;
-}
 
 module.exports = {
     name: 'rankings',
@@ -100,30 +86,22 @@ module.exports = {
                 return;
             }
 
-            // Create consolidated podiums embed (top 3 from filtered data)
-            console.log('🏆 Creating consolidated podiums embed...');
-            const podiumsEmbed = await this.createConsolidatedPodiumsEmbed(
-                channel.guild,
-                finalLC.slice(0, 3),
-                finalLevels.slice(0, 3)
-            );
-
-            // Create consolidated rankings embed with inline fields (top 10 from filtered data)
-            console.log('📊 Creating consolidated rankings embed...');
-            const rankingsEmbed = await this.createConsolidatedRankingsEmbed(
-                channel.guild,
+            // Generate rankings image (pancarte)
+            console.log('🖼️ Generating rankings image...');
+            const imageBuffer = await generateRankingsImage(
                 finalLC,
-                finalLevels
+                finalLevels,
+                channel.guild
             );
-
-            // Send the embeds
-            console.log('📤 Sending consolidated podiums embed...');
-            await channel.send({ embeds: [podiumsEmbed] });
             
-            console.log('📤 Sending consolidated rankings embed...');
-            await channel.send({ embeds: [rankingsEmbed] });
+            // Create attachment
+            const attachment = new AttachmentBuilder(imageBuffer, { name: 'classements.png' });
             
-            console.log('✅ All rankings embeds sent successfully');
+            // Send the image
+            console.log('📤 Sending rankings image...');
+            await channel.send({ files: [attachment] });
+            
+            console.log('✅ Rankings image sent successfully');
 
         } catch (error) {
             console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
@@ -138,163 +116,6 @@ module.exports = {
             }
             throw error;
         }
-    },
-
-    /**
-     * Create a consolidated podiums embed with both LC and Levels podiums
-     * @param {Guild} guild - Discord guild
-     * @param {Array} topLC - Top 3 LC users
-     * @param {Array} topLevels - Top 3 Level users
-     * @returns {Promise<EmbedBuilder>} The consolidated podiums embed
-     */
-    async createConsolidatedPodiumsEmbed(guild, topLC, topLevels) {
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setTitle('━━━━━━━━━━━━━━━━━━━\n🏆 **Classements Discord** 🏆\n━━━━━━━━━━━━━━━━━━━')
-            .setTimestamp();
-
-        // Build LC podium data with enhanced formatting
-        let podiumLCData = '';
-        for (let i = 0; i < Math.min(3, topLC.length); i++) {
-            const user = topLC[i];
-            const medal = getMedalForPosition(i);
-            
-            let guildMember;
-            try {
-                guildMember = await guild.members.fetch(user.user_id);
-                console.log(`   ✓ Fetched LC user ${guildMember.displayName} (${medal}) for podium`);
-            } catch (error) {
-                console.error(`   ⚠️ Could not fetch LC user ${user.user_id}:`, error.message);
-            }
-
-            const displayName = guildMember ? guildMember.displayName : user.username;
-            const value = `${user.balance} LC`;
-            
-            // Enhanced formatting with spacing
-            if (i === 0) {
-                podiumLCData += `${medal} **${displayName}**\n`;
-                podiumLCData += `    💰 ${value}\n`;
-            } else {
-                podiumLCData += `${medal} **${displayName}** - ${value}\n`;
-            }
-
-            // Set first place LC avatar at 128px (consistent display rule)
-            if (i === 0 && guildMember) {
-                try {
-                    const avatarUrl = guildMember.displayAvatarURL({ size: 128, dynamic: true });
-                    embed.setThumbnail(avatarUrl);
-                    console.log(`   🖼️ Set LC 1st place avatar: ${displayName} (128px thumbnail)`);
-                } catch (error) {
-                    console.error(`   ⚠️ Avatar size error for ${displayName}:`, error.message);
-                }
-            }
-        }
-
-        // Build Levels podium data with enhanced formatting
-        let podiumLevelData = '';
-        for (let i = 0; i < Math.min(3, topLevels.length); i++) {
-            const user = topLevels[i];
-            const medal = getMedalForPosition(i);
-            
-            let guildMember;
-            try {
-                guildMember = await guild.members.fetch(user.user_id);
-                console.log(`   ✓ Fetched Level user ${guildMember.displayName} (${medal}) for podium`);
-            } catch (error) {
-                console.error(`   ⚠️ Could not fetch Level user ${user.user_id}:`, error.message);
-            }
-
-            const displayName = guildMember ? guildMember.displayName : user.username;
-            const value = `Niveau ${user.level}`;
-            
-            // Enhanced formatting with spacing
-            if (i === 0) {
-                podiumLevelData += `${medal} **${displayName}**\n`;
-                podiumLevelData += `    📊 ${value}\n`;
-            } else {
-                podiumLevelData += `${medal} **${displayName}** - ${value}\n`;
-            }
-        }
-
-        // Add fields to embed with visual separator
-        embed.addFields(
-            { name: '💰 Podium LC', value: podiumLCData || 'Aucune donnée disponible', inline: true },
-            { name: '📊 Podium Niveaux', value: podiumLevelData || 'Aucune donnée disponible', inline: true }
-        );
-
-        return embed;
-    },
-
-    /**
-     * Create a consolidated rankings embed with both LC and Levels rankings
-     * @param {Guild} guild - Discord guild
-     * @param {Array} topLC - Top 10 LC users
-     * @param {Array} topLevels - Top 10 Level users
-     * @returns {Promise<EmbedBuilder>} The consolidated rankings embed
-     */
-    async createConsolidatedRankingsEmbed(guild, topLC, topLevels) {
-        const embed = new EmbedBuilder()
-            .setColor(config.colors.gold)
-            .setTitle('━━━━━━━━━━━━━━━━━━━\n📊 **Top 10 Classements** 📊\n━━━━━━━━━━━━━━━━━━━')
-            .setTimestamp();
-
-        // Collect all unique user IDs to fetch
-        const allUserIds = new Set();
-        topLC.forEach(user => allUserIds.add(user.user_id));
-        topLevels.forEach(user => allUserIds.add(user.user_id));
-
-        // Batch fetch all Discord guild members
-        const memberCache = new Map();
-        await Promise.all(
-            Array.from(allUserIds).map(async (userId) => {
-                try {
-                    const guildMember = await guild.members.fetch(userId);
-                    memberCache.set(userId, guildMember);
-                } catch (error) {
-                    console.error(`   ⚠️ Could not fetch member ${userId}:`, error.message);
-                }
-            })
-        );
-
-        // Build LC rankings data with enhanced formatting
-        let lcRankingData = '';
-        for (let i = 0; i < Math.min(10, topLC.length); i++) {
-            const user = topLC[i];
-            const medal = getMedalForPosition(i);
-            const guildMember = memberCache.get(user.user_id);
-            const displayName = guildMember ? guildMember.displayName : user.username;
-            
-            // Enhanced formatting with better spacing
-            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
-                lcRankingData += `${medal} **${displayName}**\n   💰 ${user.balance} LC\n`;
-            } else {
-                lcRankingData += `${medal} ${displayName} - ${user.balance} LC\n`;
-            }
-        }
-
-        // Build Level rankings data with enhanced formatting
-        let levelRankingData = '';
-        for (let i = 0; i < Math.min(10, topLevels.length); i++) {
-            const user = topLevels[i];
-            const medal = getMedalForPosition(i);
-            const guildMember = memberCache.get(user.user_id);
-            const displayName = guildMember ? guildMember.displayName : user.username;
-            
-            // Enhanced formatting with better spacing
-            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
-                levelRankingData += `${medal} **${displayName}**\n   📊 Niveau ${user.level}\n`;
-            } else {
-                levelRankingData += `${medal} ${displayName} - Niveau ${user.level}\n`;
-            }
-        }
-
-        // Add inline fields for side-by-side display with visual separators
-        embed.addFields(
-            { name: '💰 Classement LC', value: lcRankingData || 'Aucune donnée disponible', inline: true },
-            { name: '📊 Classement Niveaux', value: levelRankingData || 'Aucune donnée disponible', inline: true }
-        );
-
-        return embed;
     },
 
     /**

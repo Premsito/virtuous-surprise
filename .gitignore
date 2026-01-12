@@ -26,3 +26,4 @@ temp/
 # Test output files
 test-levelup-card-*.png
 test-integration-card.png
+test-rankings-image.js
