@@ -61,38 +61,50 @@ const db = {
     },
 
     async updateBalance(userId, amount, reason = 'unknown') {
-        // Get old balance first
-        const oldUser = await this.getUser(userId);
-        const oldBalance = oldUser ? oldUser.balance : 0;
-        
+        // Use a CTE to capture old balance in a single query
         const result = await pool.query(
-            'UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            `WITH old_balance AS (
+                SELECT balance FROM users WHERE user_id = $2
+            )
+            UPDATE users 
+            SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2 
+            RETURNING *, (SELECT COALESCE(balance, 0) FROM old_balance) as old_balance`,
             [amount, userId]
         );
         const updatedUser = result.rows[0];
         
         // Emit LC change event
         if (updatedUser) {
+            const oldBalance = updatedUser.old_balance || 0;
             lcEventEmitter.emitLCChange(userId, oldBalance, updatedUser.balance, reason);
+            // Remove the old_balance field from returned object
+            delete updatedUser.old_balance;
         }
         
         return updatedUser;
     },
 
     async setBalance(userId, amount, reason = 'admin_set') {
-        // Get old balance first
-        const oldUser = await this.getUser(userId);
-        const oldBalance = oldUser ? oldUser.balance : 0;
-        
+        // Use a CTE to capture old balance in a single query
         const result = await pool.query(
-            'UPDATE users SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            `WITH old_balance AS (
+                SELECT balance FROM users WHERE user_id = $2
+            )
+            UPDATE users 
+            SET balance = $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2 
+            RETURNING *, (SELECT COALESCE(balance, 0) FROM old_balance) as old_balance`,
             [amount, userId]
         );
         const updatedUser = result.rows[0];
         
         // Emit LC change event
         if (updatedUser) {
+            const oldBalance = updatedUser.old_balance || 0;
             lcEventEmitter.emitLCChange(userId, oldBalance, updatedUser.balance, reason);
+            // Remove the old_balance field from returned object
+            delete updatedUser.old_balance;
         }
         
         return updatedUser;

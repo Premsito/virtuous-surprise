@@ -47,20 +47,29 @@ class RankingsManager {
      * @param {Object} rankingsCommand - Rankings command module
      */
     async initialize(client, rankingsCommand) {
+        // Validate parameters
+        if (!client) {
+            throw new Error('Rankings Manager: client parameter is required');
+        }
+        if (!rankingsCommand) {
+            throw new Error('Rankings Manager: rankingsCommand parameter is required');
+        }
+        
         this.client = client;
         this.rankingsCommand = rankingsCommand;
         
         // Pre-fetch and cache the rankings channel
-        try {
-            const rankingsChannelId = config.channels.rankings;
-            if (rankingsChannelId) {
-                this.rankingsChannel = await client.channels.fetch(rankingsChannelId).catch(() => null);
-                if (this.rankingsChannel) {
-                    console.log(`✅ Rankings channel cached: #${this.rankingsChannel.name}`);
-                }
+        const rankingsChannelId = config.channels.rankings;
+        if (rankingsChannelId) {
+            try {
+                this.rankingsChannel = await client.channels.fetch(rankingsChannelId);
+                console.log(`✅ Rankings channel cached: #${this.rankingsChannel.name}`);
+            } catch (error) {
+                console.error('⚠️ Failed to cache rankings channel:', error.message);
+                console.error('   Rankings notifications will be disabled');
             }
-        } catch (error) {
-            console.error('⚠️ Failed to cache rankings channel:', error.message);
+        } else {
+            console.warn('⚠️ Rankings channel ID not configured');
         }
         
         // Subscribe to LC change events
@@ -141,6 +150,13 @@ class RankingsManager {
             return;
         }
         
+        // Validate manager is initialized
+        if (!this.client || !this.rankingsCommand) {
+            console.error('❌ Rankings Manager not properly initialized, skipping update');
+            this.pendingUpdates.clear();
+            return;
+        }
+        
         try {
             console.log(`🔄 Triggering dynamic rankings update (${this.pendingUpdates.size} users changed)`);
             
@@ -148,9 +164,7 @@ class RankingsManager {
             const oldRankings = await this.getCurrentRankings();
             
             // Update rankings display
-            if (this.client && this.rankingsCommand) {
-                await this.rankingsCommand.updateRankingsChannel(this.client);
-            }
+            await this.rankingsCommand.updateRankingsChannel(this.client);
             
             // Get new rankings after update
             const newRankings = await this.getCurrentRankings();
