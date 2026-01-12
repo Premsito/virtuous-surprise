@@ -3,8 +3,6 @@
  * This tests that the rankings command properly filters users based on LC and Level thresholds
  */
 
-const rankingsCommand = require('./commands/rankings');
-
 async function testRankingsFiltering() {
     console.log('🧪 Testing Rankings Filtering Logic...\n');
 
