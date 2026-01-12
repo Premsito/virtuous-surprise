@@ -307,7 +307,11 @@ module.exports = {
             
             // Verify bot permissions
             // Note: ManageMessages is no longer required since we edit our own messages
-            // instead of deleting them. Only ViewChannel, SendMessages, and EmbedLinks are needed.
+            // instead of deleting them. Discord allows bots to edit their own messages
+            // without ManageMessages permission. Required permissions:
+            // - ViewChannel: See the rankings channel
+            // - SendMessages: Post initial message (if needed)
+            // - EmbedLinks: Send embedded rankings
             const permissions = channel.permissionsFor(client.user);
             const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));

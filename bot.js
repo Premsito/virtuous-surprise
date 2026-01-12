@@ -422,7 +422,8 @@ client.once('clientReady', async () => {
         // Set up the interval for rankings updates
         setInterval(() => {
             updateRankingsWithRetry(0).catch(err => {
-                console.error('❌ Unhandled error in rankings update interval:', err.message);
+                console.error('❌ Error caught in rankings update interval:', err.message);
+                console.error('   This error was logged and will not crash the bot.');
             });
         }, RANKINGS_UPDATE_INTERVAL_MS);
         
