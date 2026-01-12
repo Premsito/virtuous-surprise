@@ -3,6 +3,24 @@ const { createCanvas, loadImage } = require('canvas');
 // Constants for visual styling
 const ALPHA_TRANSPARENCY = '20';
 
+// Layout constants for consistent spacing
+const LAYOUT = {
+    CANVAS_WIDTH: 1200,
+    CANVAS_HEIGHT: 800,
+    BORDER_MARGIN: 10,
+    BORDER_WIDTH: 6,
+    HEADER_HEIGHT: 100,
+    COLUMN_HEADER_HEIGHT: 50,
+    COLUMN_GAP: 20,           // Gap between columns for visual separation
+    ENTRY_HEIGHT: 62,         // Increased for better vertical spacing
+    ENTRY_PADDING: 12,        // Increased for better horizontal padding
+    AVATAR_SIZE: 42,          // Slightly larger for better visibility
+    MEDAL_WIDTH: 45,          // Reserved space for medal/number
+    AVATAR_MARGIN: 15,        // Space between medal and avatar
+    TEXT_MARGIN: 15,          // Space between avatar and text (increased from 10)
+    VALUE_PADDING: 20         // Minimum padding for value text on the right
+};
+
 /**
  * Generate a rankings image (pancarte) using Canvas
  * Displays Top 10 for both LC and Niveaux side-by-side
@@ -12,46 +30,47 @@ const ALPHA_TRANSPARENCY = '20';
  * @returns {Buffer} - PNG image buffer
  */
 async function generateRankingsImage(topLC, topLevels, guild) {
-    // Canvas dimensions - wide format for side-by-side columns
-    const width = 1200;
-    const height = 800;
-    
     // Create canvas
-    const canvas = createCanvas(width, height);
+    const canvas = createCanvas(LAYOUT.CANVAS_WIDTH, LAYOUT.CANVAS_HEIGHT);
     const ctx = canvas.getContext('2d');
     
     // Background - light colored gradient
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    const gradient = ctx.createLinearGradient(0, 0, LAYOUT.CANVAS_WIDTH, LAYOUT.CANVAS_HEIGHT);
     gradient.addColorStop(0, '#F0F4FF');
     gradient.addColorStop(0.5, '#E8EFFF');
     gradient.addColorStop(1, '#F0F4FF');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, LAYOUT.CANVAS_WIDTH, LAYOUT.CANVAS_HEIGHT);
     
     // Main decorative border
     ctx.strokeStyle = '#5865F2';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(10, 10, width - 20, height - 20);
+    ctx.lineWidth = LAYOUT.BORDER_WIDTH;
+    ctx.strokeRect(
+        LAYOUT.BORDER_MARGIN, 
+        LAYOUT.BORDER_MARGIN, 
+        LAYOUT.CANVAS_WIDTH - (LAYOUT.BORDER_MARGIN * 2), 
+        LAYOUT.CANVAS_HEIGHT - (LAYOUT.BORDER_MARGIN * 2)
+    );
     
     // Header section with colored background
-    const headerHeight = 100;
-    const headerGradient = ctx.createLinearGradient(0, 0, width, headerHeight);
+    const headerGradient = ctx.createLinearGradient(0, 0, LAYOUT.CANVAS_WIDTH, LAYOUT.HEADER_HEIGHT);
     headerGradient.addColorStop(0, '#5865F2');
     headerGradient.addColorStop(0.5, '#7289DA');
     headerGradient.addColorStop(1, '#5865F2');
     ctx.fillStyle = headerGradient;
-    ctx.fillRect(20, 20, width - 40, headerHeight);
+    ctx.fillRect(20, 20, LAYOUT.CANVAS_WIDTH - 40, LAYOUT.HEADER_HEIGHT);
     
     // Title
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 48px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🏆 CLASSEMENTS DISCORD 🏆', width / 2, 80);
+    ctx.fillText('🏆 CLASSEMENTS DISCORD 🏆', LAYOUT.CANVAS_WIDTH / 2, 80);
     
-    // Column setup
-    const columnWidth = (width - 60) / 2;
-    const leftColumnX = 30;
-    const rightColumnX = 30 + columnWidth + 10;
+    // Column setup - equal widths with centered gap
+    const contentWidth = LAYOUT.CANVAS_WIDTH - (LAYOUT.BORDER_MARGIN * 2) - (LAYOUT.BORDER_WIDTH * 2) - 20;
+    const columnWidth = (contentWidth - LAYOUT.COLUMN_GAP) / 2;
+    const leftColumnX = LAYOUT.BORDER_MARGIN + LAYOUT.BORDER_WIDTH + 10;
+    const rightColumnX = leftColumnX + columnWidth + LAYOUT.COLUMN_GAP;
     const startY = 140;
     
     // Left column - LC Rankings
@@ -121,9 +140,8 @@ function drawPlaceholderAvatar(ctx, x, y, size, borderColor) {
  */
 async function drawRankingColumn(ctx, x, y, width, users, title, color, valueType, guild) {
     // Column header panel
-    const headerHeight = 50;
     ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, headerHeight);
+    ctx.fillRect(x, y, width, LAYOUT.COLUMN_HEADER_HEIGHT);
     
     // Column header text
     ctx.fillStyle = '#FFFFFF';
@@ -134,18 +152,14 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
     // Reset text alignment for entries
     ctx.textAlign = 'left';
     
-    // Entry settings
-    const entryHeight = 60;
-    const avatarSize = 40;
-    const entryPadding = 8;
-    let currentY = y + headerHeight + 10;
+    let currentY = y + LAYOUT.COLUMN_HEADER_HEIGHT + 10;
     
     // Draw up to 10 entries
     const displayUsers = users.slice(0, 10);
     
     for (let i = 0; i < displayUsers.length; i++) {
         const user = displayUsers[i];
-        const entryY = currentY + i * entryHeight;
+        const entryY = currentY + i * LAYOUT.ENTRY_HEIGHT;
         
         // Entry background - alternating colors
         if (i < 3) {
@@ -155,22 +169,24 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         } else {
             ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F5F5F5';
         }
-        ctx.fillRect(x, entryY, width, entryHeight);
+        ctx.fillRect(x, entryY, width, LAYOUT.ENTRY_HEIGHT);
         
         // Entry border
         ctx.strokeStyle = '#E0E0E0';
         ctx.lineWidth = 1;
-        ctx.strokeRect(x, entryY, width, entryHeight);
+        ctx.strokeRect(x, entryY, width, LAYOUT.ENTRY_HEIGHT);
         
-        // Medal or position number
+        // Medal or position number - centered in reserved space
         const medal = getMedal(i);
         ctx.fillStyle = '#2C2F33';
         ctx.font = 'bold 24px sans-serif';
-        ctx.fillText(medal, x + entryPadding, entryY + 32);
+        ctx.textAlign = 'center';
+        ctx.fillText(medal, x + LAYOUT.ENTRY_PADDING + (LAYOUT.MEDAL_WIDTH / 2), entryY + 35);
+        ctx.textAlign = 'left';
         
-        // Avatar
-        const avatarX = x + 50;
-        const avatarY = entryY + (entryHeight - avatarSize) / 2;
+        // Avatar - positioned after medal space
+        const avatarX = x + LAYOUT.ENTRY_PADDING + LAYOUT.MEDAL_WIDTH + LAYOUT.AVATAR_MARGIN;
+        const avatarY = entryY + (LAYOUT.ENTRY_HEIGHT - LAYOUT.AVATAR_SIZE) / 2;
         
         // Fetch guild member once for both avatar and display name
         let guildMember = null;
@@ -188,38 +204,42 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
                 // Draw circular avatar
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                ctx.arc(avatarX + LAYOUT.AVATAR_SIZE / 2, avatarY + LAYOUT.AVATAR_SIZE / 2, LAYOUT.AVATAR_SIZE / 2, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.clip();
-                ctx.drawImage(avatar, avatarX, avatarY, avatarSize, avatarSize);
+                ctx.drawImage(avatar, avatarX, avatarY, LAYOUT.AVATAR_SIZE, LAYOUT.AVATAR_SIZE);
                 ctx.restore();
                 
                 // Avatar border
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                ctx.arc(avatarX + LAYOUT.AVATAR_SIZE / 2, avatarY + LAYOUT.AVATAR_SIZE / 2, LAYOUT.AVATAR_SIZE / 2, 0, Math.PI * 2);
                 ctx.stroke();
             } catch (error) {
                 console.error(`Error loading avatar for user ${user.user_id}:`, error.message);
                 // Draw placeholder on error
-                drawPlaceholderAvatar(ctx, avatarX, avatarY, avatarSize, color);
+                drawPlaceholderAvatar(ctx, avatarX, avatarY, LAYOUT.AVATAR_SIZE, color);
             }
         } else {
             // Draw placeholder circle if member not found
-            drawPlaceholderAvatar(ctx, avatarX, avatarY, avatarSize, color);
+            drawPlaceholderAvatar(ctx, avatarX, avatarY, LAYOUT.AVATAR_SIZE, color);
         }
         
-        // Username
-        const nameX = avatarX + avatarSize + 10;
+        // Username - positioned after avatar with proper margin
+        const nameX = avatarX + LAYOUT.AVATAR_SIZE + LAYOUT.TEXT_MARGIN;
         const nameY = entryY + 28;
         
         const displayName = guildMember ? guildMember.displayName : user.username;
         ctx.fillStyle = '#2C2F33';
         ctx.font = i < 3 ? 'bold 20px sans-serif' : '18px sans-serif';
         
+        // Calculate available width for name (accounting for all spacing and padding)
+        const usedWidth = LAYOUT.ENTRY_PADDING + LAYOUT.MEDAL_WIDTH + LAYOUT.AVATAR_MARGIN + 
+                         LAYOUT.AVATAR_SIZE + LAYOUT.TEXT_MARGIN;
+        const maxNameWidth = width - usedWidth - LAYOUT.VALUE_PADDING;
+        
         // Truncate name if too long
-        const maxNameWidth = width - (nameX - x) - 100;
         let truncatedName = displayName;
         if (ctx.measureText(displayName).width > maxNameWidth) {
             while (ctx.measureText(truncatedName + '...').width > maxNameWidth && truncatedName.length > 0) {
@@ -230,8 +250,8 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         
         ctx.fillText(truncatedName, nameX, nameY);
         
-        // Value (LC or Niveau)
-        const valueY = entryY + 48;
+        // Value (LC or Niveau) - positioned below username
+        const valueY = entryY + 50;
         const value = valueType === 'LC' ? `${user.balance} LC` : `Niveau ${user.level}`;
         ctx.fillStyle = color;
         ctx.font = 'bold 16px sans-serif';
