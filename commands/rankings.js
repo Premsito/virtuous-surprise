@@ -6,7 +6,7 @@ const { isAdmin } = require('../utils/adminHelper');
 // Error message constants
 const ERROR_MESSAGES = {
     CRITICAL_DISPLAY_ERROR: 'Critical error in ranking display:',
-    USER_ERROR_MESSAGE: 'Une erreur critique est survenue. Contactez un administrateur.',
+    USER_ERROR_MESSAGE: '⛔ Une erreur critique est survenue. Contactez un administrateur.',
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
@@ -45,15 +45,17 @@ module.exports = {
      */
     async displayRankings(channel) {
         try {
+            // Channel validation logging as requested in problem statement
+            console.log("Channel fetched:", channel);
             console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
             
             // Get top users
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
             
-            // Detailed logging as requested in problem statement
-            console.log("Data fetched for LC Ranking:", topLC);
-            console.log("Data fetched for Level Ranking:", topLevels);
+            // Data validation logging as requested in problem statement
+            console.log("Fetched LC Ranking:", topLC);
+            console.log("Fetched Level Ranking:", topLevels);
             
             console.log(`   - Fetched ${topLC.length} LC rankings`);
             console.log(`   - Fetched ${topLevels.length} level rankings`);
