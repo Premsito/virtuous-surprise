@@ -74,16 +74,12 @@ module.exports = {
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return;
             }
-            
-            // Use top users directly (no filtering)
-            const finalLC = topLC;
-            const finalLevels = topLevels;
 
             // Generate rankings image (pancarte)
             console.log('🖼️ Generating rankings image...');
             const imageBuffer = await generateRankingsImage(
-                finalLC,
-                finalLevels,
+                topLC,
+                topLevels,
                 channel.guild
             );
             
