@@ -27,3 +27,4 @@ temp/
 test-levelup-card-*.png
 test-integration-card.png
 test-rankings-image.js
+test-tableau-alignment.js
