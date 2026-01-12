@@ -173,27 +173,45 @@ module.exports = {
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    embed.setThumbnail(discordUser.displayAvatarURL({ size: 128, dynamic: true }));
-                    console.log(`   🖼️ Set 1st place avatar: ${username} (128px thumbnail)`);
+                    try {
+                        const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
+                        embed.setThumbnail(avatarUrl);
+                        console.log(`   🖼️ Set 1st place avatar: ${username} (128px thumbnail)`);
+                    } catch (error) {
+                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
+                        // Continue without setting the thumbnail
+                    }
                 }
             } else if (i === 1) {
-                // Second place - 96px avatar as image
+                // Second place - 128px avatar as image
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    embed.setImage(discordUser.displayAvatarURL({ size: 96, dynamic: true }));
-                    console.log(`   🖼️ Set 2nd place avatar: ${username} (96px image)`);
+                    try {
+                        const avatarUrl = discordUser.displayAvatarURL({ size: 128, dynamic: true });
+                        embed.setImage(avatarUrl);
+                        console.log(`   🖼️ Set 2nd place avatar: ${username} (128px image)`);
+                    } catch (error) {
+                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
+                        // Continue without setting the image
+                    }
                 }
             } else {
                 // Third place - 64px avatar in author section (alternative to footer)
                 description += `\n**${medal} ${username}**\n`;
                 description += `└─ ${value}\n`;
                 if (discordUser) {
-                    embed.setAuthor({
-                        name: `🥉 ${username}`,
-                        iconURL: discordUser.displayAvatarURL({ size: 64, dynamic: true })
-                    });
-                    console.log(`   🖼️ Set 3rd place avatar: ${username} (64px author icon)`);
+                    try {
+                        const avatarUrl = discordUser.displayAvatarURL({ size: 64, dynamic: true });
+                        embed.setAuthor({
+                            name: `🥉 ${username}`,
+                            iconURL: avatarUrl
+                        });
+                        console.log(`   🖼️ Set 3rd place avatar: ${username} (64px author icon)`);
+                    } catch (error) {
+                        console.error(`   ⚠️ Avatar size error for ${username}:`, error.message);
+                        // Continue without setting the author avatar
+                    }
                 }
             }
         }
