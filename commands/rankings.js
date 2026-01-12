@@ -74,13 +74,9 @@ module.exports = {
             // Get guild member with caching
             let guildMember = memberCache.get(user.user_id);
             if (!guildMember) {
-                try {
-                    guildMember = await guild.members.fetch(user.user_id).catch(() => null);
-                    if (guildMember) {
-                        memberCache.set(user.user_id, guildMember);
-                    }
-                } catch (error) {
-                    // Member fetch failed, will use username fallback
+                guildMember = await guild.members.fetch(user.user_id).catch(() => null);
+                if (guildMember) {
+                    memberCache.set(user.user_id, guildMember);
                 }
             }
             
@@ -110,17 +106,17 @@ module.exports = {
         
         // Set thumbnail to first place user's avatar
         if (users.length > 0) {
-            try {
-                const firstUser = users[0];
-                const firstMember = memberCache.get(firstUser.user_id) || 
-                    await guild.members.fetch(firstUser.user_id).catch(() => null);
-                
-                if (firstMember) {
+            const firstUser = users[0];
+            // Check if we already fetched this member in the loop above
+            const firstMember = memberCache.get(firstUser.user_id);
+            
+            if (firstMember) {
+                try {
                     embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
+                } catch (error) {
+                    // Avatar fetch failed, embed will work without thumbnail
+                    console.log('   ⚠️ Could not set avatar thumbnail:', error.message);
                 }
-            } catch (error) {
-                // Avatar fetch failed, embed will work without thumbnail
-                console.log('   ⚠️ Could not fetch avatar for thumbnail:', error.message);
             }
         }
         
