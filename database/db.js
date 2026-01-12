@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const lcEventEmitter = require('../utils/lcEventEmitter');
 
 // Database configuration constants
 const DB_INIT_MAX_RETRIES = 3;
@@ -59,20 +60,54 @@ const db = {
         return result.rows[0];
     },
 
-    async updateBalance(userId, amount) {
+    async updateBalance(userId, amount, reason = 'unknown') {
+        // Use a CTE to capture old balance in a single query
         const result = await pool.query(
-            'UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            `WITH old_balance AS (
+                SELECT balance FROM users WHERE user_id = $2
+            )
+            UPDATE users 
+            SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2 
+            RETURNING *, (SELECT COALESCE(balance, 0) FROM old_balance) as old_balance`,
             [amount, userId]
         );
-        return result.rows[0];
+        const updatedUser = result.rows[0];
+        
+        // Emit LC change event
+        if (updatedUser) {
+            const oldBalance = updatedUser.old_balance || 0;
+            lcEventEmitter.emitLCChange(userId, oldBalance, updatedUser.balance, reason);
+            // Remove the old_balance field from returned object
+            delete updatedUser.old_balance;
+        }
+        
+        return updatedUser;
     },
 
-    async setBalance(userId, amount) {
+    async setBalance(userId, amount, reason = 'admin_set') {
+        // Use a CTE to capture old balance in a single query
         const result = await pool.query(
-            'UPDATE users SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            `WITH old_balance AS (
+                SELECT balance FROM users WHERE user_id = $2
+            )
+            UPDATE users 
+            SET balance = $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2 
+            RETURNING *, (SELECT COALESCE(balance, 0) FROM old_balance) as old_balance`,
             [amount, userId]
         );
-        return result.rows[0];
+        const updatedUser = result.rows[0];
+        
+        // Emit LC change event
+        if (updatedUser) {
+            const oldBalance = updatedUser.old_balance || 0;
+            lcEventEmitter.emitLCChange(userId, oldBalance, updatedUser.balance, reason);
+            // Remove the old_balance field from returned object
+            delete updatedUser.old_balance;
+        }
+        
+        return updatedUser;
     },
 
     async transferLC(fromUserId, toUserId, amount, description = 'Transfer') {
@@ -80,15 +115,21 @@ const db = {
         try {
             await client.query('BEGIN');
             
+            // Get old balances
+            const fromUserOld = await this.getUser(fromUserId);
+            const toUserOld = await this.getUser(toUserId);
+            const fromOldBalance = fromUserOld ? fromUserOld.balance : 0;
+            const toOldBalance = toUserOld ? toUserOld.balance : 0;
+            
             // Deduct from sender
-            await client.query(
-                'UPDATE users SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+            const fromResult = await client.query(
+                'UPDATE users SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance',
                 [amount, fromUserId]
             );
             
             // Add to receiver
-            await client.query(
-                'UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+            const toResult = await client.query(
+                'UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance',
                 [amount, toUserId]
             );
             
@@ -99,6 +140,15 @@ const db = {
             );
             
             await client.query('COMMIT');
+            
+            // Emit LC change events for both users
+            if (fromResult.rows[0]) {
+                lcEventEmitter.emitLCChange(fromUserId, fromOldBalance, fromResult.rows[0].balance, 'transfer_sent');
+            }
+            if (toResult.rows[0]) {
+                lcEventEmitter.emitLCChange(toUserId, toOldBalance, toResult.rows[0].balance, 'transfer_received');
+            }
+            
             return true;
         } catch (error) {
             await client.query('ROLLBACK');

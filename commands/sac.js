@@ -146,7 +146,7 @@ async function handleTresorOpen(interaction, userId, username) {
     console.log(`[Trésor] User ${username} (${userId}) opened a Trésor and won ${reward} LC`);
 
     // Add LC to user balance
-    await db.updateBalance(userId, reward);
+    await db.updateBalance(userId, reward, 'tresor_reward');
     await db.recordTransaction(null, userId, reward, 'tresor_reward', 'Trésor ouvert');
 
     // Show second animation: treasure opened

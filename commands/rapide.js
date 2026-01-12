@@ -258,8 +258,8 @@ module.exports = {
                 const loserId = winnerId === challengerId ? opponentId : challengerId;
                 
                 // Transfer LC
-                await db.updateBalance(winnerId, betAmount);
-                await db.updateBalance(loserId, -betAmount);
+                await db.updateBalance(winnerId, betAmount, 'game_rapide_win');
+                await db.updateBalance(loserId, -betAmount, 'game_rapide_loss');
                 
                 // Record game
                 await db.recordGame('rapide', challengerId, opponentId, betAmount, winnerId === challengerId ? 'win' : 'loss', winnerId === challengerId ? betAmount : 0);

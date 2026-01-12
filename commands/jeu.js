@@ -190,8 +190,8 @@ async function handleDuel(message, args) {
         }
         
         // Transfer LC
-        await db.updateBalance(winner, finalWinnings);
-        await db.updateBalance(loser, -betAmount);
+        await db.updateBalance(winner, finalWinnings, 'game_duel_win');
+        await db.updateBalance(loser, -betAmount, 'game_duel_loss');
         
         // Record game (both players record finalWinnings if they won)
         await db.recordGame('duel', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? finalWinnings : 0);
@@ -280,7 +280,7 @@ async function handleRoulette(message, args) {
     roulette.players.set(playerId, { user: player, bet: betAmount });
     
     // Deduct bet
-    await db.updateBalance(playerId, -betAmount);
+    await db.updateBalance(playerId, -betAmount, 'game_roulette_bet');
     
     const totalPot = Array.from(roulette.players.values()).reduce((sum, p) => sum + p.bet, 0);
     
@@ -326,7 +326,7 @@ async function executeRoulette(guildId) {
     const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(winner.user.id, baseWinnings);
     
     // Award winnings
-    await db.updateBalance(winner.user.id, finalWinnings);
+    await db.updateBalance(winner.user.id, finalWinnings, 'game_roulette_win');
     
     // Record game for all players
     for (const [playerId, playerData] of roulette.players) {

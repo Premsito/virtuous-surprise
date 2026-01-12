@@ -131,7 +131,7 @@ async function handleRoue(message, args) {
         multiplierUsed = multiplierResult.multiplierUsed;
         multiplierValue = multiplierResult.multiplierValue;
         
-        await db.updateBalance(playerId, finalWinnings);
+        await db.updateBalance(playerId, finalWinnings, 'game_roue_win');
     }
     
     // Record game
@@ -222,7 +222,7 @@ async function handleBlackjack(message, args) {
         const dealerScore = calculateScore(dealerHand);
         if (dealerScore === 21) {
             // Push - return bet
-            await db.updateBalance(playerId, betAmount);
+            await db.updateBalance(playerId, betAmount, 'game_blackjack_push');
             await db.recordGame('blackjack', playerId, null, betAmount, 'push', 0);
             // No XP for push
             
@@ -243,7 +243,7 @@ async function handleBlackjack(message, args) {
             // Apply multiplier if active
             const { finalWinnings, multiplierUsed, multiplierValue } = await multiplierHelper.applyMultiplier(playerId, baseWinnings);
             
-            await db.updateBalance(playerId, finalWinnings);
+            await db.updateBalance(playerId, finalWinnings, 'game_blackjack_win');
             await db.recordGame('blackjack', playerId, null, betAmount, 'win', finalWinnings);
             
             // Grant XP for win
@@ -502,7 +502,7 @@ async function handleBlackjackStand(message, playerId) {
     }
     
     if (finalWinnings > 0) {
-        await db.updateBalance(playerId, finalWinnings);
+        await db.updateBalance(playerId, finalWinnings, 'game_blackjack_win');
     }
     
     await db.recordGame('blackjack', playerId, null, game.betAmount, result, finalWinnings);
@@ -629,7 +629,7 @@ async function handleMachine(message, args) {
         multiplierUsed = multiplierResult.multiplierUsed;
         multiplierValue = multiplierResult.multiplierValue;
         
-        await db.updateBalance(playerId, finalWinnings);
+        await db.updateBalance(playerId, finalWinnings, 'game_machine_win');
     }
     
     // Record game

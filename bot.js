@@ -5,6 +5,7 @@ const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
 const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG, getXPProgress } = require('./utils/xpHelper');
 const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
+const rankingsManager = require('./utils/rankingsManager');
 
 // Log npm configuration for debugging deployment issues
 console.log('🔍 NPM Configuration Debug:');
@@ -214,7 +215,7 @@ async function handleLevelUp(client, userId, user, newLevel, totalXP) {
         
         // Apply LC reward if applicable
         if (reward.lcAmount > 0) {
-            await db.updateBalance(userId, reward.lcAmount);
+            await db.updateBalance(userId, reward.lcAmount, 'level_up');
             await db.recordTransaction(null, userId, reward.lcAmount, 'level_up', `Niveau ${newLevel} atteint`);
         }
         
@@ -363,6 +364,10 @@ client.once('clientReady', async () => {
             }
         }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
         
+        // Initialize dynamic rankings manager
+        await rankingsManager.initialize(client, rankingsCommand);
+        console.log('✅ Dynamic LC rankings synchronization enabled');
+        
         // Start rankings auto-update (every 5 minutes)
         setInterval(async () => {
             try {
@@ -501,8 +506,8 @@ client.on('guildMemberAdd', async (member) => {
             
             // Reward both users with LC
             console.log(`Rewarding ${config.currency.inviteReward} LC to both users...`);
-            await db.updateBalance(inviterId, config.currency.inviteReward);
-            await db.updateBalance(invitedId, config.currency.inviteReward);
+            await db.updateBalance(inviterId, config.currency.inviteReward, 'invite_reward');
+            await db.updateBalance(invitedId, config.currency.inviteReward, 'invite_joined');
             
             // Record transactions
             await db.recordTransaction(null, inviterId, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
@@ -910,6 +915,11 @@ process.on('SIGTERM', async () => {
 async function shutdown() {
     try {
         console.log('👋 Logging out from Discord...');
+        
+        // Cleanup rankings manager
+        console.log('🔌 Cleaning up rankings manager...');
+        rankingsManager.destroy();
+        
         client.destroy();
         
         console.log('🔌 Closing database connections...');

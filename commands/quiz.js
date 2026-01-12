@@ -379,8 +379,8 @@ module.exports = {
                 const loserScore = Math.min(challengerScore, opponentScore);
                 
                 // Transfer LC
-                await db.updateBalance(winner, betAmount);
-                await db.updateBalance(loser, -betAmount);
+                await db.updateBalance(winner, betAmount, 'game_quiz_win');
+                await db.updateBalance(loser, -betAmount, 'game_quiz_loss');
                 
                 // Record game
                 await db.recordGame('quiz', challengerId, opponentId, betAmount, winner === challengerId ? 'win' : 'loss', winner === challengerId ? betAmount : 0);
