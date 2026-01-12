@@ -3,6 +3,20 @@ const { createCanvas, loadImage } = require('canvas');
 // Constants for visual styling
 const ALPHA_TRANSPARENCY = '20';
 
+// Font size constants for rankings
+const FONT_SIZES = {
+    BASE_MEDAL: 24,
+    BASE_NAME: 20,
+    BASE_VALUE: 16
+};
+
+// Font scaling percentages for top 3 rankings
+const FONT_SCALE = {
+    FIRST: 1.30,   // +30% for 1st place
+    SECOND: 1.20,  // +20% for 2nd place
+    THIRD: 1.10    // +10% for 3rd place
+};
+
 // Layout constants for consistent spacing
 const LAYOUT = {
     CANVAS_WIDTH: 1200,
@@ -20,6 +34,19 @@ const LAYOUT = {
     TEXT_MARGIN: 15,          // Space between avatar and text (increased from 10)
     VALUE_PADDING: 20         // Minimum padding for value text on the right
 };
+
+/**
+ * Get font size for a specific ranking position with scaling
+ * @param {number} baseFontSize - Base font size
+ * @param {number} rankingIndex - Zero-based ranking index (0 = 1st, 1 = 2nd, etc.)
+ * @returns {number} Scaled font size
+ */
+function getFontSizeForRanking(baseFontSize, rankingIndex) {
+    if (rankingIndex === 0) return Math.round(baseFontSize * FONT_SCALE.FIRST);
+    if (rankingIndex === 1) return Math.round(baseFontSize * FONT_SCALE.SECOND);
+    if (rankingIndex === 2) return Math.round(baseFontSize * FONT_SCALE.THIRD);
+    return baseFontSize;
+}
 
 /**
  * Generate a rankings image (pancarte) using Canvas
@@ -180,12 +207,8 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const medal = getMedal(i);
         ctx.fillStyle = '#2C2F33';
         
-        // Font scaling for top 3: 1st: +30%, 2nd: +20%, 3rd: +10%
-        let medalFontSize = 24;
-        if (i === 0) medalFontSize = Math.round(24 * 1.30); // +30%
-        else if (i === 1) medalFontSize = Math.round(24 * 1.20); // +20%
-        else if (i === 2) medalFontSize = Math.round(24 * 1.10); // +10%
-        
+        // Apply font scaling for top 3
+        const medalFontSize = getFontSizeForRanking(FONT_SIZES.BASE_MEDAL, i);
         ctx.font = `bold ${medalFontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText(medal, x + LAYOUT.ENTRY_PADDING + (LAYOUT.MEDAL_WIDTH / 2), entryY + 35);
@@ -240,20 +263,9 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const displayName = guildMember ? guildMember.displayName : user.username;
         ctx.fillStyle = '#2C2F33';
         
-        // Font scaling for top 3: 1st: +30%, 2nd: +20%, 3rd: +10%
-        let nameFontSize = 18;
-        let nameFontWeight = '';
-        if (i === 0) {
-            nameFontSize = Math.round(20 * 1.30); // +30%
-            nameFontWeight = 'bold ';
-        } else if (i === 1) {
-            nameFontSize = Math.round(20 * 1.20); // +20%
-            nameFontWeight = 'bold ';
-        } else if (i === 2) {
-            nameFontSize = Math.round(20 * 1.10); // +10%
-            nameFontWeight = 'bold ';
-        }
-        
+        // Apply font scaling for top 3
+        const nameFontSize = getFontSizeForRanking(FONT_SIZES.BASE_NAME, i);
+        const nameFontWeight = i < 3 ? 'bold ' : '';
         ctx.font = `${nameFontWeight}${nameFontSize}px sans-serif`;
         
         // Calculate available width for name (accounting for all spacing and padding)
@@ -277,12 +289,8 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const value = valueType === 'LC' ? `${user.balance} LC` : `Niveau ${user.level}`;
         ctx.fillStyle = color;
         
-        // Font scaling for value text for top 3
-        let valueFontSize = 16;
-        if (i === 0) valueFontSize = Math.round(16 * 1.30); // +30%
-        else if (i === 1) valueFontSize = Math.round(16 * 1.20); // +20%
-        else if (i === 2) valueFontSize = Math.round(16 * 1.10); // +10%
-        
+        // Apply font scaling for top 3
+        const valueFontSize = getFontSizeForRanking(FONT_SIZES.BASE_VALUE, i);
         ctx.font = `bold ${valueFontSize}px sans-serif`;
         ctx.fillText(value, nameX, valueY);
     }
