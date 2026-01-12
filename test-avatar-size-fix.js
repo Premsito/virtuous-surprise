@@ -23,7 +23,8 @@ async function testAvatarSizes() {
         console.log('   ✓ No invalid size 96 found\n');
 
         // Extract all size values from displayAvatarURL calls
-        const sizePattern = /displayAvatarURL\s*\(\s*\{\s*size:\s*(\d+)/g;
+        // Using a flexible regex pattern that accounts for various formatting
+        const sizePattern = /displayAvatarURL\s*\(\s*\{\s*[^}]*size\s*:\s*(\d+)/g;
         const sizes = [];
         let match;
         
@@ -83,9 +84,8 @@ async function testAvatarSizes() {
 testAvatarSizes()
     .then(() => {
         console.log('\n🎉 Avatar size fix test completed successfully!');
-        process.exit(0);
     })
     .catch((error) => {
         console.error('\n💥 Avatar size fix test failed:', error.message);
-        process.exit(1);
+        process.exitCode = 1;
     });
