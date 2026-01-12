@@ -10,6 +10,9 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+// Visual formatting constants
+const TOP_POSITIONS_WITH_SPECIAL_FORMATTING = 3;
+
 /**
  * Helper function to get medal or position number for rankings
  * @param {number} position - Zero-based position (0 = first place)
@@ -226,10 +229,10 @@ module.exports = {
     async createConsolidatedPodiumsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
-            .setTitle('🏆 Classements Discord')
+            .setTitle('━━━━━━━━━━━━━━━━━━━\n🏆 **Classements Discord** 🏆\n━━━━━━━━━━━━━━━━━━━')
             .setTimestamp();
 
-        // Build LC podium data
+        // Build LC podium data with enhanced formatting
         let podiumLCData = '';
         for (let i = 0; i < Math.min(3, topLC.length); i++) {
             const user = topLC[i];
@@ -246,7 +249,13 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             const value = `${user.balance} LC`;
             
-            podiumLCData += `${medal} **${username}** - ${value}\n`;
+            // Enhanced formatting with spacing
+            if (i === 0) {
+                podiumLCData += `${medal} **${username}**\n`;
+                podiumLCData += `    💰 ${value}\n`;
+            } else {
+                podiumLCData += `${medal} **${username}** - ${value}\n`;
+            }
 
             // Set first place LC avatar at 128px (consistent display rule)
             if (i === 0 && discordUser) {
@@ -260,7 +269,7 @@ module.exports = {
             }
         }
 
-        // Build Levels podium data
+        // Build Levels podium data with enhanced formatting
         let podiumLevelData = '';
         for (let i = 0; i < Math.min(3, topLevels.length); i++) {
             const user = topLevels[i];
@@ -277,13 +286,19 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             const value = `Niveau ${user.level}`;
             
-            podiumLevelData += `${medal} **${username}** - ${value}\n`;
+            // Enhanced formatting with spacing
+            if (i === 0) {
+                podiumLevelData += `${medal} **${username}**\n`;
+                podiumLevelData += `    📊 ${value}\n`;
+            } else {
+                podiumLevelData += `${medal} **${username}** - ${value}\n`;
+            }
         }
 
-        // Add fields to embed
+        // Add fields to embed with visual separator
         embed.addFields(
-            { name: '🏆 Podium LC', value: podiumLCData || 'Aucune donnée disponible', inline: true },
-            { name: '🏆 Podium Niveaux', value: podiumLevelData || 'Aucune donnée disponible', inline: true }
+            { name: '💰 Podium LC', value: podiumLCData || 'Aucune donnée disponible', inline: true },
+            { name: '📊 Podium Niveaux', value: podiumLevelData || 'Aucune donnée disponible', inline: true }
         );
 
         return embed;
@@ -298,8 +313,8 @@ module.exports = {
      */
     async createConsolidatedRankingsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
-            .setColor(config.colors.primary)
-            .setTitle('📊 Classements Discord')
+            .setColor(config.colors.gold)
+            .setTitle('━━━━━━━━━━━━━━━━━━━\n📊 **Top 10 Classements** 📊\n━━━━━━━━━━━━━━━━━━━')
             .setTimestamp();
 
         // Collect all unique user IDs to fetch
@@ -320,30 +335,42 @@ module.exports = {
             })
         );
 
-        // Build LC rankings data
+        // Build LC rankings data with enhanced formatting
         let lcRankingData = '';
         for (let i = 0; i < Math.min(10, topLC.length); i++) {
             const user = topLC[i];
             const medal = getMedalForPosition(i);
             const discordUser = userCache.get(user.user_id);
             const username = discordUser ? discordUser.username : user.username;
-            lcRankingData += `${medal} **${username}** - ${user.balance} LC\n`;
+            
+            // Enhanced formatting with better spacing
+            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
+                lcRankingData += `${medal} **${username}**\n   💰 ${user.balance} LC\n`;
+            } else {
+                lcRankingData += `${medal} ${username} - ${user.balance} LC\n`;
+            }
         }
 
-        // Build Level rankings data
+        // Build Level rankings data with enhanced formatting
         let levelRankingData = '';
         for (let i = 0; i < Math.min(10, topLevels.length); i++) {
             const user = topLevels[i];
             const medal = getMedalForPosition(i);
             const discordUser = userCache.get(user.user_id);
             const username = discordUser ? discordUser.username : user.username;
-            levelRankingData += `${medal} **${username}** - Niveau ${user.level}\n`;
+            
+            // Enhanced formatting with better spacing
+            if (i < TOP_POSITIONS_WITH_SPECIAL_FORMATTING) {
+                levelRankingData += `${medal} **${username}**\n   📊 Niveau ${user.level}\n`;
+            } else {
+                levelRankingData += `${medal} ${username} - Niveau ${user.level}\n`;
+            }
         }
 
-        // Add inline fields for side-by-side display
+        // Add inline fields for side-by-side display with visual separators
         embed.addFields(
-            { name: 'Classement LC - Top 10', value: lcRankingData || 'Aucune donnée disponible', inline: true },
-            { name: 'Classement Niveaux - Top 10', value: levelRankingData || 'Aucune donnée disponible', inline: true }
+            { name: '💰 Classement LC', value: lcRankingData || 'Aucune donnée disponible', inline: true },
+            { name: '📊 Classement Niveaux', value: levelRankingData || 'Aucune donnée disponible', inline: true }
         );
 
         return embed;
