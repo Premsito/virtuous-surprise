@@ -61,9 +61,9 @@ module.exports = {
             console.log("Channel fetched:", channel);
             console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
             
-            // Get top users
-            const topLC = await db.getTopLC(10);
-            const topLevels = await db.getTopLevels(10);
+            // Get top users (fetch more to account for filtering)
+            const topLC = await db.getTopLC(50);
+            const topLevels = await db.getTopLevels(50);
             
             // Data validation logging as requested in problem statement
             console.log("Fetched LC Ranking:", topLC);
@@ -72,27 +72,38 @@ module.exports = {
             console.log(`   - Fetched ${topLC.length} LC rankings`);
             console.log(`   - Fetched ${topLevels.length} level rankings`);
             
-            // Check if there's any ranking data available
-            if (topLC.length === 0 && topLevels.length === 0) {
-                console.log(`   ⚠️ No ranking data available`);
+            // Apply ranking filters as per requirements
+            const filteredLC = topLC.filter(user => user.balance >= 200);
+            const filteredLevels = topLevels.filter(user => user.level >= 2);
+            
+            console.log(`   - Filtered to ${filteredLC.length} LC users (>= 200 LC)`);
+            console.log(`   - Filtered to ${filteredLevels.length} level users (>= Level 2)`);
+            
+            // Take top 10 after filtering
+            const finalLC = filteredLC.slice(0, 10);
+            const finalLevels = filteredLevels.slice(0, 10);
+            
+            // Check if there's any ranking data available after filtering
+            if (finalLC.length === 0 && finalLevels.length === 0) {
+                console.log(`   ⚠️ No ranking data available after filtering`);
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return;
             }
 
-            // Create consolidated podiums embed
+            // Create consolidated podiums embed (top 3 from filtered data)
             console.log('🏆 Creating consolidated podiums embed...');
             const podiumsEmbed = await this.createConsolidatedPodiumsEmbed(
                 channel.client,
-                topLC.slice(0, 3),
-                topLevels.slice(0, 3)
+                finalLC.slice(0, 3),
+                finalLevels.slice(0, 3)
             );
 
-            // Create consolidated rankings embed with inline fields
+            // Create consolidated rankings embed with inline fields (top 10 from filtered data)
             console.log('📊 Creating consolidated rankings embed...');
             const rankingsEmbed = await this.createConsolidatedRankingsEmbed(
                 channel.client,
-                topLC,
-                topLevels
+                finalLC,
+                finalLevels
             );
 
             // Send the embeds
