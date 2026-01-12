@@ -179,7 +179,14 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         // Medal or position number - centered in reserved space
         const medal = getMedal(i);
         ctx.fillStyle = '#2C2F33';
-        ctx.font = 'bold 24px sans-serif';
+        
+        // Font scaling for top 3: 1st: +30%, 2nd: +20%, 3rd: +10%
+        let medalFontSize = 24;
+        if (i === 0) medalFontSize = Math.round(24 * 1.30); // +30%
+        else if (i === 1) medalFontSize = Math.round(24 * 1.20); // +20%
+        else if (i === 2) medalFontSize = Math.round(24 * 1.10); // +10%
+        
+        ctx.font = `bold ${medalFontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText(medal, x + LAYOUT.ENTRY_PADDING + (LAYOUT.MEDAL_WIDTH / 2), entryY + 35);
         ctx.textAlign = 'left';
@@ -232,7 +239,25 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         
         const displayName = guildMember ? guildMember.displayName : user.username;
         ctx.fillStyle = '#2C2F33';
-        ctx.font = i < 3 ? 'bold 20px sans-serif' : '18px sans-serif';
+        
+        // Font scaling for top 3: 1st: +30%, 2nd: +20%, 3rd: +10%
+        let nameFontSize = 18;
+        let nameFontWeight = '';
+        if (i === 0) {
+            nameFontSize = Math.round(20 * 1.30); // +30%
+            nameFontWeight = 'bold ';
+        } else if (i === 1) {
+            nameFontSize = Math.round(20 * 1.20); // +20%
+            nameFontWeight = 'bold ';
+        } else if (i === 2) {
+            nameFontSize = Math.round(20 * 1.10); // +10%
+            nameFontWeight = 'bold ';
+        } else if (i < 3) {
+            nameFontSize = 20;
+            nameFontWeight = 'bold ';
+        }
+        
+        ctx.font = `${nameFontWeight}${nameFontSize}px sans-serif`;
         
         // Calculate available width for name (accounting for all spacing and padding)
         const usedWidth = LAYOUT.ENTRY_PADDING + LAYOUT.MEDAL_WIDTH + LAYOUT.AVATAR_MARGIN + 
@@ -254,7 +279,14 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const valueY = entryY + 50;
         const value = valueType === 'LC' ? `${user.balance} LC` : `Niveau ${user.level}`;
         ctx.fillStyle = color;
-        ctx.font = 'bold 16px sans-serif';
+        
+        // Font scaling for value text for top 3
+        let valueFontSize = 16;
+        if (i === 0) valueFontSize = Math.round(16 * 1.30); // +30%
+        else if (i === 1) valueFontSize = Math.round(16 * 1.20); // +20%
+        else if (i === 2) valueFontSize = Math.round(16 * 1.10); // +10%
+        
+        ctx.font = `bold ${valueFontSize}px sans-serif`;
         ctx.fillText(value, nameX, valueY);
     }
 }
