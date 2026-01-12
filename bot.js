@@ -420,8 +420,10 @@ client.once('clientReady', async () => {
         }
         
         // Set up the interval for rankings updates
-        setInterval(async () => {
-            await updateRankingsWithRetry(0);
+        setInterval(() => {
+            updateRankingsWithRetry(0).catch(err => {
+                console.error('❌ Unhandled error in rankings update interval:', err.message);
+            });
         }, RANKINGS_UPDATE_INTERVAL_MS);
         
         // Initial rankings update

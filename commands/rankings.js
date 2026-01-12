@@ -306,6 +306,8 @@ module.exports = {
             });
             
             // Verify bot permissions
+            // Note: ManageMessages is no longer required since we edit our own messages
+            // instead of deleting them. Only ViewChannel, SendMessages, and EmbedLinks are needed.
             const permissions = channel.permissionsFor(client.user);
             const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
