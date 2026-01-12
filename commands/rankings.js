@@ -89,7 +89,8 @@ module.exports = {
 
             // Create consolidated rankings embed with inline fields
             console.log('📊 Creating consolidated rankings embed...');
-            const rankingsEmbed = this.createConsolidatedRankingsEmbed(
+            const rankingsEmbed = await this.createConsolidatedRankingsEmbed(
+                channel.client,
                 topLC,
                 topLevels
             );
@@ -234,7 +235,7 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             const value = `${user.balance} LC`;
             
-            podiumLCData += `${medal} **${username}** → ${value}\n`;
+            podiumLCData += `${medal} **${username}** - ${value}\n`;
 
             // Set first place LC avatar at 128px (consistent display rule)
             if (i === 0 && discordUser) {
@@ -265,13 +266,13 @@ module.exports = {
             const username = discordUser ? discordUser.username : user.username;
             const value = `Niveau ${user.level}`;
             
-            podiumLevelData += `${medal} **${username}** → ${value}\n`;
+            podiumLevelData += `${medal} **${username}** - ${value}\n`;
         }
 
         // Add fields to embed
         embed.addFields(
-            { name: '🥇 Podium LC', value: podiumLCData || 'Aucune donnée disponible', inline: false },
-            { name: '🏆 Podium Niveaux', value: podiumLevelData || 'Aucune donnée disponible', inline: false }
+            { name: '🏆 Podium LC', value: podiumLCData || 'Aucune donnée disponible', inline: true },
+            { name: '🏆 Podium Niveaux', value: podiumLevelData || 'Aucune donnée disponible', inline: true }
         );
 
         return embed;
@@ -279,11 +280,12 @@ module.exports = {
 
     /**
      * Create a consolidated rankings embed with both LC and Levels rankings
+     * @param {Client} client - Discord client
      * @param {Array} topLC - Top 10 LC users
      * @param {Array} topLevels - Top 10 Level users
-     * @returns {EmbedBuilder} The consolidated rankings embed
+     * @returns {Promise<EmbedBuilder>} The consolidated rankings embed
      */
-    createConsolidatedRankingsEmbed(topLC, topLevels) {
+    async createConsolidatedRankingsEmbed(client, topLC, topLevels) {
         const embed = new EmbedBuilder()
             .setColor(config.colors.primary)
             .setTitle('📊 Classements Discord')
@@ -294,7 +296,16 @@ module.exports = {
         for (let i = 0; i < Math.min(10, topLC.length); i++) {
             const user = topLC[i];
             const medal = getMedalForPosition(i);
-            lcRankingData += `${medal} **${user.username}** → ${user.balance} LC\n`;
+            
+            let discordUser;
+            try {
+                discordUser = await client.users.fetch(user.user_id);
+            } catch (error) {
+                console.error(`   ⚠️ Could not fetch user ${user.user_id} for LC rankings:`, error.message);
+            }
+            
+            const username = discordUser ? discordUser.username : user.username;
+            lcRankingData += `${medal} **${username}** - ${user.balance} LC\n`;
         }
 
         // Build Level rankings data
@@ -302,7 +313,16 @@ module.exports = {
         for (let i = 0; i < Math.min(10, topLevels.length); i++) {
             const user = topLevels[i];
             const medal = getMedalForPosition(i);
-            levelRankingData += `${medal} **${user.username}** → Niveau ${user.level}\n`;
+            
+            let discordUser;
+            try {
+                discordUser = await client.users.fetch(user.user_id);
+            } catch (error) {
+                console.error(`   ⚠️ Could not fetch user ${user.user_id} for level rankings:`, error.message);
+            }
+            
+            const username = discordUser ? discordUser.username : user.username;
+            levelRankingData += `${medal} **${username}** - Niveau ${user.level}\n`;
         }
 
         // Add inline fields for side-by-side display

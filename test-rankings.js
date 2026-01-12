@@ -108,8 +108,26 @@ async function testRankingsStructure() {
 
         console.log('\n🔍 Testing consolidated embeds...');
         
+        // Create a mock client with users.fetch method
+        const mockClient = {
+            users: {
+                fetch: async (userId) => {
+                    // Return mock user based on userId
+                    const mockUser = mockUsers.find(u => u.user_id === userId);
+                    if (!mockUser) {
+                        throw new Error('User not found');
+                    }
+                    return {
+                        id: userId,
+                        username: mockUser.username
+                    };
+                }
+            }
+        };
+        
         // Test createConsolidatedRankingsEmbed
-        const consolidatedRankingsEmbed = rankingsCommand.createConsolidatedRankingsEmbed(
+        const consolidatedRankingsEmbed = await rankingsCommand.createConsolidatedRankingsEmbed(
+            mockClient,
             mockUsers,
             mockUsers
         );
