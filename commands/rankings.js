@@ -14,6 +14,9 @@ module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
     
+    // Track the last posted rankings message for cleanup
+    lastRankingsMessage: null,
+    
     async execute(message, args) {
         try {
             console.log(`📊 Rankings command called by ${message.author.username} (${message.author.id})`);
@@ -126,6 +129,7 @@ module.exports = {
     /**
      * Display the rankings in a channel
      * @param {TextChannel} channel - The channel to display rankings in
+     * @returns {Promise<Message|null>} The sent message, or null if an error occurred or no data available
      */
     async displayRankings(channel) {
         try {
@@ -137,7 +141,7 @@ module.exports = {
             if (!channel.guild) {
                 console.error('   ❌ Channel is not in a guild context');
                 await channel.send('❌ Cette commande ne fonctionne que dans un serveur.');
-                return;
+                return null;
             }
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
@@ -155,7 +159,7 @@ module.exports = {
             if (topLC.length === 0 && topLevels.length === 0) {
                 console.log(`   ⚠️ No ranking data available`);
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
-                return;
+                return null;
             }
 
             // Create ranking embeds
@@ -179,12 +183,13 @@ module.exports = {
             
             // Send both embeds together
             console.log('📤 Sending ranking embeds...');
-            await channel.send({ 
+            const sentMessage = await channel.send({ 
                 content: '🏆 **Classements Discord** 🏆',
                 embeds: [lcEmbed, levelEmbed] 
             });
             
             console.log('✅ Ranking embeds sent successfully');
+            return sentMessage;
 
         } catch (error) {
             console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
@@ -245,58 +250,29 @@ module.exports = {
             }
             
             console.log('✅ Bot has all required permissions (View, Send, Embed, Manage)');
-            
-            // Test basic message sending functionality as requested in problem statement
-            console.log('🧪 Testing basic message sending functionality...');
-            try {
-                const testMessage = await channel.send("Test unitaire : Classement affichage opérationnel.");
-                console.log('   ✅ Test message sent successfully');
-                // Delete the test message after a short delay (simplified pattern)
-                setTimeout(() => { 
-                    testMessage.delete().catch((err) => {
-                        console.log('   ⚠️ Could not delete test message:', err.message);
-                    });
-                }, 2000);
-            } catch (testError) {
-                console.error('   ❌ Failed to send test message:', testError.message);
-                throw new Error(`Cannot send messages to channel ${rankingsChannelId}: ${testError.message}`);
-            }
 
-            // Delete previous messages in the channel (clean slate)
-            console.log('🧹 Cleaning old messages from rankings channel...');
-            // Fetch only recent messages (50 limit to reduce load)
-            const messages = await channel.messages.fetch({ limit: 50 });
-            console.log(`   - Found ${messages.size} messages to clean`);
-            
-            // Try bulk delete first (works for messages < 14 days old)
-            try {
-                const deleted = await channel.bulkDelete(messages, true);
-                console.log(`   ✅ Bulk deleted ${deleted.size} messages`);
-            } catch (bulkDeleteError) {
-                // If bulk delete fails, delete individually with rate limiting
-                console.log('   ⚠️ Bulk delete failed, deleting messages individually...');
-                let deleteCount = 0;
-                const maxIndividualDeletes = 20; // Limit individual deletes to prevent rate limits
-                
-                for (const [, msg] of messages) {
-                    if (deleteCount >= maxIndividualDeletes) break;
-                    
-                    try {
-                        await msg.delete();
-                        deleteCount++;
-                        // Small delay to avoid rate limits
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    } catch (deleteError) {
-                        // Silently continue if individual delete fails
-                        console.log(`   ⚠️ Could not delete message ${msg.id}: ${deleteError.message}`);
-                    }
+            // Delete previous rankings message if it exists
+            if (this.lastRankingsMessage) {
+                console.log('🧹 Deleting previous rankings message...');
+                try {
+                    await this.lastRankingsMessage.delete();
+                    console.log('   ✅ Previous rankings message deleted successfully');
+                } catch (deleteError) {
+                    // Message might already be deleted or doesn't exist
+                    console.log('   ⚠️ Could not delete previous message:', deleteError.message);
                 }
-                console.log(`   ✅ Individually deleted ${deleteCount} messages`);
+                this.lastRankingsMessage = null;
             }
 
             // Display new rankings
             console.log('📊 Displaying new rankings...');
-            await this.displayRankings(channel);
+            const sentMessage = await this.displayRankings(channel);
+            
+            // Track the new message for future deletion
+            if (sentMessage) {
+                this.lastRankingsMessage = sentMessage;
+                console.log('   ✅ New rankings message tracked for future cleanup');
+            }
             
             console.log(`✅ Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
