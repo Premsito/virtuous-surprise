@@ -99,9 +99,8 @@ async function testEnhancedRankings() {
 testEnhancedRankings()
     .then(() => {
         console.log('\n🎉 Enhanced rankings test completed successfully!');
-        process.exit(0);
     })
     .catch((error) => {
         console.error('\n💥 Enhanced rankings test failed:', error.message);
-        process.exit(1);
+        throw error;
     });

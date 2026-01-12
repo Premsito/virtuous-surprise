@@ -6,7 +6,8 @@ const ALPHA_TRANSPARENCY = '20';
 // Font size constants for rankings
 const FONT_SIZES = {
     BASE_MEDAL: 24,
-    BASE_NAME: 20,
+    BASE_NAME_TOP3: 20,    // Base for top 3 (with scaling applied)
+    BASE_NAME_REST: 18,    // For positions 4-10
     BASE_VALUE: 16
 };
 
@@ -263,8 +264,10 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         const displayName = guildMember ? guildMember.displayName : user.username;
         ctx.fillStyle = '#2C2F33';
         
-        // Apply font scaling for top 3
-        const nameFontSize = getFontSizeForRanking(FONT_SIZES.BASE_NAME, i);
+        // Apply font scaling: top 3 get scaled 20px base, rest get 18px
+        const nameFontSize = i < 3 
+            ? getFontSizeForRanking(FONT_SIZES.BASE_NAME_TOP3, i)
+            : FONT_SIZES.BASE_NAME_REST;
         const nameFontWeight = i < 3 ? 'bold ' : '';
         ctx.font = `${nameFontWeight}${nameFontSize}px sans-serif`;
         
