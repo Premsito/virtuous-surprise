@@ -1,10 +1,9 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
 const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
-const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG } = require('./utils/xpHelper');
-const { generateLevelUpCard } = require('./utils/levelUpCard');
+const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG, getXPProgress } = require('./utils/xpHelper');
 const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
 
 // Log npm configuration for debugging deployment issues
@@ -115,34 +114,73 @@ setInterval(() => {
 }, ERROR_THROTTLE_CLEANUP_INTERVAL_MS);
 
 /**
- * Send level-up notification card to the designated channel
+ * Send level-up notification embed (pancarte) to the designated channel
  * @param {Client} client - Discord client
  * @param {string} userId - User ID who leveled up
  * @param {Object} user - Discord user object
  * @param {number} newLevel - New level reached
  * @param {number} totalXP - Total XP
- * @param {string} reward - Reward description
+ * @param {object} rewardInfo - Reward information object from calculateLevelReward
  */
-async function sendLevelUpCard(client, userId, user, newLevel, totalXP, reward = 'Trésor 🗝️') {
+async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardInfo) {
     try {
         const levelUpChannelId = config.channels.levelUpNotification;
         const levelUpChannel = await client.channels.fetch(levelUpChannelId);
         
         if (levelUpChannel) {
-            // Generate the level-up card
-            const cardBuffer = await generateLevelUpCard(user, newLevel, totalXP, reward);
-            const attachment = new AttachmentBuilder(cardBuffer, { name: 'level-up.png' });
+            // Get XP progress for the new level
+            const progress = getXPProgress(totalXP);
+            
+            // Determine embed color based on reward type
+            let embedColor = config.colors.primary;
+            if (rewardInfo.type === 'milestone') {
+                embedColor = config.colors.gold; // Golden for milestone rewards
+            } else if (rewardInfo.type === 'boost') {
+                embedColor = rewardInfo.boost.type === 'xp' ? config.colors.warning : config.colors.success;
+            }
+            
+            // Create the embed pancarte
+            const embed = new EmbedBuilder()
+                .setColor(embedColor)
+                .setTitle('🎉 Félicitations 🎉')
+                .setDescription(`**Tu as atteint le Niveau ${newLevel}** 🏆`)
+                .setThumbnail(user.displayAvatarURL({ size: 256 }))
+                .addFields(
+                    {
+                        name: '📊 Progression XP',
+                        value: `${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`,
+                        inline: true
+                    },
+                    {
+                        name: '🎁 Récompense',
+                        value: rewardInfo.description,
+                        inline: true
+                    }
+                )
+                .setTimestamp();
+            
+            // Add special message for milestone levels
+            if (rewardInfo.type === 'milestone') {
+                const nextMilestone = Math.ceil((newLevel + 1) / 5) * 5;
+                embed.setFooter({ 
+                    text: `Continue jusqu'au niveau ${nextMilestone} pour le prochain trésor ! 💎` 
+                });
+            } else {
+                embed.setFooter({ 
+                    text: '💡 Les !missions permettent de gagner de l\'XP et des LC !' 
+                });
+            }
             
             // Send with mention
             await levelUpChannel.send({
                 content: `<@${userId}>`,
-                files: [attachment]
+                embeds: [embed]
             });
             
-            console.log(`✅ Sent level-up card for ${user.username} (Level ${newLevel})`);
+            console.log(`✅ Sent level-up pancarte for ${user.username} (Level ${newLevel})`);
         }
     } catch (error) {
-        console.error('Error sending level up card:', error.message);
+        console.error('Error sending level up pancarte:', error.message);
         console.error('  Channel ID:', config.channels.levelUpNotification);
         console.error('  User:', userId);
         // Fallback to text notification
@@ -152,7 +190,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, reward =
                 await levelUpChannel.send(
                     `🎉 **Bravo <@${userId}>** 🎉\n` +
                     `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
-                    `💝 Tu reçois un **${reward}**, ouvre vite pour découvrir ta récompense incroyable 🚀 !`
+                    `💝 Récompense : **${rewardInfo.description}** 🚀 !`
                 );
             }
         } catch (fallbackError) {
@@ -186,8 +224,8 @@ async function handleLevelUp(client, userId, user, newLevel, totalXP) {
             console.log(`✅ Activated ${reward.boost.type.toUpperCase()} x${reward.boost.multiplier} boost for ${user.username} (${reward.boost.duration}s)`);
         }
         
-        // Send level-up notification with reward description
-        await sendLevelUpCard(client, userId, user, newLevel, totalXP, reward.description);
+        // Send level-up notification with reward object
+        await sendLevelUpCard(client, userId, user, newLevel, totalXP, reward);
         
     } catch (error) {
         console.error('Error handling level up:', error.message);
