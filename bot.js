@@ -425,7 +425,7 @@ client.once('clientReady', async () => {
         }, RANKINGS_UPDATE_INTERVAL_MS);
         
         // Initial rankings update
-        setTimeout(async () => {
+        setTimeout(() => {
             let retryCount = 0;
             const maxInitialRetries = 3;
             
@@ -446,7 +446,11 @@ client.once('clientReady', async () => {
                     if (retryCount < maxInitialRetries) {
                         retryCount++;
                         console.log(`⏰ Retrying initial rankings display in 10 seconds... (${retryCount}/${maxInitialRetries})`);
-                        setTimeout(displayInitialRankings, 10000);
+                        setTimeout(() => {
+                            displayInitialRankings().catch(err => {
+                                console.error('❌ Unhandled error in retry:', err.message);
+                            });
+                        }, 10000);
                     } else {
                         console.error(`❌ Failed to display initial rankings after ${maxInitialRetries} attempts.`);
                         console.error('   Rankings will be updated on next scheduled interval.');
@@ -454,7 +458,10 @@ client.once('clientReady', async () => {
                 }
             }
             
-            await displayInitialRankings();
+            // Start initial display with error handling
+            displayInitialRankings().catch(err => {
+                console.error('❌ Unhandled error in initial rankings display:', err.message);
+            });
         }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
         
         console.log('✅ Bot is fully ready!');

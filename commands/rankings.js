@@ -305,13 +305,6 @@ module.exports = {
                 guild: channel.guild?.name || 'N/A'
             });
             
-            if (!channel) {
-                console.error(`❌ Could not fetch rankings channel: ${rankingsChannelId}`);
-                console.error('   - Verify the channel ID is correct');
-                console.error('   - Ensure the bot has access to this channel');
-                return;
-            }
-            
             // Verify bot permissions
             const permissions = channel.permissionsFor(client.user);
             const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
@@ -345,7 +338,8 @@ module.exports = {
                     
                     // Check if there's any ranking data available
                     if (topLC.length === 0 && topLevels.length === 0) {
-                        console.log(`   ⚠️ No ranking data available`);
+                        console.log(`   ⚠️ No ranking data available - keeping existing message unchanged`);
+                        console.log(`   📝 Message will show last available data until users have activity`);
                         return;
                     }
 
