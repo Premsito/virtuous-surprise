@@ -291,19 +291,30 @@ module.exports = {
             .setTitle('📊 Classements Discord')
             .setTimestamp();
 
+        // Collect all unique user IDs to fetch
+        const allUserIds = new Set();
+        topLC.forEach(user => allUserIds.add(user.user_id));
+        topLevels.forEach(user => allUserIds.add(user.user_id));
+
+        // Batch fetch all Discord users
+        const userCache = new Map();
+        await Promise.all(
+            Array.from(allUserIds).map(async (userId) => {
+                try {
+                    const discordUser = await client.users.fetch(userId);
+                    userCache.set(userId, discordUser);
+                } catch (error) {
+                    console.error(`   ⚠️ Could not fetch user ${userId}:`, error.message);
+                }
+            })
+        );
+
         // Build LC rankings data
         let lcRankingData = '';
         for (let i = 0; i < Math.min(10, topLC.length); i++) {
             const user = topLC[i];
             const medal = getMedalForPosition(i);
-            
-            let discordUser;
-            try {
-                discordUser = await client.users.fetch(user.user_id);
-            } catch (error) {
-                console.error(`   ⚠️ Could not fetch user ${user.user_id} for LC rankings:`, error.message);
-            }
-            
+            const discordUser = userCache.get(user.user_id);
             const username = discordUser ? discordUser.username : user.username;
             lcRankingData += `${medal} **${username}** - ${user.balance} LC\n`;
         }
@@ -313,14 +324,7 @@ module.exports = {
         for (let i = 0; i < Math.min(10, topLevels.length); i++) {
             const user = topLevels[i];
             const medal = getMedalForPosition(i);
-            
-            let discordUser;
-            try {
-                discordUser = await client.users.fetch(user.user_id);
-            } catch (error) {
-                console.error(`   ⚠️ Could not fetch user ${user.user_id} for level rankings:`, error.message);
-            }
-            
+            const discordUser = userCache.get(user.user_id);
             const username = discordUser ? discordUser.username : user.username;
             levelRankingData += `${medal} **${username}** - Niveau ${user.level}\n`;
         }
@@ -354,7 +358,7 @@ module.exports = {
             const medal = getMedalForPosition(i);
             const value = valueFormatter(user);
             
-            description += `${medal} **${user.username}** → ${value}\n`;
+            description += `${medal} **${user.username}** - ${value}\n`;
         }
 
         if (description === '') {
