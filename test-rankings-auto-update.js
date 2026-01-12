@@ -85,9 +85,17 @@ test('Loads message ID on update',
 test('Clears invalid message ID', 
     rankingsContent.includes("setBotState('rankings_message_id', null)"),
     'Cleanup logic for invalid messages');
+test('Edits existing message instead of deleting', 
+    rankingsContent.includes('lastRankingsMessage.edit(') &&
+    rankingsContent.includes('EDIT'),
+    'Message editing implementation found');
+test('Falls back to new message if edit fails', 
+    rankingsContent.includes('editError') &&
+    rankingsContent.includes('will post new message'),
+    'Graceful fallback on edit failure');
 
-// Test 4: Check bot.js has enhanced logging
-console.log('\n📋 Test 4: Enhanced Interval Logging');
+// Test 4: Check bot.js has enhanced logging and retry logic
+console.log('\n📋 Test 4: Enhanced Interval Logging and Error Handling');
 const botPath = path.join(__dirname, 'bot.js');
 const botContent = fs.readFileSync(botPath, 'utf8');
 
@@ -109,6 +117,17 @@ test('Next update time logged',
     botContent.includes('Next update:') && 
     botContent.includes('RANKINGS_UPDATE_INTERVAL_MS'),
     'Shows when next update will occur');
+test('Retry logic implemented', 
+    botContent.includes('updateRankingsWithRetry') &&
+    botContent.includes('RANKINGS_MAX_RETRIES'),
+    'Error retry mechanism exists');
+test('Retry delay configured', 
+    botContent.includes('RANKINGS_RETRY_DELAY_MS'),
+    'Retry delay setting found');
+test('Retry attempt logging', 
+    botContent.includes('Retry attempt:') &&
+    botContent.includes('retryCount'),
+    'Retry attempts are logged');
 
 // Test 5: Check footer message
 console.log('\n📋 Test 5: User-Facing Information');
@@ -155,16 +174,21 @@ if (testsFailed === 0) {
     console.log('\n📝 Implementation Summary:');
     console.log('   ✓ Rankings message ID persisted to database');
     console.log('   ✓ Message recovery after bot restart');
-    console.log('   ✓ Old messages deleted before posting new ones');
+    console.log('   ✓ Messages edited in-place (no delete/repost spam)');
+    console.log('   ✓ Fallback to new message if edit fails');
     console.log('   ✓ 5-minute interval with enhanced logging');
     console.log('   ✓ ISO timestamps and duration tracking');
     console.log('   ✓ Next update time visibility');
+    console.log('   ✓ Automatic retry on errors (3 attempts)');
+    console.log('   ✓ 30-second retry delay for transient errors');
     console.log('\n🚀 Expected Behavior:');
     console.log('   1. Bot starts and displays initial rankings after 5 seconds');
     console.log('   2. Rankings update every 5 minutes automatically');
-    console.log('   3. Previous message deleted before posting new one');
-    console.log('   4. After bot restart, old message still gets deleted');
-    console.log('   5. Detailed logs show timestamp, duration, and next update');
+    console.log('   3. Existing message edited in-place (same message ID)');
+    console.log('   4. If edit fails, new message posted and tracked');
+    console.log('   5. After bot restart, old message still gets edited');
+    console.log('   6. Errors trigger automatic retry (max 3 attempts)');
+    console.log('   7. Detailed logs show timestamp, duration, and next update');
     process.exit(0);
 } else {
     console.log('\n⚠️  Some tests failed. Please review the implementation.');
