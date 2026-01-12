@@ -144,6 +144,26 @@ module.exports = {
             return index < 3 ? medals[index] : `**${index + 1}.**`;
         };
         
+        // Batch fetch all guild members to avoid rate limiting
+        const userIds = users.slice(0, 10).map(u => u.user_id);
+        const memberMap = new Map();
+        
+        try {
+            // Fetch members individually but cache them
+            for (const userId of userIds) {
+                try {
+                    const member = await guild.members.fetch(userId).catch(() => null);
+                    if (member) {
+                        memberMap.set(userId, member);
+                    }
+                } catch (error) {
+                    console.log(`   ⚠️ Could not fetch member ${userId}: ${error.message}`);
+                }
+            }
+        } catch (error) {
+            console.log(`   ⚠️ Error batch-fetching members: ${error.message}`);
+        }
+        
         // Build ranking text
         let rankingText = '';
         
@@ -151,18 +171,14 @@ module.exports = {
             const user = users[i];
             const medal = getMedal(i);
             
-            // Fetch guild member for display name and avatar
+            // Get display name and avatar from cached members
             let displayName = user.username;
             let avatarURL = null;
             
-            try {
-                const guildMember = await guild.members.fetch(user.user_id).catch(() => null);
-                if (guildMember) {
-                    displayName = guildMember.displayName;
-                    avatarURL = guildMember.displayAvatarURL({ extension: 'png', size: 64 });
-                }
-            } catch (error) {
-                console.log(`   ⚠️ Could not fetch member ${user.user_id}: ${error.message}`);
+            const guildMember = memberMap.get(user.user_id);
+            if (guildMember) {
+                displayName = guildMember.displayName;
+                avatarURL = guildMember.displayAvatarURL({ extension: 'png', size: 64 });
             }
             
             // Format the ranking entry
