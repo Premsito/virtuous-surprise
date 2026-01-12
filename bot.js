@@ -369,7 +369,8 @@ client.once('clientReady', async () => {
         console.log('✅ Dynamic LC rankings synchronization enabled');
         
         // Start rankings auto-update (every 5 minutes)
-        console.log('⏰ Rankings auto-update interval configured: 5 minutes (300,000ms)');
+        const RANKINGS_UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+        console.log(`⏰ Rankings auto-update interval configured: 5 minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
         setInterval(async () => {
             try {
                 const now = new Date();
@@ -383,14 +384,14 @@ client.once('clientReady', async () => {
                 const completedAt = new Date();
                 console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
                 console.log(`   Duration: ${completedAt - now}ms`);
-                console.log(`   Next update: ${new Date(completedAt.getTime() + 5 * 60 * 1000).toISOString()}\n`);
+                console.log(`   Next update: ${new Date(completedAt.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}\n`);
             } catch (error) {
                 if (shouldLogError('rankings_update')) {
                     console.error('❌ Error updating rankings (throttled):', error.message);
                     console.error('   Stack:', error.stack);
                 }
             }
-        }, 5 * 60 * 1000); // 5 minutes in milliseconds
+        }, RANKINGS_UPDATE_INTERVAL_MS);
         
         // Initial rankings update
         setTimeout(async () => {

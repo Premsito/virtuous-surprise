@@ -14,7 +14,7 @@ module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
     
-    // Track the last posted rankings message for cleanup (in-memory cache)
+    // Track the last posted rankings message for cleanup (module-level cache)
     // Note: This is also persisted to database for recovery after restarts
     lastRankingsMessage: null,
     
