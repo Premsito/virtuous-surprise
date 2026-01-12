@@ -252,9 +252,6 @@ async function drawRankingColumn(ctx, x, y, width, users, title, color, valueTyp
         } else if (i === 2) {
             nameFontSize = Math.round(20 * 1.10); // +10%
             nameFontWeight = 'bold ';
-        } else if (i < 3) {
-            nameFontSize = 20;
-            nameFontWeight = 'bold ';
         }
         
         ctx.font = `${nameFontWeight}${nameFontSize}px sans-serif`;
