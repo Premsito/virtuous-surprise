@@ -120,12 +120,12 @@ setInterval(() => {
  * Send level-up notification embed (pancarte) to the designated channel
  * @param {Client} client - Discord client
  * @param {string} userId - User ID who leveled up
- * @param {Object} user - Discord user object
+ * @param {string} userId - Discord user ID
  * @param {number} newLevel - New level reached
  * @param {number} totalXP - Total XP
  * @param {object} rewardInfo - Reward information object from calculateLevelReward
  */
-async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardInfo) {
+async function sendLevelUpCard(client, userId, userId, newLevel, totalXP, rewardInfo) {
     try {
         const levelUpChannelId = config.channels.levelUpNotification;
         console.log(`[LEVEL-UP] Attempting to send notification to channel ${levelUpChannelId} for ${user.username} (Level ${newLevel})`);
@@ -171,12 +171,12 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             .setColor(embedColor)
             .setTitle('🎉 Niveau supérieur atteint ! 🎊')
             .setDescription(
-                `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
-                `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
+                `C'est bien c'est bien <@${userId}> ! 🎯 Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
+                `**🎁 Tiens prends ça :** ${rewardInfo.description}\n\n` +
                 `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
             )
             .setFooter({ 
-                text: '💡 Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
+                text: '💡Gagner de l\'XP? Fait des !missions, participe à des jeux,envoie des messages et surtout participe à des vocs!' 
             })
             .setTimestamp();
         
@@ -188,7 +188,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             embeds: [embed]
         });
         
-        console.log(`✅ [LEVEL-UP] Successfully sent level-up pancarte for ${user.username} (Level ${newLevel})`);
+        console.log(`✅ [LEVEL-UP] Successfully sent level-up pancarte for ${userId} (Level ${newLevel})`);
     } catch (error) {
         console.error('❌ [LEVEL-UP] Error sending level up pancarte:', error.message);
         console.error('  Channel ID:', config.channels.levelUpNotification);
@@ -203,10 +203,10 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                 const progress = getXPProgress(totalXP);
                 await levelUpChannel.send(
                     `🎉 Niveau supérieur atteint ! 🎊\n\n` +
-                    `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
-                    `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
+                    `C'est bien c'est bien <@${userId}> ! 🎯 Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
+                    `**🎁 Tiens prends ça :** ${rewardInfo.description}\n\n` +
                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                    `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
+                    `_💡 Gagner de l'XP? Fait des !missions, participe à des jeux,envoie des messages et surtout participe à des vocs !_`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {
