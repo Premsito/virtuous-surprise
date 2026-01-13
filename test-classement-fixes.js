@@ -214,8 +214,8 @@ async function runTests() {
 
         // Test 4: NO mentions in the description
         console.log('📊 Test 4: Verify NO mentions are used');
-        // Use regex to catch any mention format <@userId>
-        const mentionPattern = /<@\d+>/;
+        // Use regex to catch any mention format including nickname mentions <@!userId>
+        const mentionPattern = /<@!?\d+>/;
         if (!mentionPattern.test(lcDescription) && !mentionPattern.test(levelEmbed.data.description)) {
             console.log('   ✅ No mentions found in any embed - users will NOT be notified');
             passed++;
