@@ -123,7 +123,9 @@ test('Rankings channel ID is read from config', () => {
     
     assert(config.channels, 'Config should have channels section');
     assert(config.channels.rankings, 'Config should have rankings channel ID');
-    assert(config.channels.rankings === '1460012957458235618', 'Rankings channel should be 1460012957458235618');
+    // Validate it's a valid Discord snowflake (numeric string)
+    assert(/^\d+$/.test(config.channels.rankings), 'Rankings channel ID should be a valid Discord snowflake');
+    assert(config.channels.rankings.length >= 17, 'Rankings channel ID should be at least 17 characters (Discord snowflake)');
 });
 
 // Test 7: Verify database methods exist

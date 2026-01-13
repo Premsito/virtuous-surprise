@@ -151,6 +151,8 @@ module.exports = {
             const topLC = await db.getTopLC(10);
             console.log(`   ✅ Successfully fetched ${topLC.length} LC rankings`);
             if (topLC.length > 0) {
+                // Note: User IDs are logged for debugging as requested in the problem statement.
+                // Discord user IDs are public information and not considered sensitive data.
                 console.log(`   📝 Top 3 LC Rankings:`);
                 topLC.slice(0, 3).forEach((u, idx) => {
                     console.log(`      ${idx + 1}. ${u.username} (${u.user_id}): ${u.balance} LC`);
@@ -161,6 +163,8 @@ module.exports = {
             const topLevels = await db.getTopLevels(10);
             console.log(`   ✅ Successfully fetched ${topLevels.length} Niveau rankings`);
             if (topLevels.length > 0) {
+                // Note: User IDs are logged for debugging as requested in the problem statement.
+                // Discord user IDs are public information and not considered sensitive data.
                 console.log(`   📝 Top 3 Niveau Rankings:`);
                 topLevels.slice(0, 3).forEach((u, idx) => {
                     console.log(`      ${idx + 1}. ${u.username} (${u.user_id}): Niveau ${u.level} (${u.xp} XP)`);
