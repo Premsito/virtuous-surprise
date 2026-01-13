@@ -205,8 +205,8 @@
     }
   },
   "cadeau": {
-    "success": "🎁 **Cadeau récupéré !** +25 LC\n🕒 Revenez demain pour un autre cadeau !",
-    "cooldown": "⏳ **Cadeau déjà récupéré**\nTemps restant : **{hours}h {minutes}min**\n🕒 Revenez plus tard !",
+    "success": "🎁 **Tiens ton cadeau !** +25 LC\n🕒 Tu peux en récup dans 24h !",
+    "cooldown": "⏳ **T'es un vrai gratteur **\nTemps restant : **{hours}h {minutes}min**\n🕒 Reviens aprés clochard!",
     "error": "❌ Une erreur est survenue. Veuillez réessayer."
   },
   "loto": {
