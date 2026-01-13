@@ -59,9 +59,10 @@ console.log('   ═════════════════════�
 
 // Validate requirements
 console.log('✅ Test 5: Requirements Validation');
+const MAX_TITLE_LENGTH = 50; // Title should be concise and under 50 characters
 const requirements = [
     { name: 'Simple text-only rendering', met: !embedContent.hasThumb && !embedContent.hasFields },
-    { name: 'Concise and motivating message', met: embedContent.title.length < 50 },
+    { name: 'Concise and motivating message', met: embedContent.title.length < MAX_TITLE_LENGTH },
     { name: 'Mention of rewards unlocked', met: embedContent.description.includes('Récompense débloquée') },
     { name: 'XP earning explanation in footer', met: embedContent.footer.includes('Comment gagner') }
 ];
