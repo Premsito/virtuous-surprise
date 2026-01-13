@@ -166,12 +166,12 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             embedColor = config.colors.gold; // Golden for milestone rewards
         }
         
-        // Create a simple, text-only embed (no thumbnails or styled elements)
+        // Create a simple, text-only embed with user mention directly in description
         const embed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle('🎉 Niveau supérieur atteint !')
             .setDescription(
-                `Bravo **${user.username}** ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
+                `Bravo <@${userId}> ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
                 `**Récompense débloquée :** ${rewardInfo.description}\n\n` +
                 `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
             )
@@ -182,9 +182,8 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         
         console.log(`[LEVEL-UP] Sending embed to channel...`);
         
-        // Send with mention
+        // Send without additional content since mention is already in embed
         await levelUpChannel.send({
-            content: `<@${userId}>`,
             embeds: [embed]
         });
         
@@ -203,7 +202,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                 const progress = getXPProgress(totalXP);
                 await levelUpChannel.send(
                     `🎉 Niveau supérieur atteint !\n\n` +
-                    `Bravo **${user.username}** (<@${userId}>) ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
+                    `Bravo <@${userId}> ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
                     `**Récompense débloquée :** ${rewardInfo.description}\n\n` +
                     `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
                     `_Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
@@ -235,8 +234,8 @@ async function handleLevelUp(client, userId, user, newLevel, totalXP) {
         const reward = calculateLevelReward(newLevel);
         console.log(`[LEVEL-UP] Reward calculated: ${JSON.stringify(reward)}`);
         
-        // Apply LC reward if applicable
-        if (reward.lcAmount > 0) {
+        // Apply LC reward if applicable (not for milestone treasures which are now claimable)
+        if (reward.lcAmount > 0 && reward.type !== 'milestone') {
             console.log(`[LEVEL-UP] Granting ${reward.lcAmount} LC to ${user.username}`);
             await db.updateBalance(userId, reward.lcAmount, 'level_up');
             await db.recordTransaction(null, userId, reward.lcAmount, 'level_up', `Niveau ${newLevel} atteint`);
