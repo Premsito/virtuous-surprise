@@ -5,7 +5,7 @@ const { getResponse } = require('../utils/responseHelper');
 
 module.exports = {
     name: 'cadeau',
-    description: 'Receive 25 LC as a daily gift',
+    description: 'Receive 100 LC as a daily gift',
     
     async execute(message, args) {
         const userId = message.author.id;
@@ -37,11 +37,11 @@ module.exports = {
             return message.channel.send({ embeds: [embed] });
         }
 
-        // Update user's last_gift_time and add 25 LC
+        // Update user's last_gift_time and add 100 LC
         try {
             await db.updateGiftTime(userId, new Date());
-            await db.updateBalance(userId, 25, 'daily_gift');
-            await db.recordTransaction(null, userId, 25, 'daily_gift', 'Daily gift via !cadeau');
+            await db.updateBalance(userId, 100, 'daily_gift');
+            await db.recordTransaction(null, userId, 100, 'daily_gift', 'Daily gift via !cadeau');
 
             const embed = new EmbedBuilder()
                 .setColor(config.colors.gold)
