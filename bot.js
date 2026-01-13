@@ -368,11 +368,12 @@ client.once('clientReady', async () => {
                                 }
                                 
                                 const oldLevel = getLevelFromXP(user.xp || 0);
+                                const previousXP = user.xp || 0;
                                 const updatedUser = await db.addXP(userId, xpGained);
                                 const newLevel = getLevelFromXP(updatedUser.xp);
                                 
                                 // Debug logging for voice XP tracking
-                                console.log(`[XP] Voice XP granted to ${userInVoice.user.username}: +${xpGained} XP (${user.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+                                console.log(`[XP] Voice XP granted to ${userInVoice.user.username}: +${xpGained} XP (${previousXP} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
                                 
                                 // Check for hourly bonus (60 minutes)
                                 if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
@@ -776,11 +777,12 @@ client.on('messageReactionAdd', async (reaction, user) => {
             
             // Grant XP to message author
             const oldLevel = getLevelFromXP(authorUser.xp || 0);
+            const previousXP = authorUser.xp || 0;
             const updatedUser = await db.addXP(authorId, xpToGrant);
             const newLevel = getLevelFromXP(updatedUser.xp);
             
             // Debug logging for reaction XP tracking
-            console.log(`[XP] Reaction XP granted to ${messageAuthor.username}: +${xpToGrant} XP (${authorUser.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+            console.log(`[XP] Reaction XP granted to ${messageAuthor.username}: +${xpToGrant} XP (${previousXP} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
             
             // Update message reaction XP tracking
             if (messageReactionData) {
@@ -836,6 +838,7 @@ client.on('messageCreate', async (message) => {
         if (canGrantMessageXP(user.last_message_xp_time)) {
             const xpGained = getMessageXP();
             const oldLevel = getLevelFromXP(user.xp || 0);
+            const previousXP = user.xp || 0;
             
             // Grant XP
             const updatedUser = await db.addXP(userId, xpGained);
@@ -844,7 +847,7 @@ client.on('messageCreate', async (message) => {
             const newLevel = getLevelFromXP(updatedUser.xp);
             
             // Debug logging for XP tracking
-            console.log(`[XP] Message XP granted to ${username}: +${xpGained} XP (${user.xp || 0} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+            console.log(`[XP] Message XP granted to ${username}: +${xpGained} XP (${previousXP} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
             
             // Check for level up
             if (newLevel > oldLevel) {
