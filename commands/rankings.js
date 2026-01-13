@@ -76,7 +76,7 @@ module.exports = {
             const user = users[i];
             
             // Use Discord mention format for better user experience and performance (no API calls needed)
-            const userMention = `<@${user.user_id}>`;
+            const userMention = user.user_id ? `<@${user.user_id}>` : user.username;
             const value = valueFormatter(user);
             
             // Position indicator (medal for top 3, number for rest)
@@ -104,7 +104,10 @@ module.exports = {
         if (users.length > 0) {
             const firstUser = users[0];
             // Fetch only the first place user for avatar
-            const firstMember = await guild.members.fetch(firstUser.user_id).catch(() => null);
+            const firstMember = await guild.members.fetch(firstUser.user_id).catch((err) => {
+                console.log('   ⚠️ Could not fetch first place user for avatar:', err.message);
+                return null;
+            });
             if (firstMember) {
                 embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
             }
