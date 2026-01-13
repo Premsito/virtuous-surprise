@@ -45,16 +45,17 @@ const displayName = guildMember ? guildMember.displayName : user.username;
 ```
 
 ### 3. Performance Optimization ✅
-**Problem:** Fetching guild members one-by-one was inefficient.
+**Problem:** Fetching guild members one-by-one was inefficient and could trigger rate limits.
 
 **Solution:**
-- Implemented batch fetching using `Promise.all()`
-- Cache all members at once before building embed
+- Implemented batch fetching using single API call `guild.members.fetch({ user: userIds })`
+- Fetch all members at once in a single request
+- Cache all members before building embed
 - Reuse cached members for avatar thumbnail
 
 **Performance Impact:**
-- Before: 10 sequential API calls (slower, ~2-3 seconds)
-- After: Parallel fetching (faster, ~0.5-1 second)
+- Before: 10 sequential API calls (slower, ~2-3 seconds, rate limit risk)
+- After: Single batch API call (faster, ~0.5-1 second, minimal rate limit risk)
 
 ### 4. Display Name Support ✅
 **Problem:** User display names (including emojis) weren't shown correctly.
