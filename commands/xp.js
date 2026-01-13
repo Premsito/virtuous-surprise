@@ -226,12 +226,12 @@ module.exports = {
                                 .setColor(embedColor)
                                 .setTitle('🎉 Niveau supérieur atteint ! 🎊')
                                 .setDescription(
-                                    `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
-                                    `**🎁 Récompense débloquée :** ${reward.description}\n\n` +
+                                    `Bien bien @${userid} ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
+                                    `**🎁 Tiens ta récompense :** ${reward.description}\n\n` +
                                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
                                 )
                                 .setFooter({ 
-                                    text: '💡 Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
+                                    text: '💡Gagner de l\'XP ? Finis tes !missions, sois actif envoie des message, fais des vocs ça xp + vite et participe à des jeux!' 
                                 })
                                 .setTimestamp();
                             
@@ -253,10 +253,10 @@ module.exports = {
                                 const progress = getXPProgress(totalXP);
                                 await levelsChannel.send(
                                     `🎉 Niveau supérieur atteint ! 🎊\n\n` +
-                                    `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
-                                    `**🎁 Récompense débloquée :** ${reward.description}\n\n` +
+                                    `Bien bien <@${userId}> ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
+                                    `**🎁 Tiens ta récompense :** ${reward.description}\n\n` +
                                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                                    `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
+                                    `_💡Gagner de l\'XP ? Finis tes !missions, sois actif envoie des message, fais des vocs ça xp + vite et participe à des jeux!_`
                                 );
                             }
                         } catch (fallbackError) {
