@@ -171,7 +171,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             .setColor(embedColor)
             .setTitle('🎉 Niveau supérieur atteint ! 🎊')
             .setDescription(
-                `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                `Bravo @${user.username} 🥥 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
                 `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
                 `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
             )
@@ -203,7 +203,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                 const progress = getXPProgress(totalXP);
                 await levelUpChannel.send(
                     `🎉 Niveau supérieur atteint ! 🎊\n\n` +
-                    `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                    `Bravo @${user.username} 🥥 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
                     `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
                     `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
