@@ -28,10 +28,24 @@ function createMockGuild(users) {
 
     return {
         members: {
-            fetch: async (userId) => {
-                const member = membersMap.get(userId);
+            // Mock the batch fetch method used in production
+            fetch: async (options) => {
+                // If options.user is provided (batch fetch), return Collection
+                if (options && options.user) {
+                    const userIds = Array.isArray(options.user) ? options.user : [options.user];
+                    const collection = new Map();
+                    userIds.forEach(userId => {
+                        const member = membersMap.get(userId);
+                        if (member) {
+                            collection.set(userId, member);
+                        }
+                    });
+                    return collection;
+                }
+                // Otherwise single fetch (legacy support)
+                const member = membersMap.get(options);
                 if (!member) {
-                    throw new Error(`Member ${userId} not found`);
+                    throw new Error(`Member ${options} not found`);
                 }
                 return member;
             }
@@ -55,21 +69,24 @@ async function createRankingEmbed(users, title, color, valueFormatter, guild) {
         return embed;
     }
     
-    // Batch fetch all guild members for performance
+    // Batch fetch all guild members efficiently to avoid rate limits
     const memberCache = new Map();
-    console.log(`   🔍 Fetching ${users.length} guild members for display names...`);
-    await Promise.all(
-        users.map(async (user) => {
-            if (!user.user_id) return;
-            try {
-                const guildMember = await guild.members.fetch(user.user_id);
-                memberCache.set(user.user_id, guildMember);
-            } catch (error) {
-                console.log(`   ⚠️ Could not fetch member ${user.user_id} (${user.username}):`, error.message);
-            }
-        })
-    );
-    console.log(`   ✅ Fetched ${memberCache.size}/${users.length} guild members`);
+    const userIds = users.map(user => user.user_id).filter(id => id);
+    
+    if (userIds.length > 0) {
+        console.log(`   🔍 Fetching ${userIds.length} guild members for display names...`);
+        try {
+            // Fetch all members in a single API call to avoid rate limits
+            const members = await guild.members.fetch({ user: userIds });
+            members.forEach((member, userId) => {
+                memberCache.set(userId, member);
+            });
+            console.log(`   ✅ Fetched ${memberCache.size}/${userIds.length} guild members`);
+        } catch (error) {
+            console.log(`   ⚠️ Error batch fetching members:`, error.message);
+            console.log(`   ℹ️ Will use usernames as fallback`);
+        }
+    }
     
     // Build ranking description with proper alignment and formatting
     let description = '';

@@ -68,21 +68,24 @@ module.exports = {
             return embed;
         }
         
-        // Batch fetch all guild members for performance
+        // Batch fetch all guild members efficiently to avoid rate limits
         const memberCache = new Map();
-        console.log(`   🔍 Fetching ${users.length} guild members for display names...`);
-        await Promise.all(
-            users.map(async (user) => {
-                if (!user.user_id) return;
-                try {
-                    const guildMember = await guild.members.fetch(user.user_id);
-                    memberCache.set(user.user_id, guildMember);
-                } catch (error) {
-                    console.log(`   ⚠️ Could not fetch member ${user.user_id} (${user.username}):`, error.message);
-                }
-            })
-        );
-        console.log(`   ✅ Fetched ${memberCache.size}/${users.length} guild members`);
+        const userIds = users.map(user => user.user_id).filter(id => id);
+        
+        if (userIds.length > 0) {
+            console.log(`   🔍 Fetching ${userIds.length} guild members for display names...`);
+            try {
+                // Fetch all members in a single API call to avoid rate limits
+                const members = await guild.members.fetch({ user: userIds });
+                members.forEach((member, userId) => {
+                    memberCache.set(userId, member);
+                });
+                console.log(`   ✅ Fetched ${memberCache.size}/${userIds.length} guild members`);
+            } catch (error) {
+                console.log(`   ⚠️ Error batch fetching members:`, error.message);
+                console.log(`   ℹ️ Will use usernames as fallback`);
+            }
+        }
         
         // Build ranking description with proper alignment and formatting
         let description = '';
@@ -210,9 +213,9 @@ module.exports = {
             console.error('   Error Type:', error.name);
             console.error('   Stack:', error.stack);
             
-            // Send helpful error message to the channel with error details
+            // Send generic error message to avoid exposing sensitive information
             try {
-                await channel.send(`⛔ Une erreur critique est survenue lors de l'affichage des classements.\n\`\`\`${error.message}\`\`\``);
+                await channel.send(ERROR_MESSAGES.USER_ERROR_MESSAGE);
             } catch (sendError) {
                 console.error('   ❌ Failed to send error message to channel:', sendError.message);
             }
