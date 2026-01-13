@@ -78,7 +78,7 @@ module.exports = {
         for (let i = 0; i < users.length && i < 10; i++) {
             const user = users[i];
             
-            // Get guild member with caching
+            // Get guild member with caching for avatar purposes
             let guildMember = memberCache.get(user.user_id);
             if (!guildMember) {
                 guildMember = await guild.members.fetch(user.user_id).catch(() => null);
@@ -87,7 +87,8 @@ module.exports = {
                 }
             }
             
-            const displayName = guildMember ? guildMember.displayName : user.username;
+            // Use Discord mention format
+            const userMention = `<@${user.user_id}>`;
             const value = valueFormatter(user);
             
             // Position indicator (medal for top 3, number for rest)
@@ -95,17 +96,17 @@ module.exports = {
             
             // Add visual emphasis for top 3 using bold and different formatting
             if (i === 0) {
-                // 1st place: Bold name and value with special formatting
-                description += `${position} **\`${displayName}\`** • **${value}**\n`;
+                // 1st place: Bold mention and value with special formatting
+                description += `${position} **${userMention}** • **${value}**\n`;
             } else if (i === 1) {
-                // 2nd place: Bold name with emphasis
-                description += `${position} **${displayName}** • **${value}**\n`;
+                // 2nd place: Bold mention with emphasis
+                description += `${position} **${userMention}** • **${value}**\n`;
             } else if (i === 2) {
-                // 3rd place: Bold name
-                description += `${position} **${displayName}** • ${value}\n`;
+                // 3rd place: Bold mention
+                description += `${position} **${userMention}** • ${value}\n`;
             } else {
                 // 4-10: Regular formatting
-                description += `${position} ${displayName} • ${value}\n`;
+                description += `${position} ${userMention} • ${value}\n`;
             }
         }
         
