@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { db } = require('./database/db');
 const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
@@ -142,8 +142,8 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         if (!permissions) {
             console.error(`❌ [LEVEL-UP] Cannot check permissions for channel ${levelUpChannelId}`);
         } else {
-            const canSend = permissions.has('SendMessages');
-            const canEmbed = permissions.has('EmbedLinks');
+            const canSend = permissions.has(PermissionFlagsBits.SendMessages);
+            const canEmbed = permissions.has(PermissionFlagsBits.EmbedLinks);
             console.log(`[LEVEL-UP] Permissions - SendMessages: ${canSend}, EmbedLinks: ${canEmbed}`);
             
             if (!canSend) {
