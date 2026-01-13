@@ -149,8 +149,10 @@ module.exports = {
             console.log(`[XP-REMOVE] Current XP: ${oldXP}, Level: ${oldLevel}`);
             
             // Remove XP (negative amount)
-            const updatedUser = await db.addXP(userId, -amount);
-            const newXP = Math.max(0, updatedUser.xp || 0); // Ensure XP doesn't go negative
+            // Ensure XP doesn't go negative by clamping before database update
+            const xpToRemove = Math.min(amount, oldXP); // Don't remove more than current XP
+            const updatedUser = await db.addXP(userId, -xpToRemove);
+            const newXP = updatedUser.xp || 0;
             const newLevel = getLevelFromXP(newXP);
             
             console.log(`[XP-REMOVE] New XP: ${newXP}, New Level: ${newLevel}`);
@@ -192,7 +194,7 @@ module.exports = {
                 console.log(`[XP-LEVELUP] Reward calculated for level ${level}:`, JSON.stringify(reward));
                 
                 // Apply LC reward if applicable
-                if (reward.lcAmount > 0) {
+                if (reward.lcAmount && reward.lcAmount > 0) {
                     console.log(`[XP-LEVELUP] Granting ${reward.lcAmount} LC to ${user.username}`);
                     await db.updateBalance(userId, reward.lcAmount, 'level_up');
                     await db.recordTransaction(null, userId, reward.lcAmount, 'level_up', `Niveau ${level} atteint`);
@@ -210,10 +212,10 @@ module.exports = {
                     try {
                         const levelsChannel = await client.channels.fetch(levelsChannelId);
                         if (levelsChannel) {
-                            const { createLevelUpCard } = require('../utils/levelUpCard');
+                            const { generateLevelUpCard } = require('../utils/levelUpCard');
                             
                             // Create level-up card
-                            const cardBuffer = await createLevelUpCard(user, level, totalXP, reward);
+                            const cardBuffer = await generateLevelUpCard(user, level, totalXP, reward);
                             
                             const levelUpMessage = await levelsChannel.send({
                                 content: `🎉 <@${userId}> vient d'atteindre le **niveau ${level}** ! 🎉`,
