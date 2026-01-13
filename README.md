@@ -108,6 +108,8 @@ The bot uses PostgreSQL with the following tables:
 ### Moderation Commands (Admin only)
 - `!setlc @user [amount]` - Set a user's LC balance
 - `!setinvites @user [amount]` - Set a user's invite count
+- `!xp add [amount] @user` - Add XP to a user
+- `!xp remove [amount] @user` - Remove XP from a user
 
 ## Configuration
 
