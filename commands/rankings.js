@@ -10,6 +10,29 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+/**
+ * Helper function to fetch rankings data with error handling
+ * @param {number} limit - Number of top rankings to fetch
+ * @returns {Object} Object containing topLC and topLevels arrays
+ */
+async function fetchRankingsData(limit = 10) {
+    let topLC, topLevels;
+    try {
+        topLC = await db.getTopLC(limit);
+        topLevels = await db.getTopLevels(limit);
+    } catch (dbError) {
+        console.error('❌ Database error while fetching rankings:', dbError.message);
+        console.error('   Stack:', dbError.stack);
+        throw new Error('Failed to fetch rankings from database');
+    }
+    
+    // Ensure results are arrays (defensive programming)
+    topLC = Array.isArray(topLC) ? topLC : [];
+    topLevels = Array.isArray(topLevels) ? topLevels : [];
+    
+    return { topLC, topLevels };
+}
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -75,8 +98,8 @@ module.exports = {
         for (let i = 0; i < users.length && i < 10; i++) {
             const user = users[i];
             
-            // Use Discord mention format for better user experience and performance (no API calls needed)
-            const userMention = user.user_id ? `<@${user.user_id}>` : user.username;
+            // Use plain username to avoid triggering @mention notifications
+            const displayName = user.username || 'Unknown User';
             const value = valueFormatter(user);
             
             // Position indicator (medal for top 3, number for rest)
@@ -84,17 +107,17 @@ module.exports = {
             
             // Add visual emphasis for top 3 using bold and different formatting
             if (i === 0) {
-                // 1st place: Bold mention and value with special formatting
-                description += `${position} **${userMention}** • **${value}**\n`;
+                // 1st place: Bold name and value with special formatting
+                description += `${position} **${displayName}** • **${value}**\n`;
             } else if (i === 1) {
-                // 2nd place: Bold mention with emphasis
-                description += `${position} **${userMention}** • **${value}**\n`;
+                // 2nd place: Bold name with emphasis
+                description += `${position} **${displayName}** • **${value}**\n`;
             } else if (i === 2) {
-                // 3rd place: Bold mention
-                description += `${position} **${userMention}** • ${value}\n`;
+                // 3rd place: Bold name
+                description += `${position} **${displayName}** • ${value}\n`;
             } else {
                 // 4-10: Regular formatting
-                description += `${position} ${userMention} • ${value}\n`;
+                description += `${position} ${displayName} • ${value}\n`;
             }
         }
         
@@ -135,8 +158,7 @@ module.exports = {
             }
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
-            const topLC = await db.getTopLC(10);
-            const topLevels = await db.getTopLevels(10);
+            const { topLC, topLevels } = await fetchRankingsData(10);
             
             // Data validation logging as requested in problem statement
             console.log("Fetched LC Ranking:", topLC);
@@ -281,7 +303,14 @@ module.exports = {
             }
 
             console.log(`📡 [FETCH] Fetching channel ${rankingsChannelId}...`);
-            channel = await client.channels.fetch(rankingsChannelId);
+            try {
+                channel = await client.channels.fetch(rankingsChannelId);
+            } catch (fetchError) {
+                console.error('❌ Failed to fetch rankings channel:', fetchError.message);
+                console.error(`   Channel ID: ${rankingsChannelId}`);
+                console.error('   Please verify the channel ID in config.json is correct and the bot has access');
+                throw new Error(`Invalid or inaccessible rankings channel: ${rankingsChannelId}`);
+            }
             
             // Detailed channel logging as requested in problem statement
             console.log(`   ✅ Channel fetched:`, {
@@ -322,8 +351,7 @@ module.exports = {
                 try {
                     // Get top 10 users by LC and Level
                     console.log('📊 [DATA] Fetching rankings data...');
-                    const topLC = await db.getTopLC(10);
-                    const topLevels = await db.getTopLevels(10);
+                    const { topLC, topLevels } = await fetchRankingsData(10);
                     
                     console.log(`   - Fetched ${topLC.length} LC rankings`);
                     console.log(`   - Fetched ${topLevels.length} level rankings`);
