@@ -52,7 +52,7 @@
   },
   "casino": {
     "menu": {
-      "title": "🎰 Bienvenue au Casino Virtuel !",
+      "title": "🎰 Bienvenue au Casino !",
       "description": "Explorez les jeux disponibles et tentez votre chance :\n\n1️⃣ **!roue** : Jouez à la roulette 🎯\n   *Pariez sur une couleur (Rouge, Noir ou Vert) pour gagner gros !*\n\n2️⃣ **!bj** : Jouez au Blackjack 🃏\n   *Affrontez le croupier : obtenez 21 points pour gagner !*\n\n3️⃣ **!machine** : Essayez la machine à sous 🎰\n   *Misez pour des gains aléatoires. Jackpot possible !*\n\nUtilisez une des commandes ci-dessus pour commencer votre expérience au casino 🌟."
     },
     "roue": {
@@ -62,8 +62,8 @@
       "suspense": "🎰 **Les jeux sont faits, rien ne va plus !** 🎲",
       "result": {
         "title": "🎯 Résultat de la Roue",
-        "win": "🎲 **Résultat de la roulette** 🎯 : {colorEmoji} {color}\n🎉 Félicitations, {player}! Tu remportes **{winnings} LC !**",
-        "loss": "😢 Désolé, {player}... La chance n'était pas de ton côté. La couleur gagnante était 🎯 **{colorEmoji} {color}**."
+        "win": "🎲 **Résultat de la roulette** 🎯 : {colorEmoji} {color}\n🎉 Bien bien, {player}! Tiens t'a gagner **{winnings} LC !**",
+        "loss": "😢 Hahaha, {player}... Quelle merde t'a perdu. La couleur gagnante était 🎯 **{colorEmoji} {color}**."
       }
     },
     "blackjack": {
@@ -292,15 +292,15 @@
   },
   "menu": {
     "main": {
-      "title": "🎮 Menu Principal - Virtuous Surprise",
-      "description": "Bienvenue dans le menu interactif ! Sélectionnez une catégorie ci-dessous pour explorer les options disponibles.",
-      "placeholder": "Choisissez une catégorie..."
+      "title": "🎮 Menu Principal -",
+      "description": "Bienvenue ! Sélectionne une catégorie ci-dessous pour explorer les options disponibles.",
+      "placeholder": "Choisis une catégorie..."
     },
     "submenu": {
       "placeholder": "Choisissez une option...",
       "jeux_1v1": {
         "title": "🤼 Jeux 1v1",
-        "description": "Défiez d'autres joueurs dans des duels passionnants !",
+        "description": "Assume et défie d'autres joueurs fais attention à pas finir sdf !",
         "rapide": {
           "title": "⚡ Jeu Rapide",
           "info": "**Commande:** `!rapide @user [montant]`\n\n**Comment jouer:**\n1️⃣ Mentionnez votre adversaire et le montant du pari\n2️⃣ Attendez que l'adversaire accepte (1 minute)\n3️⃣ Après l'acceptation, les règles s'affichent\n4️⃣ Un mot apparaît après le compte à rebours\n5️⃣ Le premier à taper le mot correctement gagne!\n\n💰 Le gagnant remporte la mise doublée!"
