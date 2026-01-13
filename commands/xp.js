@@ -253,7 +253,7 @@ module.exports = {
                                 const progress = getXPProgress(totalXP);
                                 await levelsChannel.send(
                                     `🎉 Niveau supérieur atteint ! 🎊\n\n` +
-                                    `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
+                                    `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
                                     `**🎁 Récompense débloquée :** ${reward.description}\n\n` +
                                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
                                     `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
