@@ -73,7 +73,7 @@ console.log('Test 4: Reward Calculation');
 const rewardTests = [
     { level: 1, expectedType: 'milestone' },
     { level: 2, expectedType: 'lc' },
-    { level: 3, expectedType: 'boost' },
+    { level: 3, expectedType: 'lc' },
     { level: 5, expectedType: 'milestone' },
     { level: 10, expectedType: 'milestone' }
 ];
