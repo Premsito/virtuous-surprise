@@ -172,7 +172,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         const embed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle('🎉 Félicitations 🎉')
-            .setDescription(`**Tu as atteint le Niveau ${newLevel}** 🏆`)
+            .setDescription(`**Tu as atteint le Niveau ${newLevel} !** 🏆\n\n🎁 **Récompense débloquée :** ${rewardInfo.description}\n\n✨ N'oublie pas de consulter ton coffre au trésor pour récupérer tes récompenses !`)
             .setThumbnail(user.displayAvatarURL({ size: 256 }))
             .addFields(
                 {
@@ -181,9 +181,9 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                     inline: true
                 },
                 {
-                    name: '🎁 Récompense',
-                    value: rewardInfo.description,
-                    inline: true
+                    name: '💡 Comment gagner de l\'XP ?',
+                    value: 'Complète des **!missions**, participe à des **jeux**, envoie des messages (texte/vocal) et interagis avec la communauté !',
+                    inline: false
                 }
             )
             .setTimestamp();
@@ -196,7 +196,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             });
         } else {
             embed.setFooter({ 
-                text: '💡 Les !missions permettent de gagner de l\'XP et des LC !' 
+                text: 'Continue à progresser pour débloquer plus de récompenses ! 🚀' 
             });
         }
         
@@ -222,8 +222,10 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             if (levelUpChannel) {
                 await levelUpChannel.send(
                     `🎉 **Bravo <@${userId}>** 🎉\n` +
-                    `Tu as atteint le **Niveau ${newLevel}** 🏆 !\n` +
-                    `💝 Récompense : **${rewardInfo.description}** 🚀 !`
+                    `Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                    `🎁 **Récompense débloquée :** ${rewardInfo.description}\n` +
+                    `✨ N'oublie pas de consulter ton coffre au trésor !\n\n` +
+                    `💡 **Comment gagner de l'XP ?** Complète des **!missions**, participe à des **jeux**, envoie des messages (texte/vocal) et interagis avec la communauté !`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {
