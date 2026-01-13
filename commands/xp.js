@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const { db } = require('../database/db');
 const config = require('../config.json');
 const { isAdmin } = require('../utils/adminHelper');
-const { getLevelFromXP } = require('../utils/xpHelper');
+const { getLevelFromXP, getXPProgress } = require('../utils/xpHelper');
 
 module.exports = {
     name: 'xp',
@@ -206,26 +206,42 @@ module.exports = {
                     await db.activateBoost(userId, reward.boost.type, reward.boost.multiplier, reward.boost.duration);
                 }
                 
-                // Send level-up notification
+                // Send level-up notification (text-only format)
                 const levelsChannelId = config.channels.levelUpNotification;
                 if (levelsChannelId) {
                     try {
                         const levelsChannel = await client.channels.fetch(levelsChannelId);
                         if (levelsChannel) {
-                            const { generateLevelUpCard } = require('../utils/levelUpCard');
+                            // Get XP progress for the new level
+                            const progress = getXPProgress(totalXP);
                             
-                            // Create level-up card
-                            const cardBuffer = await generateLevelUpCard(user, level, totalXP, reward);
+                            // Determine embed color based on reward type
+                            let embedColor = config.colors.primary;
+                            if (reward.type === 'milestone') {
+                                embedColor = config.colors.gold;
+                            }
                             
-                            const levelUpMessage = await levelsChannel.send({
-                                content: `🎉 <@${userId}> vient d'atteindre le **niveau ${level}** ! 🎉`,
-                                files: [{
-                                    attachment: cardBuffer,
-                                    name: 'level-up.png'
-                                }]
+                            // Create a simple, text-only embed (no thumbnails or styled canvas elements)
+                            const embed = new EmbedBuilder()
+                                .setColor(embedColor)
+                                .setTitle('🎉 Niveau supérieur atteint !')
+                                .setDescription(
+                                    `Bravo **${user.username}** ! Tu as atteint le **Niveau ${level}** !\n\n` +
+                                    `**Récompense débloquée :** ${reward.description}\n\n` +
+                                    `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
+                                )
+                                .setFooter({ 
+                                    text: 'Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
+                                })
+                                .setTimestamp();
+                            
+                            // Send with mention
+                            await levelsChannel.send({
+                                content: `<@${userId}>`,
+                                embeds: [embed]
                             });
                             
-                            console.log(`✅ [XP-LEVELUP] Successfully sent level-up card for ${user.username} (Level ${level})`);
+                            console.log(`✅ [XP-LEVELUP] Successfully sent level-up notification for ${user.username} (Level ${level})`);
                         }
                     } catch (error) {
                         console.error('❌ [XP-LEVELUP] Error sending level-up notification:', error.message);
@@ -234,8 +250,13 @@ module.exports = {
                         try {
                             const levelsChannel = await client.channels.fetch(levelsChannelId);
                             if (levelsChannel) {
+                                const progress = getXPProgress(totalXP);
                                 await levelsChannel.send(
-                                    `🎉 <@${userId}> vient d'atteindre le **niveau ${level}** ! 🎉`
+                                    `🎉 Niveau supérieur atteint !\n\n` +
+                                    `Bravo **${user.username}** (<@${userId}>) ! Tu as atteint le **Niveau ${level}** !\n\n` +
+                                    `**Récompense débloquée :** ${reward.description}\n\n` +
+                                    `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
+                                    `_Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
                                 );
                             }
                         } catch (fallbackError) {
