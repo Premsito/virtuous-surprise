@@ -206,7 +206,7 @@ async function sendLevelUpCard(client, userId, userId, newLevel, totalXP, reward
                     `C'est bien c'est bien <@${userId}> ! 🎯 Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
                     `**🎁 Tiens prends ça :** ${rewardInfo.description}\n\n` +
                     `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                    `_💡 Gagner de l'XP? Fait des !missions, participe à des jeux,envoie des messages et surtout participe à des vocs !_`
+                    `_💡 Gagner de l'XP ? Fait des !missions, participe à des jeux,envoie des messages et participe à des vocs!_`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {
