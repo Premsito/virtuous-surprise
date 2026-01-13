@@ -127,7 +127,7 @@ function calculateLevelReward(level) {
 function formatMilestoneReward(treasure, lcAmount) {
     let description = lcAmount !== null 
         ? `${treasure.name}: ${lcAmount} LC 💰`
-        : `${treasure.name} 🗝️ (À réclamer)`;
+        : `${treasure.name} 🗝️✨ (!sac)`;
     
     if (treasure.boost) {
         const boostIcon = treasure.boost.type === 'xp' ? '⚡' : '💎';

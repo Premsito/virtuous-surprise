@@ -169,21 +169,22 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         // Create a simple, text-only embed with user mention directly in description
         const embed = new EmbedBuilder()
             .setColor(embedColor)
-            .setTitle('🎉 Niveau supérieur atteint !')
+            .setTitle('🎉 Niveau supérieur atteint ! 🎊')
             .setDescription(
-                `Bravo <@${userId}> ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
-                `**Récompense débloquée :** ${rewardInfo.description}\n\n` +
-                `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
+                `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
+                `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
             )
             .setFooter({ 
-                text: 'Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
+                text: '💡 Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
             })
             .setTimestamp();
         
         console.log(`[LEVEL-UP] Sending embed to channel...`);
         
-        // Send without additional content since mention is already in embed
+        // Send with user mention for proper notification
         await levelUpChannel.send({
+            content: `<@${userId}>`,
             embeds: [embed]
         });
         
@@ -201,11 +202,11 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             if (levelUpChannel) {
                 const progress = getXPProgress(totalXP);
                 await levelUpChannel.send(
-                    `🎉 Niveau supérieur atteint !\n\n` +
-                    `Bravo <@${userId}> ! Tu as atteint le **Niveau ${newLevel}** !\n\n` +
-                    `**Récompense débloquée :** ${rewardInfo.description}\n\n` +
-                    `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                    `_Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
+                    `🎉 Niveau supérieur atteint ! 🎊\n\n` +
+                    `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                    `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
+                    `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
+                    `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {

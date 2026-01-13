@@ -224,14 +224,14 @@ module.exports = {
                             // Create a simple, text-only embed (no thumbnails or styled canvas elements)
                             const embed = new EmbedBuilder()
                                 .setColor(embedColor)
-                                .setTitle('🎉 Niveau supérieur atteint !')
+                                .setTitle('🎉 Niveau supérieur atteint ! 🎊')
                                 .setDescription(
-                                    `Bravo **${user.username}** ! Tu as atteint le **Niveau ${level}** !\n\n` +
-                                    `**Récompense débloquée :** ${reward.description}\n\n` +
-                                    `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
+                                    `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
+                                    `**🎁 Récompense débloquée :** ${reward.description}\n\n` +
+                                    `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
                                 )
                                 .setFooter({ 
-                                    text: 'Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
+                                    text: '💡 Comment gagner de l\'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !' 
                                 })
                                 .setTimestamp();
                             
@@ -252,11 +252,11 @@ module.exports = {
                             if (levelsChannel) {
                                 const progress = getXPProgress(totalXP);
                                 await levelsChannel.send(
-                                    `🎉 Niveau supérieur atteint !\n\n` +
-                                    `Bravo **${user.username}** (<@${userId}>) ! Tu as atteint le **Niveau ${level}** !\n\n` +
-                                    `**Récompense débloquée :** ${reward.description}\n\n` +
-                                    `**Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                                    `_Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
+                                    `🎉 Niveau supérieur atteint ! 🎊\n\n` +
+                                    `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${level}** ! 🏆\n\n` +
+                                    `**🎁 Récompense débloquée :** ${reward.description}\n\n` +
+                                    `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
+                                    `_💡 Comment gagner de l'XP ? Complète des missions, participe à des jeux et interagis avec la communauté !_`
                                 );
                             }
                         } catch (fallbackError) {
