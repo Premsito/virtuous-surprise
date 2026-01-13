@@ -101,7 +101,7 @@ module.exports = {
         embed.setDescription(description);
         
         // Set thumbnail to first place user's avatar
-        if (users.length > 0) {
+        if (users.length > 0 && users[0].user_id) {
             const firstUser = users[0];
             // Fetch only the first place user for avatar
             const firstMember = await guild.members.fetch(firstUser.user_id).catch((err) => {
