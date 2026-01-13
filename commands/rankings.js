@@ -68,6 +68,22 @@ module.exports = {
             return embed;
         }
         
+        // Batch fetch all guild members for performance
+        const memberCache = new Map();
+        console.log(`   🔍 Fetching ${users.length} guild members for display names...`);
+        await Promise.all(
+            users.map(async (user) => {
+                if (!user.user_id) return;
+                try {
+                    const guildMember = await guild.members.fetch(user.user_id);
+                    memberCache.set(user.user_id, guildMember);
+                } catch (error) {
+                    console.log(`   ⚠️ Could not fetch member ${user.user_id} (${user.username}):`, error.message);
+                }
+            })
+        );
+        console.log(`   ✅ Fetched ${memberCache.size}/${users.length} guild members`);
+        
         // Build ranking description with proper alignment and formatting
         let description = '';
         const medals = ['🥇', '🥈', '🥉'];
@@ -75,8 +91,10 @@ module.exports = {
         for (let i = 0; i < users.length && i < 10; i++) {
             const user = users[i];
             
-            // Use Discord mention format for better user experience and performance (no API calls needed)
-            const userMention = user.user_id ? `<@${user.user_id}>` : user.username;
+            // Use displayName from guild member (no notifications triggered)
+            // Fallback to username from database if member not found
+            const guildMember = memberCache.get(user.user_id);
+            const displayName = guildMember ? guildMember.displayName : user.username;
             const value = valueFormatter(user);
             
             // Position indicator (medal for top 3, number for rest)
@@ -84,17 +102,17 @@ module.exports = {
             
             // Add visual emphasis for top 3 using bold and different formatting
             if (i === 0) {
-                // 1st place: Bold mention and value with special formatting
-                description += `${position} **${userMention}** • **${value}**\n`;
+                // 1st place: Bold displayName and value with special formatting
+                description += `${position} **${displayName}** • **${value}**\n`;
             } else if (i === 1) {
-                // 2nd place: Bold mention with emphasis
-                description += `${position} **${userMention}** • **${value}**\n`;
+                // 2nd place: Bold displayName with emphasis
+                description += `${position} **${displayName}** • **${value}**\n`;
             } else if (i === 2) {
-                // 3rd place: Bold mention
-                description += `${position} **${userMention}** • ${value}\n`;
+                // 3rd place: Bold displayName
+                description += `${position} **${displayName}** • ${value}\n`;
             } else {
                 // 4-10: Regular formatting
-                description += `${position} ${userMention} • ${value}\n`;
+                description += `${position} ${displayName} • ${value}\n`;
             }
         }
         
@@ -102,12 +120,7 @@ module.exports = {
         
         // Set thumbnail to first place user's avatar
         if (users.length > 0 && users[0].user_id) {
-            const firstUser = users[0];
-            // Fetch only the first place user for avatar
-            const firstMember = await guild.members.fetch(firstUser.user_id).catch((err) => {
-                console.log('   ⚠️ Could not fetch first place user for avatar:', err.message);
-                return null;
-            });
+            const firstMember = memberCache.get(users[0].user_id);
             if (firstMember) {
                 embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
             }
@@ -124,8 +137,9 @@ module.exports = {
     async displayRankings(channel) {
         try {
             // Channel validation logging as requested in problem statement
-            console.log("Channel fetched:", channel);
-            console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
+            console.log(`📊 [DISPLAY] Starting rankings display for channel: ${channel.id}`);
+            console.log(`   - Channel name: #${channel.name}`);
+            console.log(`   - Guild: ${channel.guild?.name || 'N/A'}`);
             
             // Ensure we have a guild context (rankings only work in guilds, not DMs)
             if (!channel.guild) {
@@ -135,15 +149,20 @@ module.exports = {
             }
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
+            console.log('🔍 [DATA] Fetching rankings from database...');
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
             
             // Data validation logging as requested in problem statement
-            console.log("Fetched LC Ranking:", topLC);
-            console.log("Fetched Level Ranking:", topLevels);
+            console.log(`📊 [DATA] Fetched LC Rankings (${topLC.length} users):`);
+            topLC.slice(0, 3).forEach((user, i) => {
+                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - ${user.balance} LC`);
+            });
             
-            console.log(`   - Fetched ${topLC.length} LC rankings`);
-            console.log(`   - Fetched ${topLevels.length} level rankings`);
+            console.log(`📊 [DATA] Fetched Niveau Rankings (${topLevels.length} users):`);
+            topLevels.slice(0, 3).forEach((user, i) => {
+                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - Level ${user.level}`);
+            });
             
             // Check if there's any ranking data available
             if (topLC.length === 0 && topLevels.length === 0) {
@@ -153,7 +172,7 @@ module.exports = {
             }
 
             // Create ranking embeds
-            console.log('🎨 Creating ranking embeds...');
+            console.log('🎨 [EMBEDS] Creating ranking embeds with display names...');
             
             const lcEmbed = await this.createRankingEmbed(
                 topLC,
@@ -171,26 +190,31 @@ module.exports = {
                 channel.guild
             );
             
+            console.log('   ✅ Embeds created successfully');
+            
             // Send both embeds together
-            console.log('📤 Sending ranking embeds...');
+            console.log('📤 [SEND] Sending ranking embeds to channel...');
             const sentMessage = await channel.send({ 
                 content: '🏆 **Classements Discord** 🏆',
                 embeds: [lcEmbed, levelEmbed] 
             });
             
-            console.log('✅ Ranking embeds sent successfully');
+            console.log(`✅ [SUCCESS] Ranking embeds sent successfully (Message ID: ${sentMessage.id})`);
             return sentMessage;
 
         } catch (error) {
-            console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
+            console.error(`❌ [ERROR] ${ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR}`, error.message);
             console.error('   Channel ID:', channel?.id);
+            console.error('   Channel Name:', channel?.name);
+            console.error('   Guild:', channel?.guild?.name);
+            console.error('   Error Type:', error.name);
             console.error('   Stack:', error.stack);
             
             // Send helpful error message to the channel with error details
             try {
-                await channel.send("⛔ Une erreur critique est survenue : " + error.message);
+                await channel.send(`⛔ Une erreur critique est survenue lors de l'affichage des classements.\n\`\`\`${error.message}\`\`\``);
             } catch (sendError) {
-                console.error('   Failed to send error message to channel:', sendError.message);
+                console.error('   ❌ Failed to send error message to channel:', sendError.message);
             }
             throw error;
         }
@@ -276,7 +300,7 @@ module.exports = {
             console.log(`   - Timestamp: ${new Date().toISOString()}`);
             
             if (!rankingsChannelId) {
-                console.error('❌ Rankings channel not configured in config.json');
+                console.error('❌ [CONFIG] Rankings channel not configured in config.json');
                 return;
             }
 
@@ -303,7 +327,7 @@ module.exports = {
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
             
             if (missingPermissions.length > 0) {
-                console.error(`❌ Missing required permissions in channel ${rankingsChannelId}:`);
+                console.error(`❌ [PERMISSIONS] Missing required permissions in channel ${rankingsChannelId}:`);
                 missingPermissions.forEach(perm => console.error(`   - ${perm}`));
                 return;
             }
@@ -321,7 +345,7 @@ module.exports = {
                 console.log(`✏️ [EDIT] Attempting to edit existing rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
                     // Get top 10 users by LC and Level
-                    console.log('📊 [DATA] Fetching rankings data...');
+                    console.log('📊 [DATA] Fetching rankings data for update...');
                     const topLC = await db.getTopLC(10);
                     const topLevels = await db.getTopLevels(10);
                     
@@ -336,7 +360,7 @@ module.exports = {
                     }
 
                     // Create ranking embeds
-                    console.log('🎨 [EMBEDS] Creating ranking embeds...');
+                    console.log('🎨 [EMBEDS] Creating ranking embeds for edit...');
                     
                     const lcEmbed = await this.createRankingEmbed(
                         topLC,
@@ -389,7 +413,10 @@ module.exports = {
         } catch (error) {
             console.error(`❌ [ERROR] ${ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR}`, error.message);
             console.error('   Channel ID:', config.channels.rankings);
+            console.error('   Channel Name:', channel?.name || 'N/A');
+            console.error('   Guild:', channel?.guild?.name || 'N/A');
             console.error('   Timestamp:', new Date().toISOString());
+            console.error('   Error Type:', error.name);
             console.error('   Stack:', error.stack);
             
             // Log Discord API errors specifically
