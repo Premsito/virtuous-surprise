@@ -23,7 +23,11 @@ module.exports = {
     
     async execute(message, args) {
         try {
-            console.log(`📊 Rankings command called by ${message.author.username} (${message.author.id})`);
+            console.log(`\n${'='.repeat(60)}`);
+            console.log(`📊 [MANUAL] Rankings command called by ${message.author.username} (${message.author.id})`);
+            console.log(`   - Timestamp: ${new Date().toISOString()}`);
+            console.log(`   - Channel: #${message.channel.name} (${message.channel.id})`);
+            console.log(`${'='.repeat(60)}\n`);
             
             // Check if user has admin permissions
             if (!isAdmin(message.author.id)) {
@@ -31,16 +35,22 @@ module.exports = {
                 return message.reply('❌ Cette commande est réservée aux administrateurs.');
             }
             
-            console.log(`   ✅ Permission granted - displaying rankings`);
+            console.log(`   ✅ Permission granted - displaying rankings manually`);
+            const startTime = Date.now();
             await this.displayRankings(message.channel);
+            const duration = Date.now() - startTime;
             
             // Delete the command message to keep the channel clean
             await message.delete().catch(() => {});
-            console.log(`   ✅ Rankings command completed successfully`);
+            console.log(`\n✅ [MANUAL] Rankings command completed successfully`);
+            console.log(`   - Duration: ${duration}ms`);
+            console.log(`   - Timestamp: ${new Date().toISOString()}\n`);
         } catch (error) {
-            console.error('❌ Error displaying rankings:', error);
+            console.error('\n❌ [ERROR] Error displaying rankings via manual command');
             console.error('   User:', message.author.username);
+            console.error('   User ID:', message.author.id);
             console.error('   Channel:', message.channel.id);
+            console.error('   Error:', error.message);
             console.error('   Stack:', error.stack);
             await message.reply('❌ Une erreur est survenue lors de l\'affichage des classements.');
         }
@@ -124,36 +134,48 @@ module.exports = {
     async displayRankings(channel) {
         try {
             // Channel validation logging as requested in problem statement
-            console.log("Channel fetched:", channel);
-            console.log(`📊 Fetching rankings data for channel: ${channel.id}`);
+            console.log(`📊 [DISPLAY] Displaying rankings for channel: ${channel.id}`);
+            console.log(`   📝 Channel Name: ${channel.name}`);
+            console.log(`   📝 Channel Type: ${channel.type}`);
+            console.log(`   📝 Guild: ${channel.guild?.name || 'N/A'}`);
             
             // Ensure we have a guild context (rankings only work in guilds, not DMs)
             if (!channel.guild) {
-                console.error('   ❌ Channel is not in a guild context');
+                console.error('   ❌ [ERROR] Channel is not in a guild context');
                 await channel.send('❌ Cette commande ne fonctionne que dans un serveur.');
                 return null;
             }
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
+            console.log('📊 [DATABASE] Fetching top 10 LC rankings from database...');
             const topLC = await db.getTopLC(10);
+            console.log(`   ✅ Successfully fetched ${topLC.length} LC rankings`);
+            if (topLC.length > 0) {
+                console.log(`   📝 Top 3 LC Rankings:`);
+                topLC.slice(0, 3).forEach((u, idx) => {
+                    console.log(`      ${idx + 1}. ${u.username} (${u.user_id}): ${u.balance} LC`);
+                });
+            }
+            
+            console.log('📊 [DATABASE] Fetching top 10 Niveau rankings from database...');
             const topLevels = await db.getTopLevels(10);
-            
-            // Data validation logging as requested in problem statement
-            console.log("Fetched LC Ranking:", topLC);
-            console.log("Fetched Level Ranking:", topLevels);
-            
-            console.log(`   - Fetched ${topLC.length} LC rankings`);
-            console.log(`   - Fetched ${topLevels.length} level rankings`);
+            console.log(`   ✅ Successfully fetched ${topLevels.length} Niveau rankings`);
+            if (topLevels.length > 0) {
+                console.log(`   📝 Top 3 Niveau Rankings:`);
+                topLevels.slice(0, 3).forEach((u, idx) => {
+                    console.log(`      ${idx + 1}. ${u.username} (${u.user_id}): Niveau ${u.level} (${u.xp} XP)`);
+                });
+            }
             
             // Check if there's any ranking data available
             if (topLC.length === 0 && topLevels.length === 0) {
-                console.log(`   ⚠️ No ranking data available`);
+                console.log(`   ⚠️ [WARNING] No ranking data available`);
                 await channel.send('Aucun classement n\'est disponible pour l\'instant.');
                 return null;
             }
 
             // Create ranking embeds
-            console.log('🎨 Creating ranking embeds...');
+            console.log('🎨 [EMBEDS] Creating ranking embeds...');
             
             const lcEmbed = await this.createRankingEmbed(
                 topLC,
@@ -162,6 +184,7 @@ module.exports = {
                 (user) => `${user.balance} LC`,
                 channel.guild
             );
+            console.log('   ✅ LC embed created');
             
             const levelEmbed = await this.createRankingEmbed(
                 topLevels,
@@ -170,27 +193,32 @@ module.exports = {
                 (user) => `Niveau ${user.level}`,
                 channel.guild
             );
+            console.log('   ✅ Niveau embed created');
             
             // Send both embeds together
-            console.log('📤 Sending ranking embeds...');
+            console.log('📤 [SEND] Sending ranking embeds to channel...');
             const sentMessage = await channel.send({ 
                 content: '🏆 **Classements Discord** 🏆',
                 embeds: [lcEmbed, levelEmbed] 
             });
             
-            console.log('✅ Ranking embeds sent successfully');
+            console.log('✅ [SUCCESS] Ranking embeds sent successfully');
+            console.log(`   📝 Message ID: ${sentMessage.id}`);
             return sentMessage;
 
         } catch (error) {
             console.error(ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR, error);
+            console.error('   Error Type:', error.name);
             console.error('   Channel ID:', channel?.id);
+            console.error('   Channel Name:', channel?.name);
+            console.error('   Timestamp:', new Date().toISOString());
             console.error('   Stack:', error.stack);
             
             // Send helpful error message to the channel with error details
             try {
-                await channel.send("⛔ Une erreur critique est survenue : " + error.message);
+                await channel.send(`⛔ Une erreur critique est survenue : ${error.message}\n\nContactez un administrateur si le problème persiste.`);
             } catch (sendError) {
-                console.error('   Failed to send error message to channel:', sendError.message);
+                console.error('   ❌ [ERROR] Failed to send error message to channel:', sendError.message);
             }
             throw error;
         }
@@ -276,12 +304,29 @@ module.exports = {
             console.log(`   - Timestamp: ${new Date().toISOString()}`);
             
             if (!rankingsChannelId) {
-                console.error('❌ Rankings channel not configured in config.json');
+                console.error('❌ [ERROR] Rankings channel not configured in config.json');
+                console.error('   Please add "rankings" channel ID to config.json under "channels" section');
                 return;
             }
 
             console.log(`📡 [FETCH] Fetching channel ${rankingsChannelId}...`);
-            channel = await client.channels.fetch(rankingsChannelId);
+            
+            // Fetch channel with detailed error handling
+            try {
+                channel = await client.channels.fetch(rankingsChannelId);
+            } catch (fetchError) {
+                console.error(`❌ [ERROR] Failed to fetch rankings channel: ${fetchError.message}`);
+                console.error('   Channel ID:', rankingsChannelId);
+                console.error('   Error Code:', fetchError.code);
+                
+                if (fetchError.code === 10003) {
+                    console.error('   ⚠️ Channel does not exist - check if channel ID is correct in config.json');
+                } else if (fetchError.code === 50001) {
+                    console.error('   ⚠️ Bot does not have access to the channel - check channel permissions');
+                }
+                
+                throw fetchError;
+            }
             
             // Detailed channel logging as requested in problem statement
             console.log(`   ✅ Channel fetched:`, {
@@ -292,102 +337,114 @@ module.exports = {
             });
             
             // Verify bot permissions
-            // Note: ManageMessages is no longer required since we edit our own messages
-            // instead of deleting them. Discord allows bots to edit their own messages
-            // without ManageMessages permission. Required permissions:
-            // - ViewChannel: See the rankings channel
-            // - SendMessages: Post initial message (if needed)
-            // - EmbedLinks: Send embedded rankings
+            // Note: We need SendMessages and EmbedLinks to post rankings
+            // We also need ManageMessages if we want to delete old messages
             const permissions = channel.permissionsFor(client.user);
             const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
+            const optionalPermissions = ['ManageMessages']; // For deleting old messages
+            
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
             
             if (missingPermissions.length > 0) {
-                console.error(`❌ Missing required permissions in channel ${rankingsChannelId}:`);
+                console.error(`❌ [ERROR] Missing required permissions in channel ${rankingsChannelId}:`);
                 missingPermissions.forEach(perm => console.error(`   - ${perm}`));
+                console.error('   ⚠️ Please grant these permissions to the bot in the channel settings');
                 return;
             }
             
+            // Check optional permissions and log warnings
+            const missingOptionalPerms = optionalPermissions.filter(perm => !permissions.has(perm));
+            if (missingOptionalPerms.length > 0) {
+                console.warn(`⚠️ [WARNING] Missing optional permissions in channel ${rankingsChannelId}:`);
+                missingOptionalPerms.forEach(perm => console.warn(`   - ${perm}`));
+                console.warn('   ℹ️ The bot can still function but may not be able to delete old messages');
+            }
+            
             console.log('✅ [PERMISSIONS] Bot has all required permissions (View, Send, Embed)');
+            if (permissions.has('ManageMessages')) {
+                console.log('   ✅ Optional: ManageMessages permission granted (can delete old messages)');
+            }
 
             // Load last message from database if not already loaded (handles bot restarts)
             if (!this.hasLoadedFromDB) {
-                console.log('🔄 [RECOVERY] Loading last message from database...');
+                console.log('🔄 [RECOVERY] First update after bot start - loading last message from database...');
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Try to edit existing message instead of deleting and reposting
+            // Delete existing message instead of editing
             if (this.lastRankingsMessage) {
-                console.log(`✏️ [EDIT] Attempting to edit existing rankings message (ID: ${this.lastRankingsMessage.id})...`);
+                console.log(`🗑️ [DELETE] Deleting old rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
-                    // Get top 10 users by LC and Level
-                    console.log('📊 [DATA] Fetching rankings data...');
-                    const topLC = await db.getTopLC(10);
-                    const topLevels = await db.getTopLevels(10);
-                    
-                    console.log(`   - Fetched ${topLC.length} LC rankings`);
-                    console.log(`   - Fetched ${topLevels.length} level rankings`);
-                    
-                    // Check if there's any ranking data available
-                    if (topLC.length === 0 && topLevels.length === 0) {
-                        console.log(`   ⚠️ No ranking data available - keeping existing message unchanged`);
-                        console.log(`   📝 Message will show last available data until users have activity`);
-                        return;
-                    }
-
-                    // Create ranking embeds
-                    console.log('🎨 [EMBEDS] Creating ranking embeds...');
-                    
-                    const lcEmbed = await this.createRankingEmbed(
-                        topLC,
-                        '💰 Classement LC - Top 10',
-                        config.colors.gold,
-                        (user) => `${user.balance} LC`,
-                        channel.guild
-                    );
-                    
-                    const levelEmbed = await this.createRankingEmbed(
-                        topLevels,
-                        '📊 Classement Niveaux - Top 10',
-                        config.colors.primary,
-                        (user) => `Niveau ${user.level}`,
-                        channel.guild
-                    );
-                    
-                    // Edit the existing message
-                    await this.lastRankingsMessage.edit({ 
-                        content: '🏆 **Classements Discord** 🏆',
-                        embeds: [lcEmbed, levelEmbed] 
-                    });
-                    
-                    console.log('   ✅ Rankings message edited successfully');
-                    console.log(`   📝 Message ID ${this.lastRankingsMessage.id} remains unchanged`);
-                    console.log(`✅ [SUCCESS] Rankings successfully updated via edit in channel #${channel.name}`);
-                    return;
-                } catch (editError) {
-                    // If edit fails (message was deleted, etc.), fall back to posting new message
-                    console.log(`   ⚠️ Could not edit message (${editError.message}), will post new message`);
-                    this.lastRankingsMessage = null;
-                    await db.setBotState('rankings_message_id', null);
+                    await this.lastRankingsMessage.delete();
+                    console.log('   ✅ Old rankings message deleted successfully');
+                } catch (deleteError) {
+                    console.log(`   ⚠️ Could not delete message (${deleteError.message}), will post new message anyway`);
                 }
+                this.lastRankingsMessage = null;
+            } else {
+                console.log('ℹ️ [DELETE] No previous rankings message to delete (first run or message was already deleted)');
             }
 
-            // Post new message (first time or if edit failed)
-            console.log('📤 [POST] Posting new rankings message...');
-            const sentMessage = await this.displayRankings(channel);
+            // Get top 10 users by LC and Level
+            console.log('📊 [DATABASE] Fetching rankings data...');
             
-            // Track the new message for future edits (in-memory and database)
-            if (sentMessage) {
-                this.lastRankingsMessage = sentMessage;
-                // Persist message ID to database for recovery after bot restarts
-                await db.setBotState('rankings_message_id', sentMessage.id);
-                console.log('   ✅ New rankings message posted and tracked');
-                console.log(`   📝 Message ID ${sentMessage.id} saved to database for future edits`);
+            console.log('   📊 Fetching top 10 LC rankings from database...');
+            const topLC = await db.getTopLC(10);
+            console.log(`      ✅ Successfully fetched ${topLC.length} LC rankings`);
+            console.log(`      📝 LC Data:`, JSON.stringify(topLC.map(u => ({ user_id: u.user_id, username: u.username, balance: u.balance })), null, 2));
+            
+            console.log('   📊 Fetching top 10 Niveau rankings from database...');
+            const topLevels = await db.getTopLevels(10);
+            console.log(`      ✅ Successfully fetched ${topLevels.length} Niveau rankings`);
+            console.log(`      📝 Niveau Data:`, JSON.stringify(topLevels.map(u => ({ user_id: u.user_id, username: u.username, level: u.level, xp: u.xp })), null, 2));
+            
+            // Check if there's any ranking data available
+            if (topLC.length === 0 && topLevels.length === 0) {
+                console.log(`   ⚠️ No ranking data available - skipping update`);
+                console.log(`   📝 Rankings will be displayed once users have activity`);
+                return;
             }
+
+            // Create ranking embeds
+            console.log('🎨 [EMBEDS] Creating ranking embeds...');
+            
+            const lcEmbed = await this.createRankingEmbed(
+                topLC,
+                '💰 Classement LC - Top 10',
+                config.colors.gold,
+                (user) => `${user.balance} LC`,
+                channel.guild
+            );
+            
+            const levelEmbed = await this.createRankingEmbed(
+                topLevels,
+                '📊 Classement Niveaux - Top 10',
+                config.colors.primary,
+                (user) => `Niveau ${user.level}`,
+                channel.guild
+            );
+            
+            // Post new rankings message
+            console.log('📤 [POST] Posting new rankings message...');
+            const sentMessage = await channel.send({ 
+                content: '🏆 **Classements Discord** 🏆',
+                embeds: [lcEmbed, levelEmbed] 
+            });
+            
+            console.log('   ✅ New rankings message posted successfully');
+            console.log(`   📝 Message ID: ${sentMessage.id}`);
+            
+            // Track the new message for future deletion (in-memory and database)
+            this.lastRankingsMessage = sentMessage;
+            
+            // Persist message ID to database for recovery after bot restarts
+            await db.setBotState('rankings_message_id', sentMessage.id);
+            console.log('   💾 Message ID saved to database for future updates');
             
             console.log(`✅ [SUCCESS] Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
         } catch (error) {
             console.error(`❌ [ERROR] ${ERROR_MESSAGES.CRITICAL_DISPLAY_ERROR}`, error.message);
+            console.error('   Error Type:', error.name);
             console.error('   Channel ID:', config.channels.rankings);
             console.error('   Timestamp:', new Date().toISOString());
             console.error('   Stack:', error.stack);
@@ -398,6 +455,17 @@ module.exports = {
             }
             if (error.httpStatus) {
                 console.error(`   HTTP Status: ${error.httpStatus}`);
+            }
+            
+            // Provide helpful troubleshooting information
+            if (error.code === 10003) {
+                console.error('   ⚠️ Troubleshooting: Channel not found - check if channel ID is correct in config.json');
+            } else if (error.code === 50001) {
+                console.error('   ⚠️ Troubleshooting: Missing access - check bot has access to the channel');
+            } else if (error.code === 50013) {
+                console.error('   ⚠️ Troubleshooting: Missing permissions - check bot has required permissions');
+            } else if (error.message.includes('Unknown Message')) {
+                console.error('   ⚠️ Troubleshooting: Message was already deleted - this is expected behavior');
             }
             
             // Re-throw error so interval handler can catch it and potentially restart
