@@ -50,6 +50,7 @@ const sacCommand = require('./commands/sac');
 const niveauCommand = require('./commands/niveau');
 const giveawayCommand = require('./commands/giveaway');
 const rankingsCommand = require('./commands/rankings');
+const xpCommand = require('./commands/xp');
 
 client.commands.set(lcCommand.name, lcCommand);
 client.commands.set(invitesCommand.name, invitesCommand);
@@ -70,6 +71,7 @@ client.commands.set(sacCommand.name, sacCommand);
 client.commands.set(niveauCommand.name, niveauCommand);
 client.commands.set(giveawayCommand.name, giveawayCommand);
 client.commands.set(rankingsCommand.name, rankingsCommand);
+client.commands.set(xpCommand.name, xpCommand);
 
 
 // Store invites for tracking
@@ -946,6 +948,9 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'rankings' || commandName === 'classement') {
             const command = client.commands.get('rankings');
             await command.execute(message, args);
+        } else if (commandName === 'xp') {
+            const command = client.commands.get('xp');
+            await command.execute(message, args, client);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
