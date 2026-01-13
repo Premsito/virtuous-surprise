@@ -171,7 +171,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             .setColor(embedColor)
             .setTitle('🎉 Niveau supérieur atteint ! 🎊')
             .setDescription(
-                `Bravo @${user.username} ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
+                `Bravo <@${userId}> ! 🎯 Tu as atteint le **Niveau ${newLevel}** ! 🏆\n\n` +
                 `**🎁 Récompense débloquée :** ${rewardInfo.description}\n\n` +
                 `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
             )
@@ -182,9 +182,8 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         
         console.log(`[LEVEL-UP] Sending embed to channel...`);
         
-        // Send with user mention for proper notification
+        // Send embed without separate content mention (mention is now inside embed)
         await levelUpChannel.send({
-            content: `<@${userId}>`,
             embeds: [embed]
         });
         
