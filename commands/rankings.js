@@ -10,6 +10,29 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+/**
+ * Helper function to fetch rankings data with error handling
+ * @param {number} limit - Number of top rankings to fetch
+ * @returns {Object} Object containing topLC and topLevels arrays
+ */
+async function fetchRankingsData(limit = 10) {
+    let topLC, topLevels;
+    try {
+        topLC = await db.getTopLC(limit);
+        topLevels = await db.getTopLevels(limit);
+    } catch (dbError) {
+        console.error('❌ Database error while fetching rankings:', dbError.message);
+        console.error('   Stack:', dbError.stack);
+        throw new Error('Failed to fetch rankings from database');
+    }
+    
+    // Ensure results are arrays (defensive programming)
+    topLC = Array.isArray(topLC) ? topLC : [];
+    topLevels = Array.isArray(topLevels) ? topLevels : [];
+    
+    return { topLC, topLevels };
+}
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -135,19 +158,7 @@ module.exports = {
             }
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
-            let topLC, topLevels;
-            try {
-                topLC = await db.getTopLC(10);
-                topLevels = await db.getTopLevels(10);
-            } catch (dbError) {
-                console.error('❌ Database error while fetching rankings:', dbError.message);
-                console.error('   Stack:', dbError.stack);
-                throw new Error('Failed to fetch rankings from database');
-            }
-            
-            // Ensure results are arrays (defensive programming)
-            topLC = Array.isArray(topLC) ? topLC : [];
-            topLevels = Array.isArray(topLevels) ? topLevels : [];
+            const { topLC, topLevels } = await fetchRankingsData(10);
             
             // Data validation logging as requested in problem statement
             console.log("Fetched LC Ranking:", topLC);
@@ -340,18 +351,7 @@ module.exports = {
                 try {
                     // Get top 10 users by LC and Level
                     console.log('📊 [DATA] Fetching rankings data...');
-                    let topLC, topLevels;
-                    try {
-                        topLC = await db.getTopLC(10);
-                        topLevels = await db.getTopLevels(10);
-                    } catch (dbError) {
-                        console.error('❌ Database error while fetching rankings:', dbError.message);
-                        throw dbError; // Re-throw to be caught by outer catch
-                    }
-                    
-                    // Ensure results are arrays (defensive programming)
-                    topLC = Array.isArray(topLC) ? topLC : [];
-                    topLevels = Array.isArray(topLevels) ? topLevels : [];
+                    const { topLC, topLevels } = await fetchRankingsData(10);
                     
                     console.log(`   - Fetched ${topLC.length} LC rankings`);
                     console.log(`   - Fetched ${topLevels.length} level rankings`);
