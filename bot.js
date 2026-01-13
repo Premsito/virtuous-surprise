@@ -182,8 +182,9 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         
         console.log(`[LEVEL-UP] Sending embed to channel...`);
         
-        // Send embed without separate content mention (mention is now inside embed)
+        // Send with user mention in content for notification, and also in embed for display
         await levelUpChannel.send({
+            content: `<@${userId}>`,
             embeds: [embed]
         });
         
