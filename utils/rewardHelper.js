@@ -103,8 +103,10 @@ function calculateLevelReward(level) {
     // Level 6: 100 LC, Level 7: 125 LC, Level 8: 150 LC, Level 9: 175 LC
     
     // Calculate non-milestone count using math instead of loop for O(1) complexity
-    // For levels 1-5: milestones at 1, 5 → 3 non-milestones (2, 3, 4)
-    // Formula: level - 1 - floor(level / 5) gives count of non-milestone levels up to that level
+    // Formula: (level - 1) - floor(level / 5) gives count of non-milestone levels before this level
+    // Examples: Level 2: (2-1) - floor(2/5) = 1-0 = 1 → 1*25 = 25 LC ✓
+    //           Level 4: (4-1) - floor(4/5) = 3-0 = 3 → 3*25 = 75 LC ✓
+    //           Level 6: (6-1) - floor(6/5) = 5-1 = 4 → 4*25 = 100 LC ✓
     const nonMilestoneCount = level - 1 - Math.floor(level / 5);
     
     const lcReward = nonMilestoneCount * 25;

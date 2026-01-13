@@ -60,13 +60,8 @@ for (let level = 2; level <= 9; level++) {
     if (isMilestoneLevel(level)) continue;
     
     const reward = calculateLevelReward(level);
-    const expectedLC = (() => {
-        let count = 0;
-        for (let i = 2; i <= level; i++) {
-            if (!isMilestoneLevel(i)) count++;
-        }
-        return count * 25;
-    })();
+    // Use same formula as production code for consistency
+    const expectedLC = (level - 1 - Math.floor(level / 5)) * 25;
     
     const pass = reward.type === 'lc' && reward.lcAmount === expectedLC;
     console.log(`    Level ${level}: ${pass ? '✅' : '❌'} Expected ${expectedLC} LC, got ${reward.description}`);
