@@ -54,37 +54,28 @@ console.log('  Normal Progression Levels:');
 console.log();
 
 // Test alternating pattern for normal levels
-console.log('📝 Test 3: Alternating Pattern Verification\n');
-console.log('  Even levels should give LC, odd levels should give boosts:');
+console.log('📝 Test 3: Progressive LC Reward Verification\n');
+console.log('  All non-milestone levels should give progressive LC rewards:');
 for (let level = 2; level <= 9; level++) {
     if (isMilestoneLevel(level)) continue;
     
     const reward = calculateLevelReward(level);
-    const isEven = level % 2 === 0;
+    // Use same formula as production code for consistency
+    const expectedLC = (level - 1 - Math.floor(level / 5)) * 25;
     
-    if (isEven) {
-        const pass = reward.type === 'lc' && reward.lcAmount === 20;
-        console.log(`    Level ${level} (even): ${pass ? '✅' : '❌'} ${reward.description}`);
-    } else {
-        const pass = reward.type === 'boost' && reward.boost !== null;
-        console.log(`    Level ${level} (odd): ${pass ? '✅' : '❌'} ${reward.description}`);
-    }
+    const pass = reward.type === 'lc' && reward.lcAmount === expectedLC;
+    console.log(`    Level ${level}: ${pass ? '✅' : '❌'} Expected ${expectedLC} LC, got ${reward.description}`);
 }
 console.log();
 
-// Test boost alternation for odd levels
-console.log('📝 Test 4: Boost Type Alternation\n');
-console.log('  Odd levels should alternate between XP and LC boosts:');
-const oddLevels = [3, 7, 9, 11, 13, 17, 19, 21, 23];
-oddLevels.forEach(level => {
-    if (isMilestoneLevel(level)) return;
-    
+// Test boost alternation for odd levels (removed since we no longer give boosts on odd levels)
+console.log('📝 Test 4: Treasure Claimability Verification\n');
+console.log('  Milestone treasures should be claimable (lcAmount = 0):');
+[1, 5, 10, 15, 20].forEach(level => {
     const reward = calculateLevelReward(level);
-    const expectedType = (level % 4 === 1) ? 'xp' : 'lc';
-    const actualType = reward.boost?.type;
-    const pass = actualType === expectedType;
+    const pass = reward.type === 'milestone' && reward.lcAmount === 0;
     
-    console.log(`    Level ${level}: ${pass ? '✅' : '❌'} Expected ${expectedType}, got ${actualType}`);
+    console.log(`    Level ${level}: ${pass ? '✅' : '❌'} Treasure is ${reward.lcAmount === 0 ? 'claimable' : 'auto-assigned'}`);
 });
 console.log();
 

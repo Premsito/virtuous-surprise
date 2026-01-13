@@ -85,54 +85,49 @@ function calculateLevelReward(level) {
     if (isMilestoneLevel(level)) {
         const treasure = getMilestoneTreasure(level);
         if (treasure) {
-            // Random LC amount within range
-            const lcAmount = Math.floor(Math.random() * (treasure.maxLC - treasure.minLC + 1)) + treasure.minLC;
-            
+            // Treasure is now claimable instead of auto-assigned
             return {
                 type: 'milestone',
                 name: treasure.name,
-                lcAmount: lcAmount,
+                treasureRange: { min: treasure.minLC, max: treasure.maxLC },
+                lcAmount: 0, // No automatic LC assignment
                 boost: treasure.boost,
-                description: formatMilestoneReward(treasure, lcAmount)
+                description: formatMilestoneReward(treasure, null)
             };
         }
     }
     
-    // Normal progression rewards
-    if (level % 2 === 0) {
-        // Even levels: Fixed LC reward
-        return {
-            type: 'lc',
-            lcAmount: 20,
-            boost: null,
-            description: '+20 LC 💰'
-        };
-    } else {
-        // Odd levels: Boost (alternating between XP and LC)
-        // Pattern: levels 1,9,17,25... get XP boost, levels 3,7,11,15,19,23... get LC boost
-        // This is achieved by: (level % 4 === 1) gives XP, otherwise LC
-        const boostType = (level % 4 === 1) ? 'xp' : 'lc';
-        return {
-            type: 'boost',
-            lcAmount: 0,
-            boost: {
-                type: boostType,
-                multiplier: 2,
-                duration: 3600 // 1 hour
-            },
-            description: boostType === 'xp' ? 'x2 XP Boost (1h) ⚡' : 'x2 LC Boost (1h) 💎'
-        };
-    }
+    // Normal progression rewards - Progressive LC based on level
+    // Systematic progression: each level adds +25 LC
+    // Level 2: 25 LC, Level 3: 50 LC, Level 4: 75 LC
+    // Level 6: 100 LC, Level 7: 125 LC, Level 8: 150 LC, Level 9: 175 LC
+    
+    // Calculate non-milestone count using math instead of loop for O(1) complexity
+    // Formula: (level - 1) - floor(level / 5) gives count of non-milestone levels before this level
+    // Examples: Level 2: (2-1) - floor(2/5) = 1-0 = 1 → 1*25 = 25 LC ✓
+    //           Level 4: (4-1) - floor(4/5) = 3-0 = 3 → 3*25 = 75 LC ✓
+    //           Level 6: (6-1) - floor(6/5) = 5-1 = 4 → 4*25 = 100 LC ✓
+    const nonMilestoneCount = level - 1 - Math.floor(level / 5);
+    
+    const lcReward = nonMilestoneCount * 25;
+    return {
+        type: 'lc',
+        lcAmount: lcReward,
+        boost: null,
+        description: `+${lcReward} LC 💰`
+    };
 }
 
 /**
  * Format milestone reward description
  * @param {object} treasure - Treasure configuration
- * @param {number} lcAmount - Actual LC amount awarded
+ * @param {number|null} lcAmount - Actual LC amount awarded (null if claimable)
  * @returns {string} - Formatted description
  */
 function formatMilestoneReward(treasure, lcAmount) {
-    let description = `${treasure.name}: ${lcAmount} LC 💰`;
+    let description = lcAmount !== null 
+        ? `${treasure.name}: ${lcAmount} LC 💰`
+        : `${treasure.name} 🗝️ (À réclamer)`;
     
     if (treasure.boost) {
         const boostIcon = treasure.boost.type === 'xp' ? '⚡' : '💎';
@@ -154,20 +149,16 @@ function formatRewardEmbed(reward, level) {
     
     if (reward.type === 'milestone') {
         title = `🎁 ${reward.name} débloqué !`;
-        description = `Gain de **${reward.lcAmount} LC** 💰`;
+        description = `Un **${reward.name}** est disponible ! 🗝️\nUtilisez la commande \`!trésor\` pour le réclamer et découvrir votre gain.`;
         
         if (reward.boost) {
             const boostIcon = reward.boost.type === 'xp' ? '⚡' : '💎';
-            description += `\n**x${reward.boost.multiplier} ${reward.boost.type.toUpperCase()} Boost activé** (1h) ${boostIcon}`;
+            description += `\n\n**Bonus activé :** x${reward.boost.multiplier} ${reward.boost.type.toUpperCase()} Boost (1h) ${boostIcon}`;
         }
         
         // Add motivational text for milestones
         const nextMilestone = Math.ceil((level + 1) / 5) * 5;
         description += `\n\nContinuez à progresser pour atteindre le niveau ${nextMilestone} et débloquer un nouveau trésor !`;
-    } else if (reward.type === 'boost') {
-        const boostType = reward.boost.type === 'xp' ? 'XP' : 'LC';
-        const boostIcon = reward.boost.type === 'xp' ? '⚡' : '💎';
-        description = `**x${reward.boost.multiplier} ${boostType} Boost activé** (1h) ${boostIcon}`;
     } else if (reward.type === 'lc') {
         description = `Gain de **${reward.lcAmount} LC** 💰`;
     }
