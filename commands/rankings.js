@@ -72,22 +72,11 @@ module.exports = {
         let description = '';
         const medals = ['🥇', '🥈', '🥉'];
         
-        // Fetch guild members in batch to avoid API rate limits
-        const memberCache = new Map();
-        
         for (let i = 0; i < users.length && i < 10; i++) {
             const user = users[i];
             
-            // Get guild member with caching
-            let guildMember = memberCache.get(user.user_id);
-            if (!guildMember) {
-                guildMember = await guild.members.fetch(user.user_id).catch(() => null);
-                if (guildMember) {
-                    memberCache.set(user.user_id, guildMember);
-                }
-            }
-            
-            const displayName = guildMember ? guildMember.displayName : user.username;
+            // Use Discord mention format for better user experience and performance (no API calls needed)
+            const userMention = user.user_id ? `<@${user.user_id}>` : user.username;
             const value = valueFormatter(user);
             
             // Position indicator (medal for top 3, number for rest)
@@ -95,35 +84,32 @@ module.exports = {
             
             // Add visual emphasis for top 3 using bold and different formatting
             if (i === 0) {
-                // 1st place: Bold name and value with special formatting
-                description += `${position} **\`${displayName}\`** • **${value}**\n`;
+                // 1st place: Bold mention and value with special formatting
+                description += `${position} **${userMention}** • **${value}**\n`;
             } else if (i === 1) {
-                // 2nd place: Bold name with emphasis
-                description += `${position} **${displayName}** • **${value}**\n`;
+                // 2nd place: Bold mention with emphasis
+                description += `${position} **${userMention}** • **${value}**\n`;
             } else if (i === 2) {
-                // 3rd place: Bold name
-                description += `${position} **${displayName}** • ${value}\n`;
+                // 3rd place: Bold mention
+                description += `${position} **${userMention}** • ${value}\n`;
             } else {
                 // 4-10: Regular formatting
-                description += `${position} ${displayName} • ${value}\n`;
+                description += `${position} ${userMention} • ${value}\n`;
             }
         }
         
         embed.setDescription(description);
         
         // Set thumbnail to first place user's avatar
-        if (users.length > 0) {
+        if (users.length > 0 && users[0].user_id) {
             const firstUser = users[0];
-            // Check if we already fetched this member in the loop above
-            const firstMember = memberCache.get(firstUser.user_id);
-            
+            // Fetch only the first place user for avatar
+            const firstMember = await guild.members.fetch(firstUser.user_id).catch((err) => {
+                console.log('   ⚠️ Could not fetch first place user for avatar:', err.message);
+                return null;
+            });
             if (firstMember) {
-                try {
-                    embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
-                } catch (error) {
-                    // Avatar fetch failed, embed will work without thumbnail
-                    console.log('   ⚠️ Could not set avatar thumbnail:', error.message);
-                }
+                embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
             }
         }
         
