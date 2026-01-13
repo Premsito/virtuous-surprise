@@ -101,13 +101,11 @@ function calculateLevelReward(level) {
     // Systematic progression: each level adds +25 LC
     // Level 2: 25 LC, Level 3: 50 LC, Level 4: 75 LC
     // Level 6: 100 LC, Level 7: 125 LC, Level 8: 150 LC, Level 9: 175 LC
-    // Count how many non-milestone levels have passed (excluding level 1 which is milestone)
-    let nonMilestoneCount = 0;
-    for (let i = 2; i <= level; i++) {
-        if (!isMilestoneLevel(i)) {
-            nonMilestoneCount++;
-        }
-    }
+    
+    // Calculate non-milestone count using math instead of loop for O(1) complexity
+    // For levels 1-5: milestones at 1, 5 → 3 non-milestones (2, 3, 4)
+    // Formula: level - 1 - floor(level / 5) gives count of non-milestone levels up to that level
+    const nonMilestoneCount = level - 1 - Math.floor(level / 5);
     
     const lcReward = nonMilestoneCount * 25;
     return {
