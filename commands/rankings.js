@@ -75,7 +75,7 @@ module.exports = {
         for (let i = 0; i < users.length && i < 10; i++) {
             const user = users[i];
             
-            // Use Discord mention format
+            // Use Discord mention format for better user experience and performance (no API calls needed)
             const userMention = `<@${user.user_id}>`;
             const value = valueFormatter(user);
             
@@ -103,15 +103,10 @@ module.exports = {
         // Set thumbnail to first place user's avatar
         if (users.length > 0) {
             const firstUser = users[0];
-            try {
-                // Fetch only the first place user for avatar
-                const firstMember = await guild.members.fetch(firstUser.user_id).catch(() => null);
-                if (firstMember) {
-                    embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
-                }
-            } catch (error) {
-                // Avatar fetch failed, embed will work without thumbnail
-                console.log('   ⚠️ Could not set avatar thumbnail:', error.message);
+            // Fetch only the first place user for avatar
+            const firstMember = await guild.members.fetch(firstUser.user_id).catch(() => null);
+            if (firstMember) {
+                embed.setThumbnail(firstMember.displayAvatarURL({ extension: 'png', size: 128 }));
             }
         }
         
