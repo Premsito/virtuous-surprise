@@ -7,6 +7,8 @@
 
 const { db } = require('../database/db');
 const { getGameXP, getLevelFromXP } = require('./xpHelper');
+const config = require('../config.json');
+const { EmbedBuilder } = require('discord.js');
 
 /**
  * Grant XP for game participation and check for level up
@@ -39,12 +41,35 @@ async function grantGameXP(userId, username, result, message = null) {
             if (leveledUp) {
                 await db.updateLevel(userId, newLevel);
                 
-                // Send level up notification if message is provided
-                if (message) {
+                // Send level up notification to the dedicated #niveaux channel
+                if (message && message.client) {
                     try {
-                        await message.channel.send(`🎉 <@${userId}> est passé au niveau **${newLevel}** !`);
+                        const levelUpChannelId = config.channels.levelUpNotification;
+                        
+                        // Validate channel ID
+                        if (!levelUpChannelId) {
+                            console.error(`[ERROR] Level-up channel (#niveaux) not configured in config.json`);
+                        } else {
+                            const levelUpChannel = await message.client.channels.fetch(levelUpChannelId).catch(err => {
+                                console.error(`[ERROR] Level-up channel (#niveaux) not found with ID ${levelUpChannelId}:`, err.message);
+                                return null;
+                            });
+                            
+                            if (levelUpChannel) {
+                                const embed = new EmbedBuilder()
+                                    .setTitle('📈 Level Up!')
+                                    .setColor('#3498DB')
+                                    .setDescription(`${username} has reached level ${newLevel}!`)
+                                    .setTimestamp();
+                                
+                                await levelUpChannel.send({ embeds: [embed] });
+                                console.log(`[DEBUG] Level-up message sent: ${username} -> Level ${newLevel}`);
+                            } else {
+                                console.error(`[ERROR] Level-up channel (#niveaux) not found with ID ${levelUpChannelId}`);
+                            }
+                        }
                     } catch (error) {
-                        console.error('Error sending level up notification:', error.message);
+                        console.error('[ERROR] Error sending level up notification from game:', error.message);
                     }
                 }
             }
