@@ -547,7 +547,7 @@ const db = {
             // This ensures consistency with !niveau command
             const usersWithLevels = result.rows.map(user => ({
                 ...user,
-                level: Math.floor(getLevelFromXP(user.xp || 0))
+                level: getLevelFromXP(user.xp || 0)
             }));
             
             console.log(`📊 [DB] getTopLevels: Retrieved ${usersWithLevels.length} users, calculated levels from XP`);

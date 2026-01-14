@@ -57,7 +57,7 @@ const mockDatabaseResults = [
 // Simulate the new logic in getTopLevels()
 const usersWithLevels = mockDatabaseResults.map(user => ({
     ...user,
-    level: Math.floor(getLevelFromXP(user.xp || 0))
+    level: getLevelFromXP(user.xp || 0)
 }));
 
 console.log('\nRanking (by XP DESC):');
