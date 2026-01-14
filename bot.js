@@ -126,15 +126,25 @@ setInterval(() => {
  * @param {number} totalXP - Total XP
  * @param {object} rewardInfo - Reward information object from calculateLevelReward
  */
-async function sendLevelUpCard(client, userId, userId, newLevel, totalXP, rewardInfo) {
+async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardInfo) {
     try {
         const levelUpChannelId = config.channels.levelUpNotification;
+        
+        // Validate channel ID
+        if (!levelUpChannelId) {
+            console.error(`[ERROR] Level-up channel (#niveaux) not configured in config.json`);
+            return;
+        }
+        
         console.log(`[LEVEL-UP] Attempting to send notification to channel ${levelUpChannelId} for ${user.username} (Level ${newLevel})`);
         
-        const levelUpChannel = await client.channels.fetch(levelUpChannelId);
+        const levelUpChannel = await client.channels.fetch(levelUpChannelId).catch(err => {
+            console.error(`[ERROR] Level-up channel (#niveaux) not found with ID ${levelUpChannelId}:`, err.message);
+            return null;
+        });
         
         if (!levelUpChannel) {
-            console.error(`❌ [LEVEL-UP] Channel ${levelUpChannelId} not found!`);
+            console.error(`[ERROR] Level-up channel (#niveaux) not found with ID ${levelUpChannelId}`);
             return;
         }
         
@@ -189,9 +199,9 @@ async function sendLevelUpCard(client, userId, userId, newLevel, totalXP, reward
             embeds: [embed]
         });
         
-        console.log(`✅ [LEVEL-UP] Successfully sent level-up pancarte for ${userId} (Level ${newLevel})`);
+        console.log(`✅ [LEVEL-UP] Successfully sent level-up pancarte for ${user.username} (Level ${newLevel})`);
     } catch (error) {
-        console.error('❌ [LEVEL-UP] Error sending level up pancarte:', error.message);
+        console.error(`[ERROR] Level-up channel (#niveaux) error while sending to ${config.channels.levelUpNotification}:`, error.message);
         console.error('  Channel ID:', config.channels.levelUpNotification);
         console.error('  User:', userId);
         console.error('  Error stack:', error.stack);
