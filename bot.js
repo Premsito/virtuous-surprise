@@ -171,23 +171,41 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
         // Get XP progress for the new level
         const progress = getXPProgress(totalXP);
         
-        // Determine embed color based on reward type (simple and minimal)
+        // Determine embed color based on reward type
         let embedColor = config.colors.primary;
         if (rewardInfo.type === 'milestone') {
             embedColor = config.colors.gold; // Golden for milestone rewards
         }
         
-        // Create a simple, text-only embed with user mention directly in description
+        // Create progress bar visualization
+        const progressBarLength = 20;
+        const filledBars = Math.floor((progress.progress / 100) * progressBarLength);
+        const emptyBars = progressBarLength - filledBars;
+        const progressBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
+        
+        // Create detailed embed with all required elements
         const embed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle('🎉 Niveau supérieur atteint ! 🎊')
             .setDescription(
-                `C'est bien c'est bien <@${userId}> ! 🎯 Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
-                `**🎁 Tiens prends ça :** ${rewardInfo.description}\n\n` +
-                `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)`
+                `Félicitations <@${userId}> ! 🎯\n` +
+                `Tu viens de passer **Niveau ${newLevel}** ! 🏆`
+            )
+            .addFields(
+                {
+                    name: '🎁 Récompense débloquée',
+                    value: rewardInfo.description,
+                    inline: false
+                },
+                {
+                    name: '📊 Progression XP',
+                    value: `**${progress.currentLevelXP}** / **${progress.nextLevelXP}** XP (**${progress.progress}%**)\n` +
+                           `${progressBar}`,
+                    inline: false
+                }
             )
             .setFooter({ 
-                text: '💡Gagner de l\'XP? Fait des !missions, participe à des jeux,envoie des messages et surtout participe à des vocs!' 
+                text: '💡 Gagner de l\'XP ? Fais des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!' 
             })
             .setTimestamp();
         
@@ -212,12 +230,21 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
             const levelUpChannel = await client.channels.fetch(config.channels.levelUpNotification);
             if (levelUpChannel) {
                 const progress = getXPProgress(totalXP);
+                // Create progress bar for text fallback
+                const progressBarLength = 20;
+                const filledBars = Math.floor((progress.progress / 100) * progressBarLength);
+                const emptyBars = progressBarLength - filledBars;
+                const progressBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
+                
                 await levelUpChannel.send(
-                    `🎉 Niveau supérieur atteint ! 🎊\n\n` +
-                    `C'est bien c'est bien <@${userId}> ! 🎯 Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
-                    `**🎁 Tiens prends ça :** ${rewardInfo.description}\n\n` +
-                    `**📊 Progression :** ${progress.currentLevelXP} / ${progress.nextLevelXP} XP (${progress.progress}%)\n\n` +
-                    `_💡 Gagner de l'XP ? Fait des !missions, participe à des jeux,envoie des messages et participe à des vocs!_`
+                    `🎉 **Niveau supérieur atteint !** 🎊\n\n` +
+                    `Félicitations <@${userId}> ! 🎯\n` +
+                    `Tu viens de passer **Niveau ${newLevel}** ! 🏆\n\n` +
+                    `**🎁 Récompense débloquée**\n${rewardInfo.description}\n\n` +
+                    `**📊 Progression XP**\n` +
+                    `**${progress.currentLevelXP}** / **${progress.nextLevelXP}** XP (**${progress.progress}%**)\n` +
+                    `${progressBar}\n\n` +
+                    `_💡 Gagner de l'XP ? Fais des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!_`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {
