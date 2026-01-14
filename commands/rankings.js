@@ -376,7 +376,7 @@ module.exports = {
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Delete existing message before posting new one
+            // Delete existing message before posting new one (ensures single message in channel)
             if (this.lastRankingsMessage) {
                 console.log(`🧹 [DELETE] Deleting previous rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
@@ -384,11 +384,14 @@ module.exports = {
                     console.log('   ✅ Previous rankings message deleted successfully');
                 } catch (deleteError) {
                     // If delete fails (message already deleted, etc.), just log and continue
-                    console.log(`   ⚠️ Could not delete message (${deleteError.message}), it may have been already deleted`);
+                    console.log(`   ⚠️ Could not delete message (${deleteError.message})`);
+                    console.log(`   ℹ️ Message may have been manually deleted or is no longer accessible`);
                 }
                 // Clear the tracked message
                 this.lastRankingsMessage = null;
                 await db.setBotState('rankings_message_id', null);
+            } else {
+                console.log('ℹ️ [DELETE] No previous rankings message to delete (first run or message not tracked)');
             }
 
             // Post new message
@@ -447,6 +450,56 @@ module.exports = {
             
             // Re-throw error so interval handler can catch it and potentially restart
             throw error;
+        }
+    },
+
+    /**
+     * Clean up multiple old ranking messages (defensive cleanup)
+     * This function can be used to clean up if multiple messages were posted accidentally
+     * @param {TextChannel} channel - The channel to clean up
+     * @param {number} keepMessageId - Optional message ID to keep (all others will be deleted)
+     * @returns {Promise<number>} Number of messages deleted
+     */
+    async cleanupOldRankings(channel, keepMessageId = null) {
+        try {
+            console.log('🧹 [CLEANUP] Scanning for old ranking messages...');
+            
+            // Fetch recent messages (last 50)
+            const messages = await channel.messages.fetch({ limit: 50 });
+            console.log(`   📋 Found ${messages.size} messages in channel`);
+            
+            // Filter for messages from the bot that contain rankings embeds
+            const botMessages = messages.filter(msg => 
+                msg.author.id === channel.client.user.id &&
+                msg.embeds.length > 0 &&
+                (msg.embeds.some(e => e.title?.includes('Classement LC')) || 
+                 msg.embeds.some(e => e.title?.includes('Classement Niveaux')))
+            );
+            
+            console.log(`   🤖 Found ${botMessages.size} ranking messages from bot`);
+            
+            // Delete all except the one to keep
+            let deletedCount = 0;
+            for (const [messageId, message] of botMessages) {
+                if (keepMessageId && messageId === keepMessageId) {
+                    console.log(`   ✅ Keeping message ${messageId} (current rankings)`);
+                    continue;
+                }
+                
+                try {
+                    await message.delete();
+                    deletedCount++;
+                    console.log(`   🗑️ Deleted old ranking message ${messageId}`);
+                } catch (deleteError) {
+                    console.warn(`   ⚠️ Could not delete message ${messageId}: ${deleteError.message}`);
+                }
+            }
+            
+            console.log(`✅ [CLEANUP] Cleanup completed: ${deletedCount} old messages deleted`);
+            return deletedCount;
+        } catch (error) {
+            console.error('❌ [CLEANUP] Error during cleanup:', error.message);
+            return 0;
         }
     }
 };
