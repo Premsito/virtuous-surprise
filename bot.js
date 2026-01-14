@@ -6,6 +6,7 @@ const { getResponse } = require('./utils/responseHelper');
 const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG, getXPProgress } = require('./utils/xpHelper');
 const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
 const rankingsManager = require('./utils/rankingsManager');
+const rankingsMetrics = require('./utils/rankingsMetrics');
 
 // Log npm configuration for debugging deployment issues
 console.log('🔍 NPM Configuration Debug:');
@@ -396,9 +397,41 @@ client.once('clientReady', async () => {
             }
         }, XP_CONFIG.VOICE_XP_INTERVAL_MS);
         
-        // Initialize dynamic rankings manager
+        // Initialize dynamic rankings manager with event-driven updates
         await rankingsManager.initialize(client, rankingsCommand);
         console.log('✅ Dynamic LC and Niveau rankings synchronization enabled');
+        
+        // Set up PostgreSQL NOTIFY listeners for database-level change detection
+        // This complements the in-app event emitters with real-time database triggers
+        const dbNotificationCleanup = await db.setupDatabaseNotifications(
+            // LC change handler (from database trigger)
+            (data) => {
+                // The database trigger provides the same data format as event emitters
+                // Forward to rankings manager's event handler
+                rankingsManager.handleLCChange({
+                    userId: data.userId,
+                    oldBalance: data.oldBalance,
+                    newBalance: data.newBalance,
+                    reason: 'db_trigger',
+                    timestamp: data.timestamp
+                });
+            },
+            // Niveau change handler (from database trigger)
+            (data) => {
+                // Forward to rankings manager's event handler
+                rankingsManager.handleNiveauChange({
+                    userId: data.userId,
+                    oldLevel: data.oldLevel,
+                    newLevel: data.newLevel,
+                    reason: 'db_trigger',
+                    timestamp: data.timestamp
+                });
+            }
+        );
+        console.log('✅ PostgreSQL NOTIFY integration enabled for real-time rankings');
+        
+        // Store cleanup function for graceful shutdown
+        client.dbNotificationCleanup = dbNotificationCleanup;
         
         // Start rankings auto-update (every 5 minutes)
         const RANKINGS_UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -414,6 +447,7 @@ client.once('clientReady', async () => {
          * @param {number} retryCount - Current retry attempt number
          */
         async function updateRankingsWithRetry(retryCount = 0) {
+            const startTime = Date.now();
             try {
                 const now = new Date();
                 console.log(`\n${'='.repeat(60)}`);
@@ -427,13 +461,26 @@ client.once('clientReady', async () => {
                 await rankingsCommand.updateRankingsChannel(client);
                 
                 const completedAt = new Date();
+                const duration = completedAt - startTime;
+                
+                // Record success metrics
+                rankingsMetrics.recordSuccess(duration);
+                
                 console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
-                console.log(`   Duration: ${completedAt - now}ms`);
+                console.log(`   Duration: ${duration}ms`);
+                console.log(`   Success rate: ${rankingsMetrics.getSuccessRate().toFixed(2)}%`);
                 console.log(`   Next update: ${new Date(completedAt.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}\n`);
             } catch (error) {
                 const errorTime = new Date();
+                const duration = errorTime - startTime;
+                
+                // Record failure metrics
+                rankingsMetrics.recordFailure(error.message);
+                
                 console.error(`\n❌ [${errorTime.toISOString()}] Error updating rankings:`, error.message);
                 console.error('   Error type:', error.name);
+                console.error('   Duration before failure:', duration + 'ms');
+                console.error('   Success rate:', rankingsMetrics.getSuccessRate().toFixed(2) + '%');
                 console.error('   Stack:', error.stack);
                 
                 // Retry logic for transient errors
@@ -498,6 +545,11 @@ client.once('clientReady', async () => {
                 console.error('❌ Unhandled error in initial rankings display:', err.message);
             });
         }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
+        
+        // Print rankings metrics summary every hour for monitoring
+        setInterval(() => {
+            rankingsMetrics.printSummary();
+        }, 60 * 60 * 1000); // 1 hour
         
         console.log('✅ Bot is fully ready!');
     } catch (error) {

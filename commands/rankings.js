@@ -383,9 +383,32 @@ module.exports = {
             // Log Discord API errors specifically
             if (error.code) {
                 console.error(`   Discord API Error Code: ${error.code}`);
+                
+                // Provide helpful context for common Discord API errors
+                const errorContexts = {
+                    10003: 'Unknown Channel - The channel may have been deleted',
+                    10008: 'Unknown Message - The message may have been deleted',
+                    50001: 'Missing Access - Bot lacks permission to view the channel',
+                    50013: 'Missing Permissions - Bot lacks permission to send messages or manage messages',
+                    50035: 'Invalid Form Body - Message content or embeds are malformed',
+                    30003: 'Maximum Number of Pins Reached',
+                    30005: 'Maximum Number of Guild Roles Reached',
+                    30010: 'Maximum Number of Reactions Reached',
+                    50021: 'Cannot Execute Action on System Message'
+                };
+                
+                if (errorContexts[error.code]) {
+                    console.error(`   Context: ${errorContexts[error.code]}`);
+                }
             }
             if (error.httpStatus) {
                 console.error(`   HTTP Status: ${error.httpStatus}`);
+            }
+            if (error.method) {
+                console.error(`   HTTP Method: ${error.method}`);
+            }
+            if (error.path) {
+                console.error(`   API Path: ${error.path}`);
             }
             
             // Re-throw error so interval handler can catch it and potentially restart

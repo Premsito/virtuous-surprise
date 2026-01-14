@@ -223,11 +223,26 @@ const db = {
     },
 
     async getTopLC(limit = 10) {
-        const result = await pool.query(
-            'SELECT user_id, username, balance FROM users ORDER BY balance DESC LIMIT $1',
-            [limit]
-        );
-        return result.rows;
+        try {
+            const startTime = Date.now();
+            const result = await pool.query(
+                'SELECT user_id, username, balance FROM users ORDER BY balance DESC LIMIT $1',
+                [limit]
+            );
+            const duration = Date.now() - startTime;
+            
+            // Log query performance for monitoring
+            if (duration > 100) {
+                console.warn(`⚠️ Slow query: getTopLC took ${duration}ms`);
+            }
+            
+            return result.rows;
+        } catch (error) {
+            console.error('❌ Error fetching top LC rankings:', error.message);
+            console.error('   Query: SELECT user_id, username, balance FROM users ORDER BY balance DESC LIMIT $1');
+            console.error('   Params:', { limit });
+            throw error;
+        }
     },
 
     // Message and voice tracking
@@ -512,11 +527,26 @@ const db = {
     },
 
     async getTopLevels(limit = 10) {
-        const result = await pool.query(
-            'SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1',
-            [limit]
-        );
-        return result.rows;
+        try {
+            const startTime = Date.now();
+            const result = await pool.query(
+                'SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1',
+                [limit]
+            );
+            const duration = Date.now() - startTime;
+            
+            // Log query performance for monitoring
+            if (duration > 100) {
+                console.warn(`⚠️ Slow query: getTopLevels took ${duration}ms`);
+            }
+            
+            return result.rows;
+        } catch (error) {
+            console.error('❌ Error fetching top level rankings:', error.message);
+            console.error('   Query: SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1');
+            console.error('   Params:', { limit });
+            throw error;
+        }
     },
 
     // Voice XP tracking
@@ -778,6 +808,84 @@ const db = {
         } catch (error) {
             console.error('❌ Error closing database pool:', error);
             throw error;
+        }
+    },
+    
+    /**
+     * Set up PostgreSQL LISTEN for real-time change notifications
+     * This complements the in-app event emitters with database-level triggers
+     * @param {Function} onLCChange - Callback for LC changes (receives parsed JSON data)
+     * @param {Function} onNiveauChange - Callback for Niveau changes (receives parsed JSON data)
+     * @returns {Object} Object with unlisten function
+     */
+    async setupDatabaseNotifications(onLCChange, onNiveauChange) {
+        try {
+            console.log('🔔 Setting up PostgreSQL NOTIFY listeners for rankings...');
+            
+            // Create a dedicated client for LISTEN (it must stay connected)
+            const listenClient = await pool.connect();
+            
+            // Set up LC change listener
+            if (onLCChange) {
+                listenClient.on('notification', (msg) => {
+                    if (msg.channel === 'lc_change') {
+                        try {
+                            const data = JSON.parse(msg.payload);
+                            console.log(`📊 [DB NOTIFY] LC Change: User ${data.userId}, ${data.oldBalance} -> ${data.newBalance}`);
+                            onLCChange(data);
+                        } catch (error) {
+                            console.error('❌ Error parsing LC change notification:', error.message);
+                        }
+                    }
+                });
+                
+                await listenClient.query('LISTEN lc_change');
+                console.log('   ✅ Listening for LC change notifications');
+            }
+            
+            // Set up Niveau change listener
+            if (onNiveauChange) {
+                listenClient.on('notification', (msg) => {
+                    if (msg.channel === 'niveau_change') {
+                        try {
+                            const data = JSON.parse(msg.payload);
+                            console.log(`📊 [DB NOTIFY] Niveau Change: User ${data.userId}, Level ${data.oldLevel} -> ${data.newLevel}`);
+                            onNiveauChange(data);
+                        } catch (error) {
+                            console.error('❌ Error parsing Niveau change notification:', error.message);
+                        }
+                    }
+                });
+                
+                await listenClient.query('LISTEN niveau_change');
+                console.log('   ✅ Listening for Niveau change notifications');
+            }
+            
+            console.log('✅ Database notification system active');
+            
+            // Return cleanup function
+            return {
+                unlisten: async () => {
+                    try {
+                        console.log('🔕 Unsubscribing from database notifications...');
+                        if (onLCChange) {
+                            await listenClient.query('UNLISTEN lc_change');
+                        }
+                        if (onNiveauChange) {
+                            await listenClient.query('UNLISTEN niveau_change');
+                        }
+                        listenClient.release();
+                        console.log('✅ Database notifications unsubscribed');
+                    } catch (error) {
+                        console.error('❌ Error unsubscribing from notifications:', error.message);
+                    }
+                },
+                client: listenClient
+            };
+        } catch (error) {
+            console.error('❌ Error setting up database notifications:', error.message);
+            console.error('   Falling back to in-app event emitters only');
+            return { unlisten: async () => {} };
         }
     }
 };
