@@ -22,6 +22,8 @@ DECLARE
     xp_for_next_level INTEGER;
 BEGIN
     -- Handle null or negative XP
+    -- Negative XP should be prevented at application level, but we handle it gracefully here
+    -- by returning level 1 to maintain data consistency
     IF total_xp IS NULL OR total_xp < 0 THEN
         RETURN 1;
     END IF;
@@ -62,7 +64,7 @@ BEGIN
     new_level := calculate_level_from_xp(NEW.xp);
     
     -- Only update level if it changed
-    IF TG_OP = 'INSERT' OR NEW.level IS NULL OR NEW.level != new_level THEN
+    IF TG_OP = 'INSERT' OR NEW.level IS NULL OR NEW.level IS DISTINCT FROM new_level THEN
         -- Store old level for notification
         old_level := COALESCE(OLD.level, 1);
         

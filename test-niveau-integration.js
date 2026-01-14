@@ -176,10 +176,11 @@ async function runIntegrationTest() {
             
             await listenClient.query('LISTEN niveau_change');
             
-            // Trigger a level change
+            // Trigger a level change using application API for consistency
             const notifyTestUserId = 'test_notify_' + Date.now();
-            await pool.query('INSERT INTO users (user_id, username, xp, level) VALUES ($1, $2, 0, 1)', [notifyTestUserId, 'NotifyTest']);
-            await pool.query('UPDATE users SET xp = 600 WHERE user_id = $1', [notifyTestUserId]);
+            await db.createUser(notifyTestUserId, 'NotifyTest');
+            // Add enough XP to trigger a level change (from level 1 to 4)
+            await db.addXP(notifyTestUserId, 600);
             
             // Wait for notification
             await new Promise(resolve => setTimeout(resolve, 500));
