@@ -1,4 +1,5 @@
 const lcEventEmitter = require('./lcEventEmitter');
+const niveauEventEmitter = require('./niveauEventEmitter');
 const { db } = require('../database/db');
 const config = require('../config.json');
 
@@ -12,7 +13,7 @@ const TOP_RANKINGS_LIMIT = 10;
  */
 class RankingsManager {
     constructor() {
-        // Track recent LC changes
+        // Track recent LC and Niveau changes
         this.pendingUpdates = new Set();
         
         // Debounce timer
@@ -31,14 +32,12 @@ class RankingsManager {
         this.rankingsCommand = null;
         this.client = null;
         
-        // Cache for position tracking
-        this.lastRankingsCache = new Map(); // userId -> position
-        
         // Cache for rankings channel
         this.rankingsChannel = null;
         
-        // Bind LC change handler
+        // Bind event handlers
         this.handleLCChange = this.handleLCChange.bind(this);
+        this.handleNiveauChange = this.handleNiveauChange.bind(this);
     }
 
     /**
@@ -72,10 +71,11 @@ class RankingsManager {
             console.warn('⚠️ Rankings channel ID not configured');
         }
         
-        // Subscribe to LC change events
+        // Subscribe to LC and Niveau change events
         lcEventEmitter.onLCChange(this.handleLCChange);
+        niveauEventEmitter.onNiveauChange(this.handleNiveauChange);
         
-        console.log('✅ Rankings Manager initialized and listening for LC changes');
+        console.log('✅ Rankings Manager initialized and listening for LC and Niveau changes');
     }
 
     /**
@@ -86,6 +86,22 @@ class RankingsManager {
         const { userId, oldBalance, newBalance, reason } = changeEvent;
         
         console.log(`📊 LC Change detected: User ${userId}, ${oldBalance} -> ${newBalance} (${reason})`);
+        
+        // Add to pending updates
+        this.pendingUpdates.add(userId);
+        
+        // Schedule an update
+        this.scheduleUpdate();
+    }
+
+    /**
+     * Handle Niveau change events
+     * @param {Object} changeEvent - Niveau change event data
+     */
+    handleNiveauChange(changeEvent) {
+        const { userId, oldLevel, newLevel, reason } = changeEvent;
+        
+        console.log(`📊 Niveau Change detected: User ${userId}, Level ${oldLevel} -> ${newLevel} (${reason})`);
         
         // Add to pending updates
         this.pendingUpdates.add(userId);
@@ -160,17 +176,22 @@ class RankingsManager {
         try {
             console.log(`🔄 Triggering dynamic rankings update (${this.pendingUpdates.size} users changed)`);
             
-            // Get current rankings before update
-            const oldRankings = await this.getCurrentRankings();
+            // Get current rankings before update (both LC and Niveau)
+            const oldLCRankings = await this.getCurrentLCRankings();
+            const oldNiveauRankings = await this.getCurrentNiveauRankings();
             
             // Update rankings display
             await this.rankingsCommand.updateRankingsChannel(this.client);
             
-            // Get new rankings after update
-            const newRankings = await this.getCurrentRankings();
+            // Get new rankings after update (both LC and Niveau)
+            const newLCRankings = await this.getCurrentLCRankings();
+            const newNiveauRankings = await this.getCurrentNiveauRankings();
             
-            // Check for position changes and notify users
-            await this.notifyPositionChanges(oldRankings, newRankings);
+            // Check for position changes and notify users (in parallel)
+            await Promise.all([
+                this.notifyLCPositionChanges(oldLCRankings, newLCRankings),
+                this.notifyNiveauPositionChanges(oldNiveauRankings, newNiveauRankings)
+            ]);
             
             // Update last update time
             this.lastUpdateTime = Date.now();
@@ -191,7 +212,7 @@ class RankingsManager {
      * Get current LC rankings
      * @returns {Map} Map of userId to position
      */
-    async getCurrentRankings() {
+    async getCurrentLCRankings() {
         try {
             const topLC = await db.getTopLC(TOP_RANKINGS_LIMIT);
             const rankings = new Map();
@@ -205,17 +226,40 @@ class RankingsManager {
             
             return rankings;
         } catch (error) {
-            console.error('Error fetching current rankings:', error.message);
+            console.error('Error fetching current LC rankings:', error.message);
             return new Map();
         }
     }
 
     /**
-     * Notify users of position changes in rankings
-     * @param {Map} oldRankings - Previous rankings
-     * @param {Map} newRankings - New rankings
+     * Get current Niveau rankings
+     * @returns {Map} Map of userId to position
      */
-    async notifyPositionChanges(oldRankings, newRankings) {
+    async getCurrentNiveauRankings() {
+        try {
+            const topLevels = await db.getTopLevels(TOP_RANKINGS_LIMIT);
+            const rankings = new Map();
+            
+            topLevels.forEach((user, index) => {
+                rankings.set(user.user_id, {
+                    position: index + 1,
+                    level: user.level
+                });
+            });
+            
+            return rankings;
+        } catch (error) {
+            console.error('Error fetching current Niveau rankings:', error.message);
+            return new Map();
+        }
+    }
+
+    /**
+     * Notify users of position changes in LC rankings
+     * @param {Map} oldRankings - Previous LC rankings
+     * @param {Map} newRankings - New LC rankings
+     */
+    async notifyLCPositionChanges(oldRankings, newRankings) {
         try {
             // Use cached channel
             if (!this.rankingsChannel) {
@@ -250,12 +294,61 @@ class RankingsManager {
                         await this.rankingsChannel.send(`😢 <@${userId}> a quitté le Top ${TOP_RANKINGS_LIMIT} LC.`);
                     }
                 } catch (sendError) {
-                    console.error(`⚠️ Failed to send notification for user ${userId}:`, sendError.message);
+                    console.error(`⚠️ Failed to send LC notification for user ${userId}:`, sendError.message);
                     // Continue with other notifications even if one fails
                 }
             }
         } catch (error) {
-            console.error('Error notifying position changes:', error.message);
+            console.error('Error notifying LC position changes:', error.message);
+        }
+    }
+
+    /**
+     * Notify users of position changes in Niveau rankings
+     * @param {Map} oldRankings - Previous Niveau rankings
+     * @param {Map} newRankings - New Niveau rankings
+     */
+    async notifyNiveauPositionChanges(oldRankings, newRankings) {
+        try {
+            // Use cached channel
+            if (!this.rankingsChannel) {
+                console.log('⚠️ Rankings channel not available for notifications');
+                return;
+            }
+            
+            // Check each user who had a Niveau change
+            for (const userId of this.pendingUpdates) {
+                const oldData = oldRankings.get(userId);
+                const newData = newRankings.get(userId);
+                
+                try {
+                    // User entered top 10
+                    if (!oldData && newData) {
+                        const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
+                        await this.rankingsChannel.send(`🎉 <@${userId}> a rejoint le Top ${TOP_RANKINGS_LIMIT} Niveaux ! ${medal}`);
+                    }
+                    // User improved position in top 10
+                    else if (oldData && newData && newData.position < oldData.position) {
+                        const gained = oldData.position - newData.position;
+                        const medal = newData.position <= 3 ? ['🥇', '🥈', '🥉'][newData.position - 1] : `#${newData.position}`;
+                        await this.rankingsChannel.send(`📈 <@${userId}> a gagné ${gained} place(s) dans le classement Niveaux ! ${medal}`);
+                    }
+                    // User dropped position in top 10
+                    else if (oldData && newData && newData.position > oldData.position) {
+                        const lost = newData.position - oldData.position;
+                        await this.rankingsChannel.send(`📉 <@${userId}> a perdu ${lost} place(s) dans le classement Niveaux. Position actuelle: #${newData.position}`);
+                    }
+                    // User fell out of top 10
+                    else if (oldData && !newData) {
+                        await this.rankingsChannel.send(`😢 <@${userId}> a quitté le Top ${TOP_RANKINGS_LIMIT} Niveaux.`);
+                    }
+                } catch (sendError) {
+                    console.error(`⚠️ Failed to send Niveau notification for user ${userId}:`, sendError.message);
+                    // Continue with other notifications even if one fails
+                }
+            }
+        } catch (error) {
+            console.error('Error notifying Niveau position changes:', error.message);
         }
     }
 
@@ -269,6 +362,7 @@ class RankingsManager {
         }
         
         lcEventEmitter.offLCChange(this.handleLCChange);
+        niveauEventEmitter.offNiveauChange(this.handleNiveauChange);
         console.log('✅ Rankings Manager destroyed');
     }
 }

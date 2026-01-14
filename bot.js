@@ -398,7 +398,7 @@ client.once('clientReady', async () => {
         
         // Initialize dynamic rankings manager
         await rankingsManager.initialize(client, rankingsCommand);
-        console.log('✅ Dynamic LC rankings synchronization enabled');
+        console.log('✅ Dynamic LC and Niveau rankings synchronization enabled');
         
         // Start rankings auto-update (every 5 minutes)
         const RANKINGS_UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds

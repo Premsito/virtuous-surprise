@@ -319,14 +319,13 @@ module.exports = {
             });
             
             // Verify bot permissions
-            // Note: ManageMessages is no longer required since we edit our own messages
-            // instead of deleting them. Discord allows bots to edit their own messages
-            // without ManageMessages permission. Required permissions:
+            // Required permissions:
             // - ViewChannel: See the rankings channel
-            // - SendMessages: Post initial message (if needed)
+            // - SendMessages: Post messages
             // - EmbedLinks: Send embedded rankings
+            // - ManageMessages: Delete old messages
             const permissions = channel.permissionsFor(client.user);
-            const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
+            const requiredPermissions = ['ViewChannel', 'SendMessages', 'EmbedLinks', 'ManageMessages'];
             const missingPermissions = requiredPermissions.filter(perm => !permissions.has(perm));
             
             if (missingPermissions.length > 0) {
@@ -335,7 +334,7 @@ module.exports = {
                 return;
             }
             
-            console.log('✅ [PERMISSIONS] Bot has all required permissions (View, Send, Embed)');
+            console.log('✅ [PERMISSIONS] Bot has all required permissions (View, Send, Embed, ManageMessages)');
 
             // Load last message from database if not already loaded (handles bot restarts)
             if (!this.hasLoadedFromDB) {
@@ -343,73 +342,32 @@ module.exports = {
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Try to edit existing message instead of deleting and reposting
+            // Delete existing message before posting new one
             if (this.lastRankingsMessage) {
-                console.log(`✏️ [EDIT] Attempting to edit existing rankings message (ID: ${this.lastRankingsMessage.id})...`);
+                console.log(`🧹 [DELETE] Deleting previous rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
-                    // Get top 10 users by LC and Level
-                    console.log('📊 [DATA] Fetching rankings data for update...');
-                    const topLC = await db.getTopLC(10);
-                    const topLevels = await db.getTopLevels(10);
-                    
-                    console.log(`   - Fetched ${topLC.length} LC rankings`);
-                    console.log(`   - Fetched ${topLevels.length} level rankings`);
-                    
-                    // Check if there's any ranking data available
-                    if (topLC.length === 0 && topLevels.length === 0) {
-                        console.log(`   ⚠️ No ranking data available - keeping existing message unchanged`);
-                        console.log(`   📝 Message will show last available data until users have activity`);
-                        return;
-                    }
-
-                    // Create ranking embeds
-                    console.log('🎨 [EMBEDS] Creating ranking embeds for edit...');
-                    
-                    const lcEmbed = await this.createRankingEmbed(
-                        topLC,
-                        '💰 Classement LC - Top 10',
-                        config.colors.gold,
-                        (user) => `${user.balance} LC`,
-                        channel.guild
-                    );
-                    
-                    const levelEmbed = await this.createRankingEmbed(
-                        topLevels,
-                        '📊 Classement Niveaux - Top 10',
-                        config.colors.primary,
-                        (user) => `Niveau ${user.level}`,
-                        channel.guild
-                    );
-                    
-                    // Edit the existing message
-                    await this.lastRankingsMessage.edit({ 
-                        content: '🏆 **Classements Discord** 🏆',
-                        embeds: [lcEmbed, levelEmbed] 
-                    });
-                    
-                    console.log('   ✅ Rankings message edited successfully');
-                    console.log(`   📝 Message ID ${this.lastRankingsMessage.id} remains unchanged`);
-                    console.log(`✅ [SUCCESS] Rankings successfully updated via edit in channel #${channel.name}`);
-                    return;
-                } catch (editError) {
-                    // If edit fails (message was deleted, etc.), fall back to posting new message
-                    console.log(`   ⚠️ Could not edit message (${editError.message}), will post new message`);
-                    this.lastRankingsMessage = null;
-                    await db.setBotState('rankings_message_id', null);
+                    await this.lastRankingsMessage.delete();
+                    console.log('   ✅ Previous rankings message deleted successfully');
+                } catch (deleteError) {
+                    // If delete fails (message already deleted, etc.), just log and continue
+                    console.log(`   ⚠️ Could not delete message (${deleteError.message}), it may have been already deleted`);
                 }
+                // Clear the tracked message
+                this.lastRankingsMessage = null;
+                await db.setBotState('rankings_message_id', null);
             }
 
-            // Post new message (first time or if edit failed)
+            // Post new message
             console.log('📤 [POST] Posting new rankings message...');
             const sentMessage = await this.displayRankings(channel);
             
-            // Track the new message for future edits (in-memory and database)
+            // Track the new message for future deletion (in-memory and database)
             if (sentMessage) {
                 this.lastRankingsMessage = sentMessage;
                 // Persist message ID to database for recovery after bot restarts
                 await db.setBotState('rankings_message_id', sentMessage.id);
                 console.log('   ✅ New rankings message posted and tracked');
-                console.log(`   📝 Message ID ${sentMessage.id} saved to database for future edits`);
+                console.log(`   📝 Message ID ${sentMessage.id} saved to database for future deletion`);
             }
             
             console.log(`✅ [SUCCESS] Rankings successfully updated in channel #${channel.name} (${rankingsChannelId})`);
