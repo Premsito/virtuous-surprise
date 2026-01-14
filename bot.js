@@ -406,6 +406,8 @@ client.once('clientReady', async () => {
         const dbNotificationCleanup = await db.setupDatabaseNotifications(
             // LC change handler (from database trigger)
             (data) => {
+                console.log('[DEBUG] Detected LC/XP update, refreshing classement');
+                console.log(`   User: ${data.userId}, LC: ${data.oldBalance} -> ${data.newBalance}`);
                 // The database trigger provides the same data format as event emitters
                 // Forward to rankings manager's event handler
                 rankingsManager.handleLCChange({
@@ -418,6 +420,8 @@ client.once('clientReady', async () => {
             },
             // Niveau change handler (from database trigger)
             (data) => {
+                console.log('[DEBUG] Detected LC/XP update, refreshing classement');
+                console.log(`   User: ${data.userId}, Level: ${data.oldLevel} -> ${data.newLevel}`);
                 // Forward to rankings manager's event handler
                 rankingsManager.handleNiveauChange({
                     userId: data.userId,
@@ -523,6 +527,7 @@ client.once('clientReady', async () => {
         
         // Set up the interval for rankings updates
         setInterval(() => {
+            console.log('[DEBUG] Automatic classement refresh triggered');
             updateRankingsWithRetry(0).catch(err => {
                 console.error('❌ Error caught in rankings update interval:', err.message);
                 console.error('   This error was logged and will not crash the bot.');

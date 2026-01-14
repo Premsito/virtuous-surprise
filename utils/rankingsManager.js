@@ -156,7 +156,12 @@ class RankingsManager {
     }
 
     /**
-     * Trigger a rankings update
+     * Trigger a rankings update (refreshClassement)
+     * This function refreshes the classement display with the latest rankings.
+     * XP and Niveau are automatically synchronized via database triggers:
+     * - When XP changes, the auto_update_level trigger calculates the new level
+     * - The niveau_change trigger then fires, triggering this refresh
+     * This ensures rankings are always up-to-date with XP changes.
      */
     async triggerUpdate() {
         // Clear the timer
@@ -175,8 +180,11 @@ class RankingsManager {
         
         try {
             console.log(`🔄 Triggering dynamic rankings update (${this.pendingUpdates.size} users changed)`);
+            console.log('[DEBUG] Refreshed rankings: Fetching latest data from database...');
             
             // Get current rankings before update (both LC and Niveau)
+            // Note: Niveau rankings automatically use levels calculated from XP
+            // via the auto_update_level database trigger
             const oldLCRankings = await this.getCurrentLCRankings();
             const oldNiveauRankings = await this.getCurrentNiveauRankings();
             
@@ -186,6 +194,11 @@ class RankingsManager {
             // Get new rankings after update (both LC and Niveau)
             const newLCRankings = await this.getCurrentLCRankings();
             const newNiveauRankings = await this.getCurrentNiveauRankings();
+            
+            console.log('[DEBUG] Refreshed rankings:', {
+                lcCount: newLCRankings.size,
+                niveauCount: newNiveauRankings.size
+            });
             
             // Check for position changes and notify users (in parallel)
             await Promise.all([

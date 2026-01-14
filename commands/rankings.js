@@ -10,6 +10,9 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+// Cleanup configuration
+const CLEANUP_MESSAGE_LIMIT = 10; // Number of recent messages to scan for cleanup
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -381,23 +384,15 @@ module.exports = {
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Delete existing message before posting new one (ensures single message in channel)
-            if (this.lastRankingsMessage) {
-                console.log(`🧹 [DELETE] Deleting previous rankings message (ID: ${this.lastRankingsMessage.id})...`);
-                try {
-                    await this.lastRankingsMessage.delete();
-                    console.log('   ✅ Previous rankings message deleted successfully');
-                } catch (deleteError) {
-                    // If delete fails (message already deleted, etc.), just log and continue
-                    console.log(`   ⚠️ Could not delete message (${deleteError.message})`);
-                    console.log(`   ℹ️ Message may have been manually deleted or is no longer accessible`);
-                }
-                // Clear the tracked message
-                this.lastRankingsMessage = null;
-                await db.setBotState('rankings_message_id', null);
-            } else {
-                console.log('ℹ️ [DELETE] No previous rankings message to delete (first run or message not tracked)');
-            }
+            // Enhanced cleanup: Delete all old ranking messages from bot (defensive cleanup)
+            // This ensures no residual embeds remain in the channel
+            console.log('🧹 [CLEANUP] Starting enhanced cleanup of old ranking messages...');
+            const deletedCount = await this.cleanupOldRankings(channel, null, CLEANUP_MESSAGE_LIMIT);
+            console.log(`   ✅ Cleanup completed: ${deletedCount} old message(s) removed`);
+            
+            // Clear tracked message since we just deleted everything
+            this.lastRankingsMessage = null;
+            await db.setBotState('rankings_message_id', null);
 
             // Post new message
             console.log('📤 [POST] Posting new rankings message...');
