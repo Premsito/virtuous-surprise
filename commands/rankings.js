@@ -183,21 +183,26 @@ module.exports = {
                         });
                 }
                 
-                // Verify sorting order
-                let sortingCorrect = true;
-                for (let i = 1; i < topLevels.length; i++) {
-                    const prev = topLevels[i - 1];
-                    const curr = topLevels[i];
-                    if (prev.level < curr.level || (prev.level === curr.level && (prev.xp || 0) < (curr.xp || 0))) {
-                        sortingCorrect = false;
-                        console.warn(`⚠️ [DATA] Sorting issue detected at position ${i}:`, {
-                            prev: { username: prev.username, level: prev.level, xp: prev.xp },
-                            curr: { username: curr.username, level: curr.level, xp: curr.xp }
-                        });
+                // Verify sorting order (only in development/debug mode to avoid overhead)
+                // Set DEBUG=true environment variable to enable this check in production
+                if (process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development') {
+                    let sortingCorrect = true;
+                    for (let i = 1; i < topLevels.length; i++) {
+                        const prev = topLevels[i - 1];
+                        const curr = topLevels[i];
+                        if (prev.level < curr.level || (prev.level === curr.level && (prev.xp || 0) < (curr.xp || 0))) {
+                            sortingCorrect = false;
+                            console.warn(`⚠️ [DATA] Sorting issue detected at position ${i}:`, {
+                                prev: { username: prev.username, level: prev.level, xp: prev.xp },
+                                curr: { username: curr.username, level: curr.level, xp: curr.xp }
+                            });
+                        }
                     }
-                }
-                if (sortingCorrect) {
-                    console.log('✅ [DATA] Niveau rankings sorting verified (Level DESC, XP DESC)');
+                    if (sortingCorrect) {
+                        console.log('✅ [DATA] Niveau rankings sorting verified (Level DESC, XP DESC)');
+                    }
+                } else {
+                    console.log('✅ [DATA] Niveau rankings sorting verification skipped (set DEBUG=true to enable)');
                 }
             }
             
@@ -458,14 +463,19 @@ module.exports = {
      * This function can be used to clean up if multiple messages were posted accidentally
      * @param {TextChannel} channel - The channel to clean up
      * @param {number} keepMessageId - Optional message ID to keep (all others will be deleted)
+     * @param {number} limit - Number of recent messages to scan (default: 20, max: 50)
      * @returns {Promise<number>} Number of messages deleted
      */
-    async cleanupOldRankings(channel, keepMessageId = null) {
+    async cleanupOldRankings(channel, keepMessageId = null, limit = 20) {
         try {
             console.log('🧹 [CLEANUP] Scanning for old ranking messages...');
             
-            // Fetch recent messages (last 50)
-            const messages = await channel.messages.fetch({ limit: 50 });
+            // Validate and cap limit
+            const scanLimit = Math.min(Math.max(limit, 1), 50);
+            console.log(`   📋 Scanning last ${scanLimit} messages...`);
+            
+            // Fetch recent messages
+            const messages = await channel.messages.fetch({ limit: scanLimit });
             console.log(`   📋 Found ${messages.size} messages in channel`);
             
             // Filter for messages from the bot that contain rankings embeds

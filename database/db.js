@@ -853,7 +853,8 @@ const db = {
                         try {
                             const data = JSON.parse(msg.payload);
                             lcNotificationCount++;
-                            console.log(`📊 [DB NOTIFY #${lcNotificationCount}] LC Change: User ${data.userId}, ${data.oldBalance} -> ${data.newBalance} (change: ${data.change >= 0 ? '+' : ''}${data.change})`);
+                            const change = data.change !== undefined ? data.change : (data.newBalance - data.oldBalance);
+                            console.log(`📊 [DB NOTIFY #${lcNotificationCount}] LC Change: User ${data.userId}, ${data.oldBalance} -> ${data.newBalance} (change: ${change >= 0 ? '+' : ''}${change})`);
                             onLCChange(data);
                         } catch (error) {
                             console.error('❌ Error parsing LC change notification:', error.message);
@@ -873,7 +874,8 @@ const db = {
                         try {
                             const data = JSON.parse(msg.payload);
                             niveauNotificationCount++;
-                            console.log(`📊 [DB NOTIFY #${niveauNotificationCount}] Niveau Change: User ${data.userId}, Level ${data.oldLevel} -> ${data.newLevel} (change: ${data.change >= 0 ? '+' : ''}${data.change})`);
+                            const change = data.change !== undefined ? data.change : (data.newLevel - data.oldLevel);
+                            console.log(`📊 [DB NOTIFY #${niveauNotificationCount}] Niveau Change: User ${data.userId}, Level ${data.oldLevel} -> ${data.newLevel} (change: ${change >= 0 ? '+' : ''}${change})`);
                             onNiveauChange(data);
                         } catch (error) {
                             console.error('❌ Error parsing Niveau change notification:', error.message);

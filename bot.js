@@ -445,7 +445,7 @@ client.once('clientReady', async () => {
         
         // Track interval for validation
         let rankingsUpdateCount = 0;
-        let lastRankingsUpdate = null;
+        let lastSuccessfulUpdate = null; // Track when last successful update completed
         
         /**
          * Update rankings with retry logic
@@ -458,7 +458,6 @@ client.once('clientReady', async () => {
                 
                 // Increment update counter for monitoring
                 rankingsUpdateCount++;
-                lastRankingsUpdate = now;
                 
                 console.log(`\n${'='.repeat(60)}`);
                 console.log(`🔄 [${now.toISOString()}] Starting scheduled rankings update...`);
@@ -467,9 +466,9 @@ client.once('clientReady', async () => {
                     console.log(`   Retry attempt: ${retryCount}/${RANKINGS_MAX_RETRIES}`);
                 }
                 // Log time since last successful update for monitoring interval health
-                if (rankingsUpdateCount > 1 && lastRankingsUpdate) {
-                    const timeSinceLastUpdate = (now - lastRankingsUpdate) / 1000;
-                    console.log(`   Time since last update: ${timeSinceLastUpdate.toFixed(1)}s`);
+                if (lastSuccessfulUpdate) {
+                    const timeSinceLastUpdate = (now - lastSuccessfulUpdate) / 1000;
+                    console.log(`   Time since last successful update: ${timeSinceLastUpdate.toFixed(1)}s`);
                 }
                 console.log(`${'='.repeat(60)}\n`);
                 
@@ -480,6 +479,9 @@ client.once('clientReady', async () => {
                 
                 // Record success metrics
                 rankingsMetrics.recordSuccess(duration);
+                
+                // Update last successful update timestamp for interval monitoring
+                lastSuccessfulUpdate = completedAt;
                 
                 console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
                 console.log(`   Duration: ${duration}ms`);

@@ -7,7 +7,18 @@
  */
 
 require('dotenv').config();
-const { pool, db } = require('./database/db');
+
+// Import database with error handling
+let pool, db;
+try {
+    const dbModule = require('./database/db');
+    pool = dbModule.pool;
+    db = dbModule.db;
+} catch (error) {
+    console.error('❌ Failed to load database module:', error.message);
+    console.error('   Make sure database/db.js exists and is properly configured');
+    process.exit(1);
+}
 
 async function testNiveauRankings() {
     console.log('🧪 Testing Niveau Rankings System\n');
