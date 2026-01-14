@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 
 console.log('🧪 Testing Automatic Classement Refresh Logging Enhancements\n');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 
 let testsPassed = 0;
 let testsFailed = 0;
@@ -192,13 +192,13 @@ test('Rankings manager is initialized with client and command', () => {
 });
 
 // Summary
-console.log('\n' + '=' .repeat(70));
+console.log('\n' + '='.repeat(70));
 console.log('📊 Test Summary');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 console.log(`✅ Passed: ${testsPassed}`);
 console.log(`❌ Failed: ${testsFailed}`);
 console.log(`📈 Success Rate: ${((testsPassed / (testsPassed + testsFailed)) * 100).toFixed(1)}%`);
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 
 if (testsFailed > 0) {
     console.log('\n⚠️  Some tests failed. Please review the implementation.');

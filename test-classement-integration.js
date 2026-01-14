@@ -15,7 +15,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 console.log('🧪 Testing Automatic Classement Refresh Integration\n');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 
 // Create a test database connection
 const pool = new Pool({
@@ -213,16 +213,16 @@ async function runTests() {
     }
 
     // Summary
-    console.log('\n' + '=' .repeat(70));
+    console.log('\n' + '='.repeat(70));
     console.log('📊 Test Summary');
-    console.log('=' .repeat(70));
+    console.log('='.repeat(70));
     console.log(`✅ Passed: ${testsPassed}`);
     console.log(`❌ Failed: ${testsFailed}`);
     
     if (testsPassed + testsFailed > 0) {
         console.log(`📈 Success Rate: ${((testsPassed / (testsPassed + testsFailed)) * 100).toFixed(1)}%`);
     }
-    console.log('=' .repeat(70));
+    console.log('='.repeat(70));
 
     if (testsFailed > 0) {
         console.log('\n⚠️  Some tests failed. Database setup may be incomplete.');

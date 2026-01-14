@@ -10,6 +10,9 @@ const ERROR_MESSAGES = {
     USER_UPDATE_ERROR_MESSAGE: 'Une erreur critique est survenue lors de la mise à jour du classement. Contactez un administrateur.'
 };
 
+// Cleanup configuration
+const CLEANUP_MESSAGE_LIMIT = 10; // Number of recent messages to scan for cleanup
+
 module.exports = {
     name: 'rankings',
     description: 'Display LC and Level rankings with podiums (Admin only)',
@@ -384,7 +387,7 @@ module.exports = {
             // Enhanced cleanup: Delete all old ranking messages from bot (defensive cleanup)
             // This ensures no residual embeds remain in the channel
             console.log('🧹 [CLEANUP] Starting enhanced cleanup of old ranking messages...');
-            const deletedCount = await this.cleanupOldRankings(channel, null, 10);
+            const deletedCount = await this.cleanupOldRankings(channel, null, CLEANUP_MESSAGE_LIMIT);
             console.log(`   ✅ Cleanup completed: ${deletedCount} old message(s) removed`);
             
             // Clear tracked message since we just deleted everything

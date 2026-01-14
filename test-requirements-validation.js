@@ -11,13 +11,13 @@ const fs = require('fs');
 const path = require('path');
 
 console.log('🧪 Validating Automatic Classement Refresh Implementation\n');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 console.log('Problem Statement Requirements:');
 console.log('1. Ensure setInterval triggers automatic refresh with logging');
 console.log('2. Enable triggers for real-time updates');
 console.log('3. Synchronize XP and Niveau calculations');
 console.log('4. Enhance embed deletion and recreation');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 console.log('');
 
 let testsPassed = 0;
@@ -256,16 +256,16 @@ test('Old messages are deleted before posting new ones', () => {
 });
 
 // Summary
-console.log('\n' + '=' .repeat(70));
+console.log('\n' + '='.repeat(70));
 console.log('📊 Test Summary');
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 console.log(`✅ Passed: ${testsPassed}`);
 console.log(`❌ Failed: ${testsFailed}`);
 
 if (testsPassed + testsFailed > 0) {
     console.log(`📈 Success Rate: ${((testsPassed / (testsPassed + testsFailed)) * 100).toFixed(1)}%`);
 }
-console.log('=' .repeat(70));
+console.log('='.repeat(70));
 
 if (testsFailed > 0) {
     console.log('\n⚠️  Some requirements are not fully implemented.');
