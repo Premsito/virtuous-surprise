@@ -205,7 +205,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                 }
             )
             .setFooter({ 
-                text: '💡 Gagner de l\'XP ? Fait des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!' 
+                text: '💡 Gagner de l\'XP ? Fais des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!' 
             })
             .setTimestamp();
         
@@ -244,7 +244,7 @@ async function sendLevelUpCard(client, userId, user, newLevel, totalXP, rewardIn
                     `**📊 Progression XP**\n` +
                     `**${progress.currentLevelXP}** / **${progress.nextLevelXP}** XP (**${progress.progress}%**)\n` +
                     `${progressBar}\n\n` +
-                    `_💡 Gagner de l'XP ? Fait des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!_`
+                    `_💡 Gagner de l'XP ? Fais des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!_`
                 );
                 console.log(`✅ [LEVEL-UP] Fallback text notification sent successfully`);
             } else {

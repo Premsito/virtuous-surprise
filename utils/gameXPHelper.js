@@ -113,7 +113,7 @@ async function grantGameXP(userId, username, result, message = null) {
                                         }
                                     )
                                     .setFooter({ 
-                                        text: '💡 Gagner de l\'XP ? Fait des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!' 
+                                        text: '💡 Gagner de l\'XP ? Fais des !missions, participe à des jeux, envoie des messages et surtout participe à des vocs!' 
                                     })
                                     .setTimestamp();
                                 
