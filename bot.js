@@ -433,12 +433,17 @@ client.once('clientReady', async () => {
         // Store cleanup function for graceful shutdown
         client.dbNotificationCleanup = dbNotificationCleanup;
         
-        // Start rankings auto-update (every 5 minutes)
-        const RANKINGS_UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
-        const RANKINGS_RETRY_DELAY_MS = 30 * 1000; // 30 seconds retry delay on error
-        const RANKINGS_MAX_RETRIES = 3; // Maximum retry attempts per update cycle
+        // Start rankings auto-update (configurable interval)
+        // Configuration: See config.json under "rankings" section
+        // - updateIntervalMinutes: How often to update rankings (default: 5)
+        // - retryDelaySeconds: Delay before retrying on error (default: 30)
+        // - maxRetries: Maximum retry attempts per cycle (default: 3)
+        // - initialDelaySeconds: Delay before first update after bot start (default: 5)
+        const RANKINGS_UPDATE_INTERVAL_MS = (config.rankings?.updateIntervalMinutes || 5) * 60 * 1000; // Default: 5 minutes
+        const RANKINGS_RETRY_DELAY_MS = (config.rankings?.retryDelaySeconds || 30) * 1000; // Default: 30 seconds
+        const RANKINGS_MAX_RETRIES = config.rankings?.maxRetries || 3; // Default: 3 retries
         
-        console.log(`⏰ Rankings auto-update interval configured: 5 minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
+        console.log(`⏰ Rankings auto-update interval configured: ${config.rankings?.updateIntervalMinutes || 5} minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
         console.log(`   - Retry delay on error: ${RANKINGS_RETRY_DELAY_MS / 1000} seconds`);
         console.log(`   - Max retries per cycle: ${RANKINGS_MAX_RETRIES}`);
         console.log(`   - Update frequency: ${60 / (RANKINGS_UPDATE_INTERVAL_MS / 60000)} updates per hour`);
@@ -525,13 +530,14 @@ client.once('clientReady', async () => {
         }, RANKINGS_UPDATE_INTERVAL_MS);
         
         // Initial rankings update
+        const INITIAL_DELAY_MS = (config.rankings?.initialDelaySeconds || 5) * 1000; // Default: 5 seconds
         setTimeout(() => {
             let retryCount = 0;
             const maxInitialRetries = 3;
             
             async function displayInitialRankings() {
                 try {
-                    console.log('\n🎯 Displaying initial rankings (5 seconds after bot ready)...');
+                    console.log(`\n🎯 Displaying initial rankings (${config.rankings?.initialDelaySeconds || 5} seconds after bot ready)...`);
                     if (retryCount > 0) {
                         console.log(`   Retry attempt: ${retryCount}/${maxInitialRetries}`);
                     }
@@ -562,7 +568,7 @@ client.once('clientReady', async () => {
             displayInitialRankings().catch(err => {
                 console.error('❌ Unhandled error in initial rankings display:', err.message);
             });
-        }, 5000); // Wait 5 seconds after bot ready to ensure everything is initialized
+        }, INITIAL_DELAY_MS); // Use configured delay (default: 5 seconds) after bot ready to ensure everything is initialized
         
         // Print rankings metrics summary every hour for monitoring
         setInterval(() => {
