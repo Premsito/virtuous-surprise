@@ -87,5 +87,11 @@
     "warning": "#FEE75C",
     "gold": "#FFD700",
     "blue": "#3498db"
+  },
+  "rankings": {
+    "updateIntervalMinutes": 5,
+    "retryDelaySeconds": 30,
+    "maxRetries": 3,
+    "initialDelaySeconds": 5
   }
 }
