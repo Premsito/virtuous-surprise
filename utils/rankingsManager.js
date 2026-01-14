@@ -32,10 +32,6 @@ class RankingsManager {
         this.rankingsCommand = null;
         this.client = null;
         
-        // Cache for position tracking (both LC and Niveau)
-        this.lastLCRankingsCache = new Map(); // userId -> position
-        this.lastNiveauRankingsCache = new Map(); // userId -> position
-        
         // Cache for rankings channel
         this.rankingsChannel = null;
         
@@ -191,9 +187,11 @@ class RankingsManager {
             const newLCRankings = await this.getCurrentLCRankings();
             const newNiveauRankings = await this.getCurrentNiveauRankings();
             
-            // Check for position changes and notify users
-            await this.notifyLCPositionChanges(oldLCRankings, newLCRankings);
-            await this.notifyNiveauPositionChanges(oldNiveauRankings, newNiveauRankings);
+            // Check for position changes and notify users (in parallel)
+            await Promise.all([
+                this.notifyLCPositionChanges(oldLCRankings, newLCRankings),
+                this.notifyNiveauPositionChanges(oldNiveauRankings, newNiveauRankings)
+            ]);
             
             // Update last update time
             this.lastUpdateTime = Date.now();

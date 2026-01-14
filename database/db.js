@@ -478,7 +478,7 @@ const db = {
         return result.rows[0];
     },
 
-    async updateLevel(userId, level) {
+    async updateLevel(userId, level, reason = 'level_up') {
         // Use a CTE to capture old level in a single query
         const result = await pool.query(
             `WITH old_level AS (
@@ -495,7 +495,7 @@ const db = {
         // Emit Niveau change event
         if (updatedUser) {
             const oldLevel = updatedUser.old_level || 0;
-            niveauEventEmitter.emitNiveauChange(userId, oldLevel, updatedUser.level, 'level_up');
+            niveauEventEmitter.emitNiveauChange(userId, oldLevel, updatedUser.level, reason);
             // Remove the old_level field from returned object
             delete updatedUser.old_level;
         }
