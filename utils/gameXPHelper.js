@@ -57,9 +57,9 @@ async function grantGameXP(userId, username, result, message = null) {
                             
                             if (levelUpChannel) {
                                 const embed = new EmbedBuilder()
-                                    .setTitle('📈 Level Up!')
+                                    .setTitle('🎉 Niveau supérieur atteint ! 🎊')
                                     .setColor('#3498DB')
-                                    .setDescription(`${username} has reached level ${newLevel}!`)
+                                    .setDescription(`<@${userId}> vient de passer **Niveau ${newLevel}** ! 🏆`)
                                     .setTimestamp();
                                 
                                 await levelUpChannel.send({ embeds: [embed] });
