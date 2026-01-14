@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const lcEventEmitter = require('../utils/lcEventEmitter');
 const niveauEventEmitter = require('../utils/niveauEventEmitter');
+const { getLevelFromXP } = require('../utils/xpHelper');
 
 // Database configuration constants
 const DB_INIT_MAX_RETRIES = 3;
@@ -529,8 +530,10 @@ const db = {
     async getTopLevels(limit = 10) {
         try {
             const startTime = Date.now();
+            // Query by XP directly to ensure accurate rankings
+            // This avoids relying on potentially outdated level column
             const result = await pool.query(
-                'SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1',
+                'SELECT user_id, username, xp FROM users ORDER BY xp DESC LIMIT $1',
                 [limit]
             );
             const duration = Date.now() - startTime;
@@ -540,10 +543,19 @@ const db = {
                 console.warn(`⚠️ Slow query: getTopLevels took ${duration}ms`);
             }
             
-            return result.rows;
+            // Calculate level from XP in real-time for each user
+            // This ensures consistency with !niveau command
+            const usersWithLevels = result.rows.map(user => ({
+                ...user,
+                level: getLevelFromXP(user.xp || 0)
+            }));
+            
+            console.log(`📊 [DB] getTopLevels: Retrieved ${usersWithLevels.length} users, calculated levels from XP`);
+            
+            return usersWithLevels;
         } catch (error) {
             console.error('❌ Error fetching top level rankings:', error.message);
-            console.error('   Query: SELECT user_id, username, level, xp FROM users ORDER BY level DESC, xp DESC LIMIT $1');
+            console.error('   Query: SELECT user_id, username, xp FROM users ORDER BY xp DESC LIMIT $1');
             console.error('   Params:', { limit });
             throw error;
         }
