@@ -63,7 +63,7 @@ async function grantGameXP(userId, username, result, message = null) {
                                     .setTimestamp();
                                 
                                 await levelUpChannel.send({ embeds: [embed] });
-                                console.log(`[DEBUG] Level-up message sent: ${username} -> Level ${newLevel}`);
+                                console.log(`[DEBUG] Level-up message sent: User ${userId} (${username || 'unknown'}) -> Level ${newLevel}`);
                             } else {
                                 console.error(`[ERROR] Level-up channel (#niveaux) not found with ID ${levelUpChannelId}`);
                             }
