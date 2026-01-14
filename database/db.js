@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const lcEventEmitter = require('../utils/lcEventEmitter');
+const niveauEventEmitter = require('../utils/niveauEventEmitter');
 
 // Database configuration constants
 const DB_INIT_MAX_RETRIES = 3;
@@ -478,11 +479,28 @@ const db = {
     },
 
     async updateLevel(userId, level) {
+        // Use a CTE to capture old level in a single query
         const result = await pool.query(
-            'UPDATE users SET level = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
+            `WITH old_level AS (
+                SELECT level FROM users WHERE user_id = $2
+            )
+            UPDATE users 
+            SET level = $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2 
+            RETURNING *, (SELECT COALESCE(level, 0) FROM old_level) as old_level`,
             [level, userId]
         );
-        return result.rows[0];
+        const updatedUser = result.rows[0];
+        
+        // Emit Niveau change event
+        if (updatedUser) {
+            const oldLevel = updatedUser.old_level || 0;
+            niveauEventEmitter.emitNiveauChange(userId, oldLevel, updatedUser.level, 'level_up');
+            // Remove the old_level field from returned object
+            delete updatedUser.old_level;
+        }
+        
+        return updatedUser;
     },
 
     async updateLastMessageXPTime(userId, timestamp) {
