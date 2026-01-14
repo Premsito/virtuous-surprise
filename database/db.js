@@ -822,8 +822,29 @@ const db = {
         try {
             console.log('🔔 Setting up PostgreSQL NOTIFY listeners for rankings...');
             
+            // First, verify that the trigger functions exist
+            const triggerCheck = await pool.query(`
+                SELECT proname 
+                FROM pg_proc 
+                WHERE proname IN ('notify_lc_change', 'notify_niveau_change')
+            `);
+            
+            const foundFunctions = triggerCheck.rows.map(r => r.proname);
+            console.log(`   📋 Found trigger functions: ${foundFunctions.join(', ') || 'none'}`);
+            
+            if (foundFunctions.length < 2) {
+                console.warn('   ⚠️  Warning: Some trigger functions are missing');
+                console.warn('   Database notifications may not work properly');
+                console.warn('   Run migration 013_add_rankings_optimizations.sql to install triggers');
+            }
+            
             // Create a dedicated client for LISTEN (it must stay connected)
             const listenClient = await pool.connect();
+            console.log('   ✅ Dedicated LISTEN client connected');
+            
+            // Track notification counts for monitoring
+            let lcNotificationCount = 0;
+            let niveauNotificationCount = 0;
             
             // Set up LC change listener
             if (onLCChange) {
@@ -831,16 +852,18 @@ const db = {
                     if (msg.channel === 'lc_change') {
                         try {
                             const data = JSON.parse(msg.payload);
-                            console.log(`📊 [DB NOTIFY] LC Change: User ${data.userId}, ${data.oldBalance} -> ${data.newBalance}`);
+                            lcNotificationCount++;
+                            console.log(`📊 [DB NOTIFY #${lcNotificationCount}] LC Change: User ${data.userId}, ${data.oldBalance} -> ${data.newBalance} (change: ${data.change >= 0 ? '+' : ''}${data.change})`);
                             onLCChange(data);
                         } catch (error) {
                             console.error('❌ Error parsing LC change notification:', error.message);
+                            console.error('   Payload:', msg.payload);
                         }
                     }
                 });
                 
                 await listenClient.query('LISTEN lc_change');
-                console.log('   ✅ Listening for LC change notifications');
+                console.log('   ✅ Listening for LC change notifications on channel: lc_change');
             }
             
             // Set up Niveau change listener
@@ -849,25 +872,29 @@ const db = {
                     if (msg.channel === 'niveau_change') {
                         try {
                             const data = JSON.parse(msg.payload);
-                            console.log(`📊 [DB NOTIFY] Niveau Change: User ${data.userId}, Level ${data.oldLevel} -> ${data.newLevel}`);
+                            niveauNotificationCount++;
+                            console.log(`📊 [DB NOTIFY #${niveauNotificationCount}] Niveau Change: User ${data.userId}, Level ${data.oldLevel} -> ${data.newLevel} (change: ${data.change >= 0 ? '+' : ''}${data.change})`);
                             onNiveauChange(data);
                         } catch (error) {
                             console.error('❌ Error parsing Niveau change notification:', error.message);
+                            console.error('   Payload:', msg.payload);
                         }
                     }
                 });
                 
                 await listenClient.query('LISTEN niveau_change');
-                console.log('   ✅ Listening for Niveau change notifications');
+                console.log('   ✅ Listening for Niveau change notifications on channel: niveau_change');
             }
             
-            console.log('✅ Database notification system active');
+            console.log('✅ Database notification system active and ready');
+            console.log('   💡 Notifications will be logged when LC or Niveau values change in the database');
             
-            // Return cleanup function
+            // Return cleanup function with notification counts
             return {
                 unlisten: async () => {
                     try {
                         console.log('🔕 Unsubscribing from database notifications...');
+                        console.log(`   📊 Statistics: ${lcNotificationCount} LC notifications, ${niveauNotificationCount} Niveau notifications received`);
                         if (onLCChange) {
                             await listenClient.query('UNLISTEN lc_change');
                         }
@@ -880,12 +907,20 @@ const db = {
                         console.error('❌ Error unsubscribing from notifications:', error.message);
                     }
                 },
-                client: listenClient
+                client: listenClient,
+                getStats: () => ({
+                    lcNotifications: lcNotificationCount,
+                    niveauNotifications: niveauNotificationCount
+                })
             };
         } catch (error) {
             console.error('❌ Error setting up database notifications:', error.message);
+            console.error('   Stack:', error.stack);
             console.error('   Falling back to in-app event emitters only');
-            return { unlisten: async () => {} };
+            return { 
+                unlisten: async () => {},
+                getStats: () => ({ lcNotifications: 0, niveauNotifications: 0 })
+            };
         }
     }
 };

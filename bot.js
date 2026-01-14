@@ -441,6 +441,11 @@ client.once('clientReady', async () => {
         console.log(`⏰ Rankings auto-update interval configured: 5 minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
         console.log(`   - Retry delay on error: ${RANKINGS_RETRY_DELAY_MS / 1000} seconds`);
         console.log(`   - Max retries per cycle: ${RANKINGS_MAX_RETRIES}`);
+        console.log(`   - Update frequency: ${60 / (RANKINGS_UPDATE_INTERVAL_MS / 60000)} updates per hour`);
+        
+        // Track interval for validation
+        let rankingsUpdateCount = 0;
+        let lastRankingsUpdate = null;
         
         /**
          * Update rankings with retry logic
@@ -450,11 +455,21 @@ client.once('clientReady', async () => {
             const startTime = Date.now();
             try {
                 const now = new Date();
+                
+                // Increment update counter for monitoring
+                rankingsUpdateCount++;
+                lastRankingsUpdate = now;
+                
                 console.log(`\n${'='.repeat(60)}`);
                 console.log(`🔄 [${now.toISOString()}] Starting scheduled rankings update...`);
-                console.log(`   Interval: Every 5 minutes`);
+                console.log(`   Update #${rankingsUpdateCount} | Interval: Every 5 minutes`);
                 if (retryCount > 0) {
                     console.log(`   Retry attempt: ${retryCount}/${RANKINGS_MAX_RETRIES}`);
+                }
+                // Log time since last successful update for monitoring interval health
+                if (rankingsUpdateCount > 1 && lastRankingsUpdate) {
+                    const timeSinceLastUpdate = (now - lastRankingsUpdate) / 1000;
+                    console.log(`   Time since last update: ${timeSinceLastUpdate.toFixed(1)}s`);
                 }
                 console.log(`${'='.repeat(60)}\n`);
                 
@@ -469,6 +484,7 @@ client.once('clientReady', async () => {
                 console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
                 console.log(`   Duration: ${duration}ms`);
                 console.log(`   Success rate: ${rankingsMetrics.getSuccessRate().toFixed(2)}%`);
+                console.log(`   Total updates: ${rankingsUpdateCount}`);
                 console.log(`   Next update: ${new Date(completedAt.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}\n`);
             } catch (error) {
                 const errorTime = new Date();

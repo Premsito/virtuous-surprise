@@ -153,8 +153,11 @@ module.exports = {
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
             console.log('🔍 [DATA] Fetching rankings from database...');
+            const startFetchTime = Date.now();
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
+            const fetchDuration = Date.now() - startFetchTime;
+            console.log(`✅ [DATA] Fetched rankings in ${fetchDuration}ms`);
             
             // Data validation logging as requested in problem statement
             console.log(`📊 [DATA] Fetched LC Rankings (${topLC.length} users):`);
@@ -164,8 +167,39 @@ module.exports = {
             
             console.log(`📊 [DATA] Fetched Niveau Rankings (${topLevels.length} users):`);
             topLevels.slice(0, 3).forEach((user, i) => {
-                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - Level ${user.level}`);
+                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - Level ${user.level}, XP: ${user.xp || 0}`);
             });
+            
+            // Additional validation: Check for data integrity issues
+            if (topLevels.length > 0) {
+                const hasInvalidData = topLevels.some(user => 
+                    user.level === null || user.level === undefined || user.level < 1
+                );
+                if (hasInvalidData) {
+                    console.warn('⚠️ [DATA] Warning: Some users have invalid level data!');
+                    topLevels.filter(u => u.level === null || u.level === undefined || u.level < 1)
+                        .forEach(user => {
+                            console.warn(`   - User ${user.username} (${user.user_id}): level=${user.level}`);
+                        });
+                }
+                
+                // Verify sorting order
+                let sortingCorrect = true;
+                for (let i = 1; i < topLevels.length; i++) {
+                    const prev = topLevels[i - 1];
+                    const curr = topLevels[i];
+                    if (prev.level < curr.level || (prev.level === curr.level && (prev.xp || 0) < (curr.xp || 0))) {
+                        sortingCorrect = false;
+                        console.warn(`⚠️ [DATA] Sorting issue detected at position ${i}:`, {
+                            prev: { username: prev.username, level: prev.level, xp: prev.xp },
+                            curr: { username: curr.username, level: curr.level, xp: curr.xp }
+                        });
+                    }
+                }
+                if (sortingCorrect) {
+                    console.log('✅ [DATA] Niveau rankings sorting verified (Level DESC, XP DESC)');
+                }
+            }
             
             // Check if there's any ranking data available
             if (topLC.length === 0 && topLevels.length === 0) {
