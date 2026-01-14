@@ -441,6 +441,11 @@ client.once('clientReady', async () => {
         console.log(`⏰ Rankings auto-update interval configured: 5 minutes (${RANKINGS_UPDATE_INTERVAL_MS}ms)`);
         console.log(`   - Retry delay on error: ${RANKINGS_RETRY_DELAY_MS / 1000} seconds`);
         console.log(`   - Max retries per cycle: ${RANKINGS_MAX_RETRIES}`);
+        console.log(`   - Update frequency: ${60 / (RANKINGS_UPDATE_INTERVAL_MS / 60000)} updates per hour`);
+        
+        // Track interval for validation
+        let rankingsUpdateCount = 0;
+        let lastSuccessfulUpdate = null; // Track when last successful update completed
         
         /**
          * Update rankings with retry logic
@@ -450,11 +455,20 @@ client.once('clientReady', async () => {
             const startTime = Date.now();
             try {
                 const now = new Date();
+                
+                // Increment update counter for monitoring
+                rankingsUpdateCount++;
+                
                 console.log(`\n${'='.repeat(60)}`);
                 console.log(`🔄 [${now.toISOString()}] Starting scheduled rankings update...`);
-                console.log(`   Interval: Every 5 minutes`);
+                console.log(`   Update #${rankingsUpdateCount} | Interval: Every 5 minutes`);
                 if (retryCount > 0) {
                     console.log(`   Retry attempt: ${retryCount}/${RANKINGS_MAX_RETRIES}`);
+                }
+                // Log time since last successful update for monitoring interval health
+                if (lastSuccessfulUpdate) {
+                    const timeSinceLastUpdate = (now - lastSuccessfulUpdate) / 1000;
+                    console.log(`   Time since last successful update: ${timeSinceLastUpdate.toFixed(1)}s`);
                 }
                 console.log(`${'='.repeat(60)}\n`);
                 
@@ -466,9 +480,13 @@ client.once('clientReady', async () => {
                 // Record success metrics
                 rankingsMetrics.recordSuccess(duration);
                 
+                // Update last successful update timestamp for interval monitoring
+                lastSuccessfulUpdate = completedAt;
+                
                 console.log(`\n✅ [${completedAt.toISOString()}] Scheduled rankings update completed`);
                 console.log(`   Duration: ${duration}ms`);
                 console.log(`   Success rate: ${rankingsMetrics.getSuccessRate().toFixed(2)}%`);
+                console.log(`   Total updates: ${rankingsUpdateCount}`);
                 console.log(`   Next update: ${new Date(completedAt.getTime() + RANKINGS_UPDATE_INTERVAL_MS).toISOString()}\n`);
             } catch (error) {
                 const errorTime = new Date();

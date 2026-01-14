@@ -153,8 +153,11 @@ module.exports = {
             
             // Get top 10 users by LC and Level (no minimum threshold filtering)
             console.log('🔍 [DATA] Fetching rankings from database...');
+            const startFetchTime = Date.now();
             const topLC = await db.getTopLC(10);
             const topLevels = await db.getTopLevels(10);
+            const fetchDuration = Date.now() - startFetchTime;
+            console.log(`✅ [DATA] Fetched rankings in ${fetchDuration}ms`);
             
             // Data validation logging as requested in problem statement
             console.log(`📊 [DATA] Fetched LC Rankings (${topLC.length} users):`);
@@ -164,8 +167,44 @@ module.exports = {
             
             console.log(`📊 [DATA] Fetched Niveau Rankings (${topLevels.length} users):`);
             topLevels.slice(0, 3).forEach((user, i) => {
-                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - Level ${user.level}`);
+                console.log(`   ${i + 1}. ${user.username} (ID: ${user.user_id}) - Level ${user.level}, XP: ${user.xp || 0}`);
             });
+            
+            // Additional validation: Check for data integrity issues
+            if (topLevels.length > 0) {
+                const hasInvalidData = topLevels.some(user => 
+                    user.level === null || user.level === undefined || user.level < 1
+                );
+                if (hasInvalidData) {
+                    console.warn('⚠️ [DATA] Warning: Some users have invalid level data!');
+                    topLevels.filter(u => u.level === null || u.level === undefined || u.level < 1)
+                        .forEach(user => {
+                            console.warn(`   - User ${user.username} (${user.user_id}): level=${user.level}`);
+                        });
+                }
+                
+                // Verify sorting order (only in development/debug mode to avoid overhead)
+                // Set DEBUG=true environment variable to enable this check in production
+                if (process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development') {
+                    let sortingCorrect = true;
+                    for (let i = 1; i < topLevels.length; i++) {
+                        const prev = topLevels[i - 1];
+                        const curr = topLevels[i];
+                        if (prev.level < curr.level || (prev.level === curr.level && (prev.xp || 0) < (curr.xp || 0))) {
+                            sortingCorrect = false;
+                            console.warn(`⚠️ [DATA] Sorting issue detected at position ${i}:`, {
+                                prev: { username: prev.username, level: prev.level, xp: prev.xp },
+                                curr: { username: curr.username, level: curr.level, xp: curr.xp }
+                            });
+                        }
+                    }
+                    if (sortingCorrect) {
+                        console.log('✅ [DATA] Niveau rankings sorting verified (Level DESC, XP DESC)');
+                    }
+                } else {
+                    console.log('✅ [DATA] Niveau rankings sorting verification skipped (set DEBUG=true to enable)');
+                }
+            }
             
             // Check if there's any ranking data available
             if (topLC.length === 0 && topLevels.length === 0) {
@@ -342,7 +381,7 @@ module.exports = {
                 await this.loadLastMessageFromDB(client);
             }
 
-            // Delete existing message before posting new one
+            // Delete existing message before posting new one (ensures single message in channel)
             if (this.lastRankingsMessage) {
                 console.log(`🧹 [DELETE] Deleting previous rankings message (ID: ${this.lastRankingsMessage.id})...`);
                 try {
@@ -350,11 +389,14 @@ module.exports = {
                     console.log('   ✅ Previous rankings message deleted successfully');
                 } catch (deleteError) {
                     // If delete fails (message already deleted, etc.), just log and continue
-                    console.log(`   ⚠️ Could not delete message (${deleteError.message}), it may have been already deleted`);
+                    console.log(`   ⚠️ Could not delete message (${deleteError.message})`);
+                    console.log(`   ℹ️ Message may have been manually deleted or is no longer accessible`);
                 }
                 // Clear the tracked message
                 this.lastRankingsMessage = null;
                 await db.setBotState('rankings_message_id', null);
+            } else {
+                console.log('ℹ️ [DELETE] No previous rankings message to delete (first run or message not tracked)');
             }
 
             // Post new message
@@ -413,6 +455,61 @@ module.exports = {
             
             // Re-throw error so interval handler can catch it and potentially restart
             throw error;
+        }
+    },
+
+    /**
+     * Clean up multiple old ranking messages (defensive cleanup)
+     * This function can be used to clean up if multiple messages were posted accidentally
+     * @param {TextChannel} channel - The channel to clean up
+     * @param {number} keepMessageId - Optional message ID to keep (all others will be deleted)
+     * @param {number} limit - Number of recent messages to scan (default: 20, max: 50)
+     * @returns {Promise<number>} Number of messages deleted
+     */
+    async cleanupOldRankings(channel, keepMessageId = null, limit = 20) {
+        try {
+            console.log('🧹 [CLEANUP] Scanning for old ranking messages...');
+            
+            // Validate and cap limit
+            const scanLimit = Math.min(Math.max(limit, 1), 50);
+            console.log(`   📋 Scanning last ${scanLimit} messages...`);
+            
+            // Fetch recent messages
+            const messages = await channel.messages.fetch({ limit: scanLimit });
+            console.log(`   📋 Found ${messages.size} messages in channel`);
+            
+            // Filter for messages from the bot that contain rankings embeds
+            const botMessages = messages.filter(msg => 
+                msg.author.id === channel.client.user.id &&
+                msg.embeds.length > 0 &&
+                (msg.embeds.some(e => e.title?.includes('Classement LC')) || 
+                 msg.embeds.some(e => e.title?.includes('Classement Niveaux')))
+            );
+            
+            console.log(`   🤖 Found ${botMessages.size} ranking messages from bot`);
+            
+            // Delete all except the one to keep
+            let deletedCount = 0;
+            for (const [messageId, message] of botMessages) {
+                if (keepMessageId && messageId === keepMessageId) {
+                    console.log(`   ✅ Keeping message ${messageId} (current rankings)`);
+                    continue;
+                }
+                
+                try {
+                    await message.delete();
+                    deletedCount++;
+                    console.log(`   🗑️ Deleted old ranking message ${messageId}`);
+                } catch (deleteError) {
+                    console.warn(`   ⚠️ Could not delete message ${messageId}: ${deleteError.message}`);
+                }
+            }
+            
+            console.log(`✅ [CLEANUP] Cleanup completed: ${deletedCount} old messages deleted`);
+            return deletedCount;
+        } catch (error) {
+            console.error('❌ [CLEANUP] Error during cleanup:', error.message);
+            return 0;
         }
     }
 };
