@@ -633,7 +633,7 @@ async function sendDuplicateInviteNotification(client, member, inviterId) {
     }
 
     try {
-        const inviteChannel = await client.channels.fetch(inviteChannelId);
+        const inviteChannel = member.guild.channels.cache.get(inviteChannelId);
         if (!inviteChannel) {
             console.error('[ERROR] Invite tracker channel not found');
             return;
@@ -718,7 +718,7 @@ client.on('guildMemberAdd', async (member) => {
         
         // Record transactions
         await db.recordTransaction(null, inviter.id, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
-        await db.recordTransaction(null, member.id, config.currency.inviteReward, 'invite_reward', 'Reward for joining via invite');
+        await db.recordTransaction(null, member.id, config.currency.inviteReward, 'invite_joined', 'Reward for joining via invite');
 
         const inviteChannel = member.guild.channels.cache.get(config.channels.inviteTracker);
         if (inviteChannel) {
@@ -734,7 +734,7 @@ client.on('guildMemberAdd', async (member) => {
 
             const msg = `📩 ${member} a rejoint grâce à <@${inviter.id}>, qui a maintenant ${updatedData.invites} invitations ! 🎉`;
             await inviteChannel.send(msg);
-            console.log(`[DEBUG] Sent invite tracking message to #invitations`);
+            console.log(`[DEBUG] Sent invite tracking message to invite tracker channel`);
         } else {
             console.error('[ERROR] Invite tracker channel not found or not configured');
         }
