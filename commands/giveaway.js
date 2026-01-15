@@ -7,9 +7,13 @@ const { isAdmin } = require('../utils/adminHelper');
 // Constants
 const MS_PER_MINUTE = 60000; // Milliseconds in one minute
 const COLLECTOR_TIMEOUT_MS = 60000; // Message collector timeout (60 seconds)
+const UPDATE_INTERVAL_MS = 60000; // Giveaway embed update interval (60 seconds)
 
 // Store active giveaway timers
 const giveawayTimers = new Map();
+
+// Store active giveaway update intervals
+const giveawayUpdateIntervals = new Map();
 
 module.exports = {
     name: 'giveaway',
@@ -90,6 +94,77 @@ module.exports = {
         }
     }
 };
+
+// Format time remaining in hours and minutes
+function formatTimeRemaining(minutes) {
+    // Handle edge cases
+    if (minutes < 0) {
+        return '0min';
+    }
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours > 0) {
+        return `${hours}h ${mins}min`;
+    }
+    return `${mins}min`;
+}
+
+// Schedule periodic giveaway embed updates
+function scheduleGiveawayUpdate(giveawayId, endTime, channel, message) {
+    // Clear existing interval if any
+    if (giveawayUpdateIntervals.has(giveawayId)) {
+        clearInterval(giveawayUpdateIntervals.get(giveawayId));
+    }
+
+    // Set up interval to update every 60 seconds
+    const interval = setInterval(async () => {
+        try {
+            const remainingTime = Math.floor((endTime - Date.now()) / MS_PER_MINUTE);
+
+            if (remainingTime <= 0) {
+                clearInterval(interval);
+                giveawayUpdateIntervals.delete(giveawayId);
+                // Note: scheduleGiveawayEnd will also call endGiveaway, but it's protected against double-execution
+                await endGiveaway(giveawayId, channel, message);
+                return;
+            }
+
+            // Get giveaway details to ensure it's still active
+            const giveaway = await db.getGiveaway(giveawayId);
+            if (!giveaway || giveaway.status !== 'active') {
+                clearInterval(interval);
+                giveawayUpdateIntervals.delete(giveawayId);
+                return;
+            }
+
+            const timeLeft = formatTimeRemaining(remainingTime);
+            const participantCount = await db.getGiveawayParticipantCount(giveawayId);
+
+            const updatedEmbed = new EmbedBuilder()
+                .setColor(config.colors.gold)
+                .setTitle('🎉 GIVEAWAY 🎁')
+                .setDescription(
+                    `🌟 **Récompense** : ${giveaway.reward} x${giveaway.quantity}\n` +
+                    `🏆 **Nombre de gagnants** : ${giveaway.winners_count}\n` +
+                    `👥 **Participants** : ${participantCount}\n\n` +
+                    `⏲️ **Fin dans** : ${timeLeft}\n` +
+                    `📢 Cliquez sur Participer pour tenter votre chance !`
+                )
+                .setTimestamp(new Date(giveaway.end_time))
+                .setFooter({ text: `Se termine le` });
+
+            await message.edit({ embeds: [updatedEmbed] });
+        } catch (error) {
+            console.error('Error updating giveaway embed:', error);
+            clearInterval(interval);
+            giveawayUpdateIntervals.delete(giveawayId);
+        }
+    }, UPDATE_INTERVAL_MS);
+
+    giveawayUpdateIntervals.set(giveawayId, interval);
+}
 
 // Interactive menu handler - now handles single-response format
 async function handleInteractiveMenu(message) {
@@ -256,7 +331,7 @@ async function launchGiveaway(channel, config, creatorId) {
                 `🌟 **Récompense** : ${config.reward} x${config.quantity}\n` +
                 `🏆 **Nombre de gagnants** : ${config.winners}\n` +
                 `👥 **Participants** : 0\n\n` +
-                `⏲️ **Fin dans** : ${config.duration} minute${config.duration > 1 ? 's' : ''}\n` +
+                `⏲️ **Fin dans** : ${formatTimeRemaining(config.duration)}\n` +
                 `📢 Cliquez sur Participer pour tenter votre chance !`
             )
             .setTimestamp(new Date(giveaway.end_time))
@@ -282,6 +357,9 @@ async function launchGiveaway(channel, config, creatorId) {
 
         // Set up automatic ending timer
         scheduleGiveawayEnd(giveaway.id, config.duration, channel, giveawayMessage);
+
+        // Set up periodic embed updates
+        scheduleGiveawayUpdate(giveaway.id, new Date(giveaway.end_time).getTime(), channel, giveawayMessage);
 
     } catch (error) {
         console.error('Error launching giveaway:', error);
@@ -344,7 +422,7 @@ async function handleCreate(message, args) {
                 `🌟 **Récompense** : ${reward} x${quantity}\n` +
                 `🏆 **Nombre de gagnants** : ${winnersCount}\n` +
                 `👥 **Participants** : 0\n\n` +
-                `⏲️ **Fin dans** : ${duration} minute${duration > 1 ? 's' : ''}\n` +
+                `⏲️ **Fin dans** : ${formatTimeRemaining(duration)}\n` +
                 `📢 Cliquez sur Participer pour tenter votre chance !`
             )
             .setTimestamp(new Date(giveaway.end_time))
@@ -370,6 +448,9 @@ async function handleCreate(message, args) {
 
         // Set up automatic ending timer
         scheduleGiveawayEnd(giveaway.id, duration, message.channel, giveawayMessage);
+
+        // Set up periodic embed updates
+        scheduleGiveawayUpdate(giveaway.id, new Date(giveaway.end_time).getTime(), message.channel, giveawayMessage);
 
         // Delete the command message
         await message.delete().catch(() => {});
@@ -473,6 +554,12 @@ function scheduleGiveawayEnd(giveawayId, durationMinutes, channel, giveawayMessa
 
 async function endGiveaway(giveawayId, channel, giveawayMessage = null) {
     try {
+        // Clear any active update interval
+        if (giveawayUpdateIntervals.has(giveawayId)) {
+            clearInterval(giveawayUpdateIntervals.get(giveawayId));
+            giveawayUpdateIntervals.delete(giveawayId);
+        }
+
         // Get giveaway details
         const giveaway = await db.getGiveaway(giveawayId);
         if (!giveaway || giveaway.status !== 'active') {
@@ -588,7 +675,7 @@ async function updateGiveawayEmbed(message, giveaway) {
                 `🌟 **Récompense** : ${giveaway.reward} x${giveaway.quantity}\n` +
                 `🏆 **Nombre de gagnants** : ${giveaway.winners_count}\n` +
                 `👥 **Participants** : ${participantCount}\n\n` +
-                `⏲️ **Fin dans** : ${timeRemaining} minute${timeRemaining > 1 ? 's' : ''}\n` +
+                `⏲️ **Fin dans** : ${formatTimeRemaining(timeRemaining)}\n` +
                 `📢 Cliquez sur Participer pour tenter votre chance !`
             )
             .setTimestamp(new Date(giveaway.end_time))
