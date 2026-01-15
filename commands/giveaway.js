@@ -7,6 +7,7 @@ const { isAdmin } = require('../utils/adminHelper');
 // Constants
 const MS_PER_MINUTE = 60000; // Milliseconds in one minute
 const COLLECTOR_TIMEOUT_MS = 60000; // Message collector timeout (60 seconds)
+const UPDATE_INTERVAL_MS = 60000; // Giveaway embed update interval (60 seconds)
 
 // Store active giveaway timers
 const giveawayTimers = new Map();
@@ -96,6 +97,11 @@ module.exports = {
 
 // Format time remaining in hours and minutes
 function formatTimeRemaining(minutes) {
+    // Handle edge cases
+    if (minutes < 0) {
+        return '0min';
+    }
+    
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     
@@ -120,6 +126,7 @@ function scheduleGiveawayUpdate(giveawayId, endTime, channel, message) {
             if (remainingTime <= 0) {
                 clearInterval(interval);
                 giveawayUpdateIntervals.delete(giveawayId);
+                // Note: scheduleGiveawayEnd will also call endGiveaway, but it's protected against double-execution
                 await endGiveaway(giveawayId, channel, message);
                 return;
             }
@@ -148,13 +155,13 @@ function scheduleGiveawayUpdate(giveawayId, endTime, channel, message) {
                 .setTimestamp(new Date(giveaway.end_time))
                 .setFooter({ text: `Se termine le` });
 
-            await message.edit({ embeds: [updatedEmbed] }).catch(console.error);
+            await message.edit({ embeds: [updatedEmbed] });
         } catch (error) {
             console.error('Error updating giveaway embed:', error);
             clearInterval(interval);
             giveawayUpdateIntervals.delete(giveawayId);
         }
-    }, 60000);
+    }, UPDATE_INTERVAL_MS);
 
     giveawayUpdateIntervals.set(giveawayId, interval);
 }
