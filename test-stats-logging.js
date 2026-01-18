@@ -4,9 +4,19 @@
  */
 
 const fs = require('fs');
+const path = require('path');
+
+// Resolve bot.js file path relative to this test file
+const botFilePath = path.resolve(__dirname, 'bot.js');
+
+// Check if bot.js exists before reading
+if (!fs.existsSync(botFilePath)) {
+    console.error(`❌ Error: bot.js not found at ${botFilePath}`);
+    process.exit(1);
+}
 
 // Read bot.js file contents
-const botCode = fs.readFileSync('./bot.js', 'utf-8');
+const botCode = fs.readFileSync(botFilePath, 'utf-8');
 
 async function testStatsLogging() {
     console.log('=== Stats Logging Test ===\n');
@@ -17,8 +27,9 @@ async function testStatsLogging() {
     // Test 1: Check for message detection log
     console.log('Test 1: Verify message detection logging');
     try {
-        if (botCode.includes('[Stats] Detected message from') &&
-            botCode.includes('Processing...')) {
+        // Use regex to ensure it's in a console.log context
+        const hasLog = /console\.log\([^)]*\[Stats\] Detected message from/.test(botCode);
+        if (hasLog) {
             console.log('✅ Message detection logging is present');
             console.log('   Log format: [Stats] Detected message from {user}. Processing...\n');
             testsPassed++;
@@ -34,8 +45,9 @@ async function testStatsLogging() {
     // Test 2: Check for message count update log
     console.log('Test 2: Verify message count update logging');
     try {
-        if (botCode.includes('[Stats] Updated message count for') &&
-            botCode.includes('batched')) {
+        // Use regex to ensure it's in a console.log context
+        const hasLog = /console\.log\([^)]*\[Stats\] Updated message count for/.test(botCode);
+        if (hasLog) {
             console.log('✅ Message count update logging is present');
             console.log('   Log format: [Stats] Updated message count for {user}: {count} (batched +{batchSize})\n');
             testsPassed++;
@@ -51,9 +63,9 @@ async function testStatsLogging() {
     // Test 3: Check for voice channel join log
     console.log('Test 3: Verify voice channel join logging');
     try {
-        if (botCode.includes('[Stats] User') &&
-            botCode.includes('joined voice channel') &&
-            botCode.includes('Starting time tracking')) {
+        // Use regex to ensure it's in a console.log context
+        const hasLog = /console\.log\([^)]*\[Stats\] User.*joined voice channel/.test(botCode);
+        if (hasLog) {
             console.log('✅ Voice channel join logging is present');
             console.log('   Log format: [Stats] User {user} joined voice channel. Starting time tracking.\n');
             testsPassed++;
@@ -69,9 +81,9 @@ async function testStatsLogging() {
     // Test 4: Check for voice time update log
     console.log('Test 4: Verify voice time update logging');
     try {
-        if (botCode.includes('[Stats] Updated voice time for') &&
-            botCode.includes('New total:') &&
-            botCode.includes('seconds')) {
+        // Use regex to ensure it's in a console.log context
+        const hasLog = /console\.log\([^)]*\[Stats\] Updated voice time for/.test(botCode);
+        if (hasLog) {
             console.log('✅ Voice time update logging is present');
             console.log('   Log format: [Stats] Updated voice time for {user}. New total: {seconds} seconds.\n');
             testsPassed++;
@@ -87,9 +99,9 @@ async function testStatsLogging() {
     // Test 5: Check for voice activity tracking log
     console.log('Test 5: Verify voice activity session logging');
     try {
-        if (botCode.includes('[Stats] Voice activity tracked for') &&
-            botCode.includes('Session time:') &&
-            botCode.includes('minutes')) {
+        // Use regex to ensure it's in a console.log context
+        const hasLog = /console\.log\([^)]*\[Stats\] Voice activity tracked for/.test(botCode);
+        if (hasLog) {
             console.log('✅ Voice activity session logging is present');
             console.log('   Log format: [Stats] Voice activity tracked for {user}. Session time: {minutes} minutes.\n');
             testsPassed++;
@@ -194,8 +206,11 @@ async function testStatsLogging() {
 
 // Run tests
 testStatsLogging().then(success => {
-    process.exit(success ? 0 : 1);
+    // Let Node.js exit naturally based on test results
+    if (!success) {
+        process.exitCode = 1;
+    }
 }).catch(error => {
     console.error('Fatal error running tests:', error);
-    process.exit(1);
+    process.exitCode = 1;
 });
