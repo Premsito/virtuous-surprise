@@ -633,16 +633,29 @@ async function sendDuplicateInviteNotification(client, member, inviterId) {
     }
 
     try {
+        console.log(`[DEBUG] Sending duplicate invite notification for ${member.user.tag}`);
         const inviteChannel = member.guild.channels.cache.get(inviteChannelId);
         if (!inviteChannel) {
-            console.error('[ERROR] Invite tracker channel not found');
+            console.error(`[ERROR] Invite tracker channel not found with ID: ${inviteChannelId}`);
             return;
         }
 
+        console.log(`[DEBUG] Invite tracker channel found: ${inviteChannel.name} (${inviteChannel.id})`);
+
         // Check bot permissions
         const permissions = inviteChannel.permissionsFor(client.user);
-        if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {
-            console.error('[ERROR] Bot lacks SendMessages permission in invite tracker channel');
+        if (!permissions) {
+            console.error('[ERROR] Cannot check permissions for invite tracker channel');
+            return;
+        }
+
+        if (!permissions.has(PermissionsBitField.Flags.ViewChannel)) {
+            console.error('[ERROR] Missing VIEW_CHANNEL permission in invite tracker channel');
+            return;
+        }
+
+        if (!permissions.has(PermissionsBitField.Flags.SendMessages)) {
+            console.error('[ERROR] Missing SEND_MESSAGES permission in invite tracker channel');
             return;
         }
 
@@ -657,7 +670,7 @@ async function sendDuplicateInviteNotification(client, member, inviterId) {
 
 // Guild member add event (invite tracking)
 client.on('guildMemberAdd', async (member) => {
-    console.log(`[DEBUG] ${member.user.tag} joined.`);
+    console.log(`[DEBUG] Member added: ${member.user.tag} (${member.user.id}). Invite tracking event triggered.`);
 
     try {
         const guildId = member.guild.id;
@@ -667,13 +680,18 @@ client.on('guildMemberAdd', async (member) => {
             console.warn('[WARNING] No cached invites found for guild, fetching...');
             const guildInvites = await member.guild.invites.fetch();
             invites.set(guildId, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
+            console.log(`[DEBUG] Cached ${guildInvites.size} invites for guild ${member.guild.name}`);
         }
 
+        console.log(`[DEBUG] Starting inviter detection for ${member.user.tag}...`);
         const inviter = await getInviter(member.guild, member, invites.get(guildId));
         if (!inviter) {
             console.warn(`[WARNING] Failed to detect inviter for user ${member.user.tag}`);
+            console.warn(`[WARNING] Possible reasons: vanity URL, widget, discovery, or direct join link`);
             return;
         }
+
+        console.log(`[DEBUG] Detected inviter: ${inviter.tag} (${inviter.id})`);
 
         // Don't track bot invites
         if (member.user.bot) {
@@ -681,12 +699,15 @@ client.on('guildMemberAdd', async (member) => {
             return;
         }
 
+        console.log(`[DEBUG] Checking for duplicate invite: inviter=${inviter.id}, invited=${member.id}`);
         const isDuplicate = await db.checkInviteHistory(inviter.id, member.id);
         if (isDuplicate) {
             console.log(`[DEBUG] Duplicate invite detected for ${member.user.tag} by ${inviter.tag}`);
             await sendDuplicateInviteNotification(client, member, inviter.id);
             return;
         }
+
+        console.log(`[DEBUG] Valid invite detected, processing...`);
 
         // Create or get inviter user record
         let inviterUser = await db.getUser(inviter.id);
@@ -720,24 +741,40 @@ client.on('guildMemberAdd', async (member) => {
         await db.recordTransaction(null, inviter.id, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
         await db.recordTransaction(null, member.id, config.currency.inviteReward, 'invite_joined', 'Reward for joining via invite');
 
+        console.log(`[DEBUG] Preparing to send message to invite tracker channel...`);
         const inviteChannel = member.guild.channels.cache.get(config.channels.inviteTracker);
-        if (inviteChannel) {
-            // Check bot permissions before sending
-            const permissions = inviteChannel.permissionsFor(client.user);
-            if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {
-                console.error('[ERROR] Bot lacks SendMessages permission in invite tracker channel');
-                return;
-            }
-            if (!permissions.has(PermissionsBitField.Flags.EmbedLinks)) {
-                console.warn('[WARNING] Bot lacks EmbedLinks permission in invite tracker channel');
-            }
-
-            const msg = `📩 ${member} a rejoint grâce à <@${inviter.id}>, qui a maintenant ${updatedData.invites} invitations ! 🎉`;
-            await inviteChannel.send(msg);
-            console.log(`[DEBUG] Sent invite tracking message to invite tracker channel`);
-        } else {
-            console.error('[ERROR] Invite tracker channel not found or not configured');
+        if (!inviteChannel) {
+            console.error(`[ERROR] Invite tracker channel not found with ID: ${config.channels.inviteTracker}`);
+            return;
         }
+
+        console.log(`[DEBUG] Invite tracker channel found: ${inviteChannel.name} (${inviteChannel.id})`);
+
+        // Check bot permissions before sending
+        const permissions = inviteChannel.permissionsFor(client.user);
+        if (!permissions) {
+            console.error('[ERROR] Cannot check permissions for invite tracker channel');
+            return;
+        }
+
+        if (!permissions.has(PermissionsBitField.Flags.ViewChannel)) {
+            console.error('[ERROR] Missing VIEW_CHANNEL permission in invite tracker channel');
+            return;
+        }
+
+        if (!permissions.has(PermissionsBitField.Flags.SendMessages)) {
+            console.error('[ERROR] Missing SEND_MESSAGES permission in invite tracker channel');
+            return;
+        }
+
+        if (!permissions.has(PermissionsBitField.Flags.EmbedLinks)) {
+            console.warn('[WARNING] Bot lacks EmbedLinks permission in invite tracker channel');
+        }
+
+        console.log(`[DEBUG] Permissions verified, sending invite tracking message...`);
+        const msg = `📩 ${member} a rejoint grâce à <@${inviter.id}>, qui a maintenant ${updatedData.invites} invitations ! 🎉`;
+        await inviteChannel.send(msg);
+        console.log(`[DEBUG] Successfully sent invite tracking message to ${inviteChannel.name}`);
 
     } catch (error) {
         console.error('[ERROR] Error in invite tracking:', error);
