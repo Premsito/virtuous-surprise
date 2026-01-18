@@ -5,6 +5,7 @@ const config = require('./config.json');
 const { getResponse } = require('./utils/responseHelper');
 const { getMessageXP, canGrantMessageXP, getLevelFromXP, getVoiceXP, getReactionXP, XP_CONFIG, getXPProgress } = require('./utils/xpHelper');
 const { calculateLevelReward, formatRewardEmbed } = require('./utils/rewardHelper');
+const { getInviter } = require('./utils/inviteHelper');
 const rankingsManager = require('./utils/rankingsManager');
 const rankingsMetrics = require('./utils/rankingsMetrics');
 
@@ -624,149 +625,122 @@ client.once('clientReady', async () => {
 });
 
 // Helper function to send duplicate invite notification
-async function sendDuplicateInviteNotification(client, member, inviter) {
+async function sendDuplicateInviteNotification(client, member, inviterId) {
     const inviteChannelId = config.channels.inviteTracker;
-    if (inviteChannelId) {
-        try {
-            const inviteChannel = await client.channels.fetch(inviteChannelId);
-            if (inviteChannel) {
-                await inviteChannel.send(
-                    `🔴 L'invitation de ${inviter} pour ${member.user} n'a pas été comptée, car ${member.user} est déjà membre du serveur !`
-                );
-                console.log(`Sent duplicate invite notification to channel ${inviteChannelId}`);
-            }
-        } catch (error) {
-            console.error('Error sending duplicate invite message:', error);
+    if (!inviteChannelId) {
+        console.warn('[WARNING] Invite tracker channel not configured in config.json');
+        return;
+    }
+
+    try {
+        const inviteChannel = member.guild.channels.cache.get(inviteChannelId);
+        if (!inviteChannel) {
+            console.error('[ERROR] Invite tracker channel not found');
+            return;
         }
+
+        // Check bot permissions
+        const permissions = inviteChannel.permissionsFor(client.user);
+        if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {
+            console.error('[ERROR] Bot lacks SendMessages permission in invite tracker channel');
+            return;
+        }
+
+        await inviteChannel.send(
+            `🔴 L'invitation de <@${inviterId}> pour ${member} n'a pas été comptée, car ${member} est déjà membre du serveur !`
+        );
+        console.log(`[DEBUG] Sent duplicate invite notification to channel ${inviteChannelId}`);
+    } catch (error) {
+        console.error('[ERROR] Error sending duplicate invite message:', error);
     }
 }
 
 // Guild member add event (invite tracking)
 client.on('guildMemberAdd', async (member) => {
+    console.log(`[DEBUG] ${member.user.tag} joined.`);
+
     try {
         const guildId = member.guild.id;
         const cachedInvites = invites.get(guildId);
-        const newInvites = await member.guild.invites.fetch();
         
-        // Find which invite was used
-        let usedInvite = null;
-        for (const [code, invite] of newInvites) {
-            const cachedUses = cachedInvites.get(code) || 0;
-            if (invite.uses > cachedUses) {
-                usedInvite = invite;
-                break;
-            }
+        if (!cachedInvites) {
+            console.warn('[WARNING] No cached invites found for guild, fetching...');
+            const guildInvites = await member.guild.invites.fetch();
+            invites.set(guildId, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
         }
+
+        const inviter = await getInviter(member.guild, member, invites.get(guildId));
+        if (!inviter) {
+            console.warn(`[WARNING] Failed to detect inviter for user ${member.user.tag}`);
+            return;
+        }
+
+        // Don't track bot invites
+        if (member.user.bot) {
+            console.log(`[DEBUG] Skipping invite tracking for bot: ${member.user.tag}`);
+            return;
+        }
+
+        const isDuplicate = await db.checkInviteHistory(inviter.id, member.id);
+        if (isDuplicate) {
+            console.log(`[DEBUG] Duplicate invite detected for ${member.user.tag} by ${inviter.tag}`);
+            await sendDuplicateInviteNotification(client, member, inviter.id);
+            return;
+        }
+
+        // Create or get inviter user record
+        let inviterUser = await db.getUser(inviter.id);
+        if (!inviterUser) {
+            inviterUser = await db.createUser(inviter.id, inviter.username);
+            console.log(`[DEBUG] Created new inviter record for ${inviter.username}`);
+        }
+
+        // Create or get invited user record
+        let invitedUser = await db.getUser(member.id);
+        if (!invitedUser) {
+            invitedUser = await db.createUser(member.id, member.user.username, inviter.id);
+            console.log(`[DEBUG] Created new invited user record for ${member.user.username}`);
+        }
+
+        await db.addInviteHistory(inviter.id, member.id);
+        console.log(`[DEBUG] Added invite history: ${inviter.tag} -> ${member.user.tag}`);
+
+        const updatedData = await db.incrementInvites(inviter.id);
+        console.log(`[DEBUG] Incremented invites for ${inviter.tag}, new count: ${updatedData.invites}`);
+
+        // Record the invite (legacy table)
+        await db.recordInvite(inviter.id, member.id);
+
+        // Reward both users with LC
+        console.log(`[DEBUG] Rewarding ${config.currency.inviteReward} LC to both users...`);
+        await db.updateBalance(inviter.id, config.currency.inviteReward, 'invite_reward');
+        await db.updateBalance(member.id, config.currency.inviteReward, 'invite_joined');
         
-        // Update cache
-        invites.set(guildId, new Map(newInvites.map(invite => [invite.code, invite.uses])));
-        
-        if (usedInvite && usedInvite.inviter) {
-            const inviterId = usedInvite.inviter.id;
-            const invitedId = member.id;
-            
-            // Debugging logs
-            console.log(`Inviter ID: ${inviterId}, Invited ID: ${invitedId}`);
-            console.log(`Verifying invitation from ${usedInvite.inviter.username} for ${member.user.username}`);
-            
-            // Don't track bot invites
-            if (member.user.bot) return;
-            
-            // Get inviter member object for mentions
-            const inviterMember = await member.guild.members.fetch(inviterId).catch(() => null);
-            
-            // Anti-cheat: Check if this invite already exists in history
-            console.log(`Checking invite history for duplicates...`);
-            const alreadyInvited = await db.checkInviteHistory(inviterId, invitedId);
-            
-            if (alreadyInvited) {
-                console.log(`🚫 Duplicate invite blocked: ${usedInvite.inviter.username} -> ${member.user.username}`);
-                await sendDuplicateInviteNotification(client, member, inviterMember || usedInvite.inviter);
+        // Record transactions
+        await db.recordTransaction(null, inviter.id, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
+        await db.recordTransaction(null, member.id, config.currency.inviteReward, 'invite_joined', 'Reward for joining via invite');
+
+        const inviteChannel = member.guild.channels.cache.get(config.channels.inviteTracker);
+        if (inviteChannel) {
+            // Check bot permissions before sending
+            const permissions = inviteChannel.permissionsFor(client.user);
+            if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {
+                console.error('[ERROR] Bot lacks SendMessages permission in invite tracker channel');
                 return;
             }
-            
-            console.log(`✅ Invite validation passed - invite is unique`);
-            
-            // Create or get inviter
-            console.log(`Creating/fetching inviter user record...`);
-            let inviter = await db.getUser(inviterId);
-            if (!inviter) {
-                inviter = await db.createUser(inviterId, usedInvite.inviter.username);
-                console.log(`Created new inviter record for ${usedInvite.inviter.username}`);
-            } else {
-                console.log(`Found existing inviter record for ${usedInvite.inviter.username}`);
+            if (!permissions.has(PermissionsBitField.Flags.EmbedLinks)) {
+                console.warn('[WARNING] Bot lacks EmbedLinks permission in invite tracker channel');
             }
-            
-            // Create or get invited user
-            console.log(`Creating/fetching invited user record...`);
-            let invited = await db.getUser(invitedId);
-            if (!invited) {
-                invited = await db.createUser(invitedId, member.user.username, inviterId);
-                console.log(`Created new invited user record for ${member.user.username}`);
-            } else {
-                console.log(`Found existing invited user record for ${member.user.username}`);
-            }
-            
-            // Anti-cheat: Add to invite history (double-check with unique constraint)
-            console.log(`Adding invite to history table...`);
-            const historyAdded = await db.addInviteHistory(inviterId, invitedId);
-            
-            if (!historyAdded) {
-                // Race condition: invite was added between check and insert
-                console.log(`🚫 Duplicate invite blocked (race condition): ${usedInvite.inviter.username} -> ${member.user.username}`);
-                await sendDuplicateInviteNotification(client, member, inviterMember || usedInvite.inviter);
-                return;
-            }
-            
-            console.log(`✅ Invite successfully added to history`);
-            
-            // Increment inviter's invite count
-            console.log(`Incrementing invite count for ${usedInvite.inviter.username}...`);
-            await db.incrementInvites(inviterId);
-            
-            // Record the invite (legacy table)
-            await db.recordInvite(inviterId, invitedId);
-            
-            // Reward both users with LC
-            console.log(`Rewarding ${config.currency.inviteReward} LC to both users...`);
-            await db.updateBalance(inviterId, config.currency.inviteReward, 'invite_reward');
-            await db.updateBalance(invitedId, config.currency.inviteReward, 'invite_joined');
-            
-            // Record transactions
-            await db.recordTransaction(null, inviterId, config.currency.inviteReward, 'invite_reward', 'Reward for inviting a member');
-            await db.recordTransaction(null, invitedId, config.currency.inviteReward, 'invite_reward', 'Reward for joining via invite');
-            
-            // Get inviter's updated invite count after increment
-            const inviterData = await db.getUser(inviterId);
-            const totalInvites = inviterData ? inviterData.invites : 1;
-            
-            console.log(`✅ ${usedInvite.inviter.username} invited ${member.user.username} (unique invite)`);
-            console.log(`   Total invites for ${usedInvite.inviter.username}: ${totalInvites}`);
-            
-            // Send invite tracking message to specific channel
-            const inviteChannelId = config.channels.inviteTracker;
-            if (inviteChannelId) {
-                try {
-                    const inviteChannel = await client.channels.fetch(inviteChannelId);
-                    if (inviteChannel) {
-                        
-                        // Format message with emotes (try custom emojis, fallback to Unicode)
-                        const invitePeopleEmote = client.emojis.cache.find(e => e.name === config.emotes.invitePeople) || '📨';
-                        const boostGemsEmote = client.emojis.cache.find(e => e.name === config.emotes.boostGemsMonth) || '🔰';
-                        
-                        // Fix grammar for pluralization
-                        const invitationText = totalInvites === 1 ? '1 invitation' : `${totalInvites} invitations`;
-                        const messageContent = `${invitePeopleEmote} ${member.user} à rejoins l'équipe. Passe D de ${usedInvite.inviter} qui a maintenant ${invitationText}! ${boostGemsEmote}`;
-                        
-                        await inviteChannel.send(messageContent);
-                    }
-                } catch (error) {
-                    console.error('Error sending invite tracking message:', error);
-                }
-            }
+
+            const msg = `📩 ${member} a rejoint grâce à <@${inviter.id}>, qui a maintenant ${updatedData.invites} invitations ! 🎉`;
+            await inviteChannel.send(msg);
+            console.log(`[DEBUG] Sent invite tracking message to invite tracker channel`);
+        } else {
+            console.error('[ERROR] Invite tracker channel not found or not configured');
         }
+
     } catch (error) {
-        console.error('Error tracking invite:', error);
+        console.error('[ERROR] Error in invite tracking:', error);
     }
 });
 
