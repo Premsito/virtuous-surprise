@@ -42,8 +42,6 @@ async function getInviter(guild, member, cachedInvites) {
         return null;
     } catch (error) {
         console.error('[ERROR] Failed to detect inviter:', error);
-        console.error('[ERROR] Error details:', error.message);
-        console.error('[ERROR] Stack trace:', error.stack);
         return null;
     }
 }

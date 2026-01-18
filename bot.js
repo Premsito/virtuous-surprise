@@ -665,7 +665,6 @@ async function sendDuplicateInviteNotification(client, member, inviterId) {
         console.log(`[DEBUG] Sent duplicate invite notification to channel ${inviteChannelId}`);
     } catch (error) {
         console.error('[ERROR] Error sending duplicate invite message:', error);
-        console.error('[ERROR] Error message:', error.message);
     }
 }
 
@@ -779,8 +778,6 @@ client.on('guildMemberAdd', async (member) => {
 
     } catch (error) {
         console.error('[ERROR] Error in invite tracking:', error);
-        console.error('[ERROR] Error message:', error.message);
-        console.error('[ERROR] Stack trace:', error.stack);
     }
 });
 
