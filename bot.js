@@ -1072,6 +1072,10 @@ client.on('messageCreate', async (message) => {
         } else if (commandName === 'xp') {
             const command = client.commands.get('xp');
             await command.execute(message, args, client);
+        } else if (commandName === 'pp') {
+            console.log(`[Command] PP command recognized from ${message.author.username}`);
+            const command = client.commands.get('pp');
+            await command.execute(message, args);
         } else if (commandName === 'help' || commandName === 'aide') {
             await showHelp(message);
         }
