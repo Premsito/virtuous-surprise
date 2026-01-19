@@ -49,7 +49,7 @@ console.log('\nTest 6: Functionality');
 console.log('  ✓ Mentions support:', ppFileContent.includes('message.mentions.users.first()'));
 console.log('  ✓ Fallback to author:', ppFileContent.includes('message.author'));
 
-console.log('\n✅ All PP command tests passed!');
+console.log('\n✅ All PP command static analysis tests passed!');
 console.log('\n📝 Summary:');
 console.log('   - Command module is properly structured');
 console.log('   - Avatar size is set to 512px');
@@ -58,3 +58,5 @@ console.log('   - Error handling is implemented');
 console.log('   - Command is registered in bot.js');
 console.log('   - Command handler is added to messageCreate event');
 console.log('   - Supports both self-avatar and mentioned user avatar');
+console.log('\n⚠️  Note: This test performs static code analysis only.');
+console.log('   Runtime testing requires a Discord bot instance and test server.');
