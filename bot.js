@@ -392,12 +392,13 @@ client.once('clientReady', async () => {
                                 }
                                 
                                 const oldLevel = getLevelFromXP(user.xp || 0);
-                                const previousXP = user.xp || 0;
+                                 const previousXP = user.xp || 0;
                                 const updatedUser = await db.addXP(userId, xpGained);
                                 const newLevel = getLevelFromXP(updatedUser.xp);
                                 
                                 // Debug logging for voice XP tracking
                                 console.log(`[XP] Voice XP granted to ${userInVoice.user.username}: +${xpGained} XP (${previousXP} -> ${updatedUser.xp}, Level ${oldLevel} -> ${newLevel})`);
+                                console.log(`[Stats] Voice activity tracked for ${userInVoice.user.username}. Session time: ${newTotalMinutes} minutes.`);
                                 
                                 // Check for hourly bonus (60 minutes)
                                 if (newTotalMinutes >= 60 && xpSession.totalMinutes < 60) {
@@ -794,6 +795,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         if (!oldState.channelId && newState.channelId) {
             // Store join timestamp
             voiceSessions.set(userId, Date.now());
+            console.log(`[Stats] User ${member.user.username} joined voice channel. Starting time tracking.`);
             
             // Start XP tracking session
             const now = new Date();
@@ -820,7 +822,8 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
                     }
                     
                     // Update voice time in database
-                    await db.updateVoiceTime(userId, timeSpent);
+                    const updatedUser = await db.updateVoiceTime(userId, timeSpent);
+                    console.log(`[Stats] Updated voice time for ${member.user.username}. New total: ${updatedUser.voice_time} seconds.`);
                 }
                 
                 // Remove from tracking
@@ -931,6 +934,9 @@ client.on('messageCreate', async (message) => {
         const userId = message.author.id;
         const username = message.author.username;
         
+        // Debug logging: Detect message from user
+        console.log(`[Stats] Detected message from ${username}. Processing...`);
+        
         // Ensure user exists
         let user = await db.getUser(userId);
         if (!user) {
@@ -944,7 +950,8 @@ client.on('messageCreate', async (message) => {
         // Update database every MESSAGE_COUNT_BATCH_SIZE messages
         if (messageCountCache.get(userId) >= MESSAGE_COUNT_BATCH_SIZE) {
             const count = messageCountCache.get(userId);
-            await db.incrementMessageCount(userId, count);
+            const updatedUser = await db.incrementMessageCount(userId, count);
+            console.log(`[Stats] Updated message count for ${username}: ${updatedUser.message_count} (batched +${count})`);
             messageCountCache.delete(userId);
         }
 
